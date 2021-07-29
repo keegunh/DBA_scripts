@@ -1,0 +1,92 @@
+##Redshift 실제 적용한 자동배포 스크립트 
+
+Write-Host "Redshift : begin automated deployment task"
+Write-Host "Check Directory."
+cd deploy
+dir
+
+# 접속 정보 정리
+<# ... #>
+
+# Connect to QA
+$endpoint="qadb.aws.com"
+$port=5678
+$database="db"
+$username="user"
+$Env:PGPASSWORD="1234!@"
+$Env:PGCLIENTENCODING="UTF8"
+
+# grant 명령어를 위한 파일 생성. utf8로 인코딩하지 않을 시 오류 발생.
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+echo $null > grant.txt
+
+# [deploy] 내 .sql파일 하나씩 작업하도록 루프 수행
+$datetime = Get-Date -format "yyyyMMddHHmmss"
+$sqlfiles = Get-ChildItem -Filter *.sql
+foreach ($file in $sqlfiles) {
+
+	# 각 프로시저 스크립트를 배포
+	Write-Host "executing : $($file.Name)"
+	&"C:\Program Files\PostgreSQL\13\bin\psql.exe" -h $endpoint -U $username -d $database -p $port -P tuples_only -a -b -e -f $file.FullName
+
+	# grant 명령어 생성
+	$top = cat $file.FullName | Select-String -Pattern 'CREATE OR REPLACE PROCEDURE'
+	$replace = $top -replace "^CREATE OR REPLACE", "GRANT EXECUTE ON"
+	$ddl = $($replace + " TO nbmdw_ssis;")
+	$ddl >> grant.txt
+}
+
+# grant 명령어 일괄 실행
+$grant = Resolve-Path grant.txt | select -ExpandProperty Path
+&"C:\Program Files\PostgreSQL\13\bin\psql.exe" -h $endpoint -U $username -d $database -p $port -P tuples_only -a -b -e -f $grant
+rm grant.txt
+
+# [executed] 내 오늘 날짜의 폴더가 없으면 신규 생성
+$executedPath = Join-Path ..\executed \$datetime
+if (Test-Path -Path $executedPath) {
+    Write-Host "directory already exists. No directory created."
+} else {
+    Write-Host "new directory created."
+	New-Item -Path $executedPath -ItemType "directory"
+}
+Write-Host ""
+
+## [latest] 폴더로 배포한 스크립트 복사. 동일 이름의 기존 파일은 신규 버전으로 갱신됨.
+Get-ChildItem -Path ".\*.sql" -Recurse | Copy-Item -Destination ..\latest -force
+Write-Host "deployed scripts copied from [deploy] to [latest]. Any files with the same name are overwritten."
+
+## [executed] 내 신규 생성한 폴더로 배포한 스크립트 이동. 동일 이름의 기존 파일은 신규 버전으로 갱신됨.
+Get-ChildItem -Path ".\*.sql" -Recurse | Move-Item -Destination $executedPath -force
+Write-Host "deployed scripts moved from [deploy] to [executed]. Any files with the same name are overwritten."
+
+Write-Host ""
+Write-Host "Redshift : deployment task processed."
+
+--------------------------------------------------------------------
+로컬 PC 테스트 scripts
+
+# Connect to QA
+$endpoint="qadb.aws.com"
+$port=5678
+$database="db"
+$username="user"
+$Env:PGPASSWORD="1234!@"
+$Env:PGCLIENTENCODING="UTF8"
+
+&"C:\Program Files\PostgreSQL\13\bin\psql.exe" -h $endpoint -U $username -d $database -p $port -c 'select current_user, current_namespace, current_database(), current_schema();'
+
+cd [테스트 폴더 경로]
+$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'
+echo $null > grant.txt
+foreach ($file in $sqlfiles) {
+	Write-Host "executing : $($file.Name)"
+	&"C:\Program Files\PostgreSQL\13\bin\psql.exe" -h $endpoint -U $username -d $database -p $port -P tuples_only -a -b -e -f $file.FullName
+
+	$top = cat $file.FullName | Select-String -Pattern 'CREATE OR REPLACE PROCEDURE'
+	$replace = $top -replace "^CREATE OR REPLACE", "GRANT EXECUTE ON"
+	$ddl = $($replace + " TO granted_user;")
+	$ddl >> grant.txt
+}
+$grant = Resolve-Path grant.txt | select -ExpandProperty Path
+&"C:\Program Files\PostgreSQL\13\bin\psql.exe" -h $endpoint -U $username -d $database -p $port -P tuples_only -a -b -e -f $grant
+rm grant.txt
