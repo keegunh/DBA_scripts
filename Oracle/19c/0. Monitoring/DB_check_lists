@@ -1,0 +1,119 @@
+/************************************
+Oracle 19c RAC 데이터베이스 점검 체크 리스트
+************************************/
+
+I. DAILY
+	1. 모든 인스턴스의 정상적인 기동 확인
+		a. 서버 접속 후 srvctl 사용
+			- srvctl status database -db TNUPB
+				TNUPB1 인스턴스가 tnupbdbm01v 노드에서 실행 중임
+				TNUPB2 인스턴스가 tnupbdbm02v 노드에서 실행 중임
+		b. DB 접속 후 쿼리 실행 (GV$INSTANCE) 
+			- _sqlplus_view_instances.sql 
+	2. Listener 정상 기동 확인
+		a. 서버 접속 후 srvctl 사용
+			- srvctl status listener 
+				LISTENER 리스너가 사용으로 설정되었습니다.
+				LISTENER 리스너가 노드에서 실행 중임: tnupbdbm02v,tnupbdbm01v
+		b. 서버 접속 후 lsnrctl 사용
+			- lsnrctl status
+				LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 22-DEC-2021 14:14:45
+				
+				Copyright (c) 1991, 2021, Oracle.  All rights reserved.
+				
+				Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=dnupbdbm01v.prv.lguplus.co.kr)(PORT=1525)))
+				TNS-12541: TNS:no listener
+				TNS-12560: TNS:protocol adapter error
+				TNS-00511: No listener
+				Linux Error: 111: Connection refused
+				Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=IPC)(KEY=EXTPROC1525)))
+				STATUS of the LISTENER
+				------------------------
+				Alias                     LISTENER
+				Version                   TNSLSNR for Linux: Version 19.0.0.0.0 - Production
+				Start Date                02-SEP-2021 11:35:17
+				Uptime                    111 days 2 hr. 39 min. 28 sec
+				Trace Level               off
+				Security                  ON: Local OS Authentication
+				SNMP                      OFF
+				Listener Parameter File   /orahome/crs/product/19c/network/admin/listener.ora
+				Listener Log File         /oradump/diag/network/log/listener.log
+				Listening Endpoints Summary...
+				(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=172.23.19.52)(PORT=1525)))
+				(DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1525)))
+				(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=127.0.0.1)(PORT=1525)))
+				Services Summary...
+				Service "DNUPB" has 1 instance(s).
+				Instance "DNUPB", status READY, has 1 handler(s) for this service...
+				Service "DNUPBXDB" has 1 instance(s).
+				Instance "DNUPB", status READY, has 1 handler(s) for this service...
+				The command completed successfully
+		c. listener log 확인
+			- alias ttns='tail -fn 70 $ORACLE_BASE/diag/tnslsnr/${HOSTNAME}/listener/alert/log.xml'
+	3. 로그(예:alert< SID>.log)에서 에러 메시지 확인
+		a. Diag Trace 경로에 alert.log 확인 (select * from v$diag_info where name = 'Diag Trace';)
+			- alias tdb='tail -fn 70 /oradump/diag/rdbms/${SERVICE_NAME,,}/${ORACLE_SID}/trace/alert*.log'
+	4. Redo Log 상태 
+		a. DB 접속 후 쿼리 실행 (GV$LOG, GV$LOGFILE)
+			- _sqlplus_view_redo_log_members.sql
+	5. Undo Segment 상태 확인
+		a. DB 접속 후 쿼리 실행 (GV$UNDOSTAT)
+			- _sqlplus_view_undostat.sql
+	6. Archive 디렉토리의 Free Space 확인
+		a. DB 접속 후 쿼리 실행 (V$ASM_DISKGROUP)
+			- _sqlplus_view_ask_disk.sql
+			- _sqlplus_view_ask_diskgroup.sql
+		a. asmcmd에서 ls로 확인 *************************************************************
+	7. Daily Backup 결과 확인
+		a. DB 접속 후 쿼리 실행 (V$BACKUP, DBA_DATA_FILES)
+			- _sqlplus_view_backup_status.sql
+		b. RMAN 으로 확인 *******************************************************************
+	8. Tablespace Free Space 확인
+		a. DB 접속 후 쿼리 실행 (DBA_TABLESPACES, DBA_DATA_FILES, DBA_SEGMENTS)
+			- _sqlplus_view_tablespaces.sql	
+	9. 매일 실행되는 스크립트 및 Batch Job 결과 확인
+		a. DB 접속 후 쿼리 실행 (DBA_JOBS)
+			- _sqlplus_view_jobs.sql
+	10. DB Session 및 Lock / Latch 상태 확인
+		a. DB 접속 후 쿼리 실행 (GV$SESSION, GV$LOCKED_OBJECT, GV$SQLAREA, DBA_OBJECTS)
+			- _sqlplus_view_locked_objects.sql
+			
+II. Weekly
+	1. 오브젝트 (Extent 수, Row Chain 발생 확인 등)
+		a. DB 접속 후 쿼리 실행
+			- _sqlplus_view_tables
+			- _sqlplus_compare_objects
+			- _sqlplus_view_db_links
+			- _sqlplus_recompile
+			- _sqlplus_check_dependencies
+	2. 오브젝트 권한 검사
+		a. DB 접속 후 쿼리 실행
+			- check_grant_privileges.sql
+	3. 통계정보 생성 결과 확인
+		a. DB 접속 후 쿼리로 통계정보 생성 및 복사
+			- check_update_statistics.sql
+			- _sqlplus_check_table_statistics.sql
+			- _sqlplus_check_table_partition_statistics.sql
+			- _sqlplus_copy_table_partition_statistics.sql
+			- _sqlplus_check_index_partition_statistics.sql
+			- _sqlplus_check_index_statistics.sql
+		b. DB 접속 후 쿼리로 통계정보 백업 및 복구
+			- modify_statistics.sql
+	4. Log Switch Interval 확인
+	
+	5. DBMS 로그 및 데이터 파일이 위치한 디스크 볼륨의 여유 공간 확인
+		a. DB 접속 후 쿼리로 통계정보 생성 및 복사
+			- _sqlplus_view_asm_disk.sql
+			- _sqlplus_view_asm_diskgroup.sql
+	
+III. Monthly
+	1. DB모니터링 결과 분석 및 조치
+	2. 보관주기가 지난 데이터 Purge 작업 수행
+	3. Table Reorg 작업 수행
+	4. 과도하게 증가되는 오브젝트 점검
+	5. DBMS 서버 튜닝 항목 점검
+	6. Monthly Range Partition이 존재하는 경우 차월 Partition이 존재하는지 점검
+	
+	
+	
+- GV$SYSSTAT < - 이건 언제 쓰지 ?????????
