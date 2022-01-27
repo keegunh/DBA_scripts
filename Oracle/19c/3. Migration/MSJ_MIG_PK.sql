@@ -1,0 +1,14 @@
+/*
+* 용도       : PNP정산시스템 고도화 프로젝트
+* 생성자     : 문성진 부장님
+* 저장일     : 2022-01-25
+*/
+
+CREATE TABLE PMPBMIG.MSJ_MIG_PK
+(
+    TABLE_NAME      VARCHAR2(128) NOT NULL,
+    CONSTRAINT_NAME VARCHAR2(128),
+    PK_SQL          VARCHAR2(4000)            -- "CREATE UNIQUE INDEX..."가 아니라 "ALTER TABLE ... ADD CONSTRAINT ... PRIMARY KEY..." DDL 저장
+)
+TABLESPACE TS_PMPBMIG_D01
+NOCOMPRESS;
