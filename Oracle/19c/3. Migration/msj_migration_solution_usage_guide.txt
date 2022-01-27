@@ -1,0 +1,91 @@
+본 파일은 LG유플러스 PNP정산시스템 고도화 프로젝트에서 데이터 전환 담당자인 문성진 부장님이 작업한 스크립트를 정리한 것이다.
+
+이관 DB에 대한 요약
+	- TOBE 운영DB 총 데이터는 54TB
+	- 그 중 ASIS -> TOBE 이관 데이터는 10TB 정도.
+	- 데이터 전환 시 사용한 네트워크 대역폭은 10G. (10 GIGA BIT ETHERNET: 초당 10 기가비트의 속도로 전송)
+	- 데이터 이관 시간은 10시간. 1시간에 대략 1TB 정도 이관 가능했다.
+
+사전 작업
+1. msj_migration_script_preparation.sql 실행
+	- 이관 대상 테이블 별 사이즈 또는 이전 전환테스트 이관 소요시간 기준으로 이관 세션(MSJ_MIG_TABLE.INST_ID) 리밸런싱 : MSJ_MIG_TABLE, MSJ_MIG_JOB_LOG
+	- 로그 테이블 TRUNCATE 및 테이블명 재입력 : MSJ_MIG_JOB_LOG, MSJ_MIG_INDEX_LOG
+	- 인덱스, PK DDL 다시 백업 : MSJ_MIG_INDEX, MSJ_MIG_PK (D-1)
+	- 이관 대상 테이블 변경 관리 FREEZING (D-2)
+	- 이관 대상 테이블 PK CONSTRAINT 삭제 (D-1)
+	- 이관 대상 테이블 인덱스 삭제 (D-1)
+	- 이관 대상 테이블 TRUNCATE (D-1)
+
+전체적 데이터 전환 프로세스
+1. 전체 이관 대상 테이블을 8개 세션으로 나눠서 DB링크로 이관.
+
+2. TOBE DB 서버에 직접 접속하여 아래 Com.sql 파일을 sqlplus로 수행하면 전환이 시작되는 구조. 
+   총 8개의 터미널 sqlplus 세션을 생성하여 병렬로 데이터 전환.
+   아래는 4번 세션을 예시로 듬.
+---------- Com.sql ----------------
+SET PAGESIZE 0;
+SET LINESIZE 2000;
+SET HEAD OFF;
+SET SQLNUMBER OFF;
+SET WRAP ON;
+SET TERMOUT OFF;
+SET TRIMSPOOL ON;
+SET FEEDBACK OFF;
+SET TIMING ON;
+SET ECHO OFF;
+
+@1_Insert.sql            -- exec PMPBMIG.PR_MIG_FETCH(4);
+@2_Create_Index.sql      -- exec PMPBMIG.PR_MIG_INDEX_FETCH(4);
+@3_Create_Pk.sql         -- exec PMPBMIG.PR_MIG_PK_FETCH(4);
+@4_Alter_Table_Index.sql -- exec PMPBMIG.PR_MIG_ALTER_TABLE_INDEX(4);
+@5_Create_Stat.sql       -- 각 테이블의 dbms_stats.gather_table_stats 문이 하드코딩되어 있음
+-----------------------------------
+
+3. Com.sql에 대한 세부 구조 분석
+	@1_Insert.sql
+		- PR_MIG_FETCH (프로시저) : 이관 대상 테이블의 INSERT문을 생성하고 cursor로 루프 구조를 만들어 하나씩 PR_MIG_INSERT에 전달
+			- MSJ_MIG_TABLE (테이블) : 데이터 전환 대상 조회 테이블. 각 테이블을 몇 번 세션으로 전환할 지, 조건절은 어떻게 되는지, 병렬도는 어떻게 줄 지, 등
+			- MSJ_MIG_RULE (테이블) : 테이블명 또는 컬럼명이 바뀐 테이블의 매핑 정보
+			- PR_MIG_INSERT (프로시저) : 생성된 INSERT문을 하나씩 수행하고 실행 로그를 남기는 프로시저
+				- MSJ_MIG_JOB_LOG (테이블) : INSERT에 대한 실행 로그를 기록하는 테이블. 성공하면 SUCCESS, 실패하면 오류 코드 기록
+	@2_Create_Index.sql
+		- PR_MIG_INDEX_FETCH  (프로시저) : 이관 대상 테이블들에 대하여 백업해둔 INDEX DDL문을 조회하고 cursor로 루프 구조를 만들어 하나씩 PR_MIG_CREATE_INDEX에 전달
+			- MSJ_MIG_TABLE (테이블)
+			- MSJ_MIG_INDEX (테이블) : INDEX DDL을 백업해둔 테이블. 전환 전 사전작업으로 인덱스를 삭제할 때 여기 DDL을 백업해둠.
+			- PR_MIG_CREATE_INDEX (프로시저) : 생성된 CREATE INDEX문을 하나씩 수행하고 실행 로그를 남기는 프로시저
+				- MSJ_MIG_INDEX_LOG (테이블) : CREATE INDEX 에 대한 실행 로그를 기록하는 테이블. 성공하면 SUCCESS, 실패하면 오류 코드 기록
+	@3_Create_Pk.sql
+		- PR_MIG_PK_FETCH  (프로시저) : 이관 대상 테이블들에 대하여 백업해둔 ALTER TABLE ... ADD CONSTRAINT ... PRIMARY KEY 문을 조회하고 cursor로 루프 구조를 만들어 하나씩 PR_MIG_CREATE_PK에 전달
+			- MSJ_MIG_TABLE (테이블)
+			- MSJ_MIG_PK (테이블) : ALTER TABLE ... ADD CONSTRAINT ... PRIMARY KEY문을 백업해둔 테이블. 전환 전 사전작업으로 PK CONSTRAINT 삭제 시 여기 DDL 백업해둠
+			- PR_MIG_CREATE_PK (프로시저) : 생성된 ADD CONSTRAINT문을 하나씩 수행. 별도 로그 테이블은 없음.
+	@4_Alter_Table_Index.sql
+		- PR_MIG_ALTER_TABLE_INDEX (프로시저) : ALTER TABLE ... LOGGING, ALTER INDEX ... LOGGING, NOPARALLEL 문 생성 후 CURSOR 만들어서 실행. 별도 로그 테이블은 없음.
+			- MSJ_MIG_TABLE (테이블)
+			- DBA_INDEXES (딕셔너리 뷰)
+	@5_Create_Stat.sql
+		- 각 테이블의 dbms_stats.gather_table_stats 문이 하드코딩되어 있음
+
+4. DB링크로 데이터 전환이 불가능한 컬럼들이 있다. 예를 들면 LONG TYPE 컬럼들. 
+   이러한 컬럼들은 DATAPUMP로 직접 이관해야한다. (ASIS DB 서버에 접속하여 expdp로 덤프파일 받은 후 FTP / SCP로 파일을 TOBE DB서버로 이관 후 impdp로 덤프파일을 넣어야 한다.)
+   
+5. 캐릭터셋 차이로 이관 후 데이터가 깨지는 테이블들이 있을 수 있다. 이 부분은 사전 점검 후 미리 목록을 정리하여 다른 이관 방법을 찾아야 한다.
+   이 프로젝트에서는 기존 TOBE DB에서 접속하여 ASIS 데이터를 당겨서 받는 방식이 아니라
+   ASIS에서 TOBE로 데이터를 밀어주는 프로시저를 개발해서 실행하니 데이터가 깨지지 않았다.
+	- 이관 후 데이터 깨졌는지 확인하는 법 ******** 
+		1. 의심되는 컬럼을 ASIS DB에서 UTL_RAW.CAST_TO_RAW 모두 변환하는 뷰를 만들어 해당 뷰를 TOBE로 이관한다.
+		2. TOBE에서 변환한 테이블과 변환하지 않은 테이블을 둘 다 받는다.
+		3. TOBE에서 MINUS로 비교해본다.
+		4. MINUS 결과값을 ASIS에서 조회해본다. (또는 ASIS에서 MINUS 결과값을 조회해본다.)
+   
+6. 특정 테이블에 넣어야 할 데이터가 1대1이 아니고 복잡하다면 담당 개발자에게 데이터 이관 sql 스크립트를 요청해야 한다. 
+   해당 테이블의 이관은 당연히 받은 스크립트를 수행한다.
+
+
+개선 가능한 점:
+1. 로그 테이블을 하나로 합치는 게 좋을 것 같다.
+	- 현재는 PR_MIG_CREATE_PK 실행 시 PK 생성 오류를 테이블에 기록하지 않는데 추가로 기록 가능하다
+	
+2. 통계정보 수집 프로시저는 내가 한 번 만들어 보자.
+
+3. 마지막에 SEQUENCE 재생성 하는 프로시저도 생성 + 실행하면 좋을 것 같다.
