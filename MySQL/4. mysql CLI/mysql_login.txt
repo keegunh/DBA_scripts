@@ -1,0 +1,23 @@
+######################################################################
+# U-Cloud에서는 path설정이 안 되기 때문에 mysql 절대 경로 사용
+######################################################################
+
+# 방법1
+mysql -h[Host IP] -P[Port No.] -u[User ID] -p[Password] [DB Name]
+
+# 예시
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql" -h10.1.131.161 -P3306 -uroot -pSingleHrvmffotvha!
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql" -hlocalhost -P3306 -uroot -pBe@n1n$pir@tion
+
+
+
+# 방법2
+mysql --host=[Host IP] --port=[Port No.] --user[User ID] --password=[Password] --database=[DB Name]
+
+# 예시
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql" --host=10.1.131.161 --port=3306 --user=root --password=SingleHrvmffotvha!
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql" --host=localhost --port=3306 --user=root --password=Be@n1n$pir@tion
+
+
+# 참고 
+	https://dev.mysql.com/doc/refman/8.0/en/mysql-command-options.html

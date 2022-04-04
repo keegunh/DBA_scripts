@@ -1,0 +1,30 @@
+######################################################################
+# U-Cloud에서는 path설정이 안 되기 때문에 mysqldump 절대 경로 사용
+######################################################################
+
+# 방법1
+mysqldump --host=[Host IP] --port=[Port No.] --user[User ID] --password=[Password] ...[options]... --result-file=[Dumpfile path] [DB Name] [Table1] [Table2] [Table3] ...
+
+# 예시
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqldump" --host=10.1.131.161 --port=3306 --user=root --password=SingleHrvmffotvha! --single-transaction --verbose --quick --set-gtid-purged=off --result-file="C:\Users\80517\Desktop\2022 HR CORE\DUMP\CloudSQL_Conn_Rec_20220317.sql" ERPAPP HR_CM_ROLE_MSG CM_CURRENCY_M
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqldump" --host=10.1.131.99 --port=3306 --user=erpapp --password=?????? --single-transaction --verbose --quick --set-gtid-purged=off --result-file="C:\DUMPFILE_NAME.sql" ERPAPP HR_CM_ROLE_MSG CM_CURRENCY_M
+
+
+
+# 방법2
+mysqldump -h[Host IP] -P[Port No.] -u[User ID] -p[Password] ... [options] ... [DB Name] [Table1] [Table2] [Table3] ... > [Dumpfile path].sql
+
+# 예시
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqldump" -h10.1.131.99 -P3306 -uerpapp -proqkf00 --single-transaction --verbose --quick --set-gtid-purged=off ERPAPP HR_CM_ROLE_MSG CM_CURRENCY_M > "C:\CloudSQL_Conn_Rec_20220317.sql"
+
+
+# 유용한 options
+	--no-create-info
+	--replace
+	--single-transaction
+	--verbose
+	--quick
+	--set-gtid-purged=off
+	
+# 참고 
+	https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html

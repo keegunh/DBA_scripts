@@ -1,0 +1,95 @@
+***********************************************************************************************************************************
+/* 
+	1. 목적 : GCP에서 Source DB의 백업으로 Target DB 덮어쓰기
+	
+	2. 세부 STEP
+		1) Source DB의 백업 생성
+		2) CLOUD SHELL에서 아래 curl GET 명령어로 1에서 백업 받은 BACKUP_ID 확인
+		
+			curl -X GET \
+			-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+			"https://sqladmin.googleapis.com/v1/projects/[Source_PROJECT_ID]/instances/[Source_DB_INSTANCE_ID]/backupRuns"
+		
+		3) 1에서 백업 받은 ID로 CLOUD SHELL 내에 .json 파일 생성
+		
+			파일 명 : backup_core.json (예시)
+			파일 내용 : 
+			{
+			  "restoreBackupContext":
+			  {
+			  	"backupRunId": 1647913163804, -- 2에서 확인한 BACKUP_ID
+			  	"project": "pjt-hrcore-stg-316104",	-- Source_PROJECT_ID
+			  	"instanceId": "csql-an3-hrcore-core-stg-mysql" --Source_DB_INSTANCE_ID
+			  }
+			}
+			
+		4) CLOUD SHELL에서 아래 curl POST 명령어로 target DB를 1에서 생성한 백업ID로 복원 (데이터는 덮어씌워짐)
+		
+			curl -X POST \
+			-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+			-H "Content-Type: application/json; charset=utf-8" \
+			-d @backup_portal.json \   			# 3에서 생성한 .json 파일명
+			"https://sqladmin.googleapis.com/v1/projects/[Target_PROJECT_ID]/instances/[Target_DB_INSTANCE_ID]/restoreBackup"
+		
+		5) Target DB 복원 완료되면 원래 Target DB 계정 정보에 맞게 비밀번호 변경
+*/
+***********************************************************************************************************************************
+
+
+예시1)
+	Source : csql-an3-hrcore-core-stg-mysql
+	Target : csql-an3-hrcore-core-qa3-mysql
+ 
+curl -X GET \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-stg-316104/instances/csql-an3-hrcore-core-stg-mysql/backupRuns"
+
+
+(ex) backup_core.json
+{
+  "restoreBackupContext":
+  {
+    "backupRunId": 1647913163804,
+    "project": "pjt-hrcore-stg-316104",
+    "instanceId": "csql-an3-hrcore-core-stg-mysql"
+  }
+}
+
+
+curl -X POST \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @backup_core.json \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-qa3/instances/csql-an3-hrcore-core-qa3-mysql/restoreBackup"
+***********************************************************************************************************************************
+
+
+
+
+
+예시2)
+	Source : csql-an3-hrcore-portal-stg-mysql
+	Target : csql-an3-hrcore-portal-qa3-mysql
+ 
+curl -X GET \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-stg-316104/instances/csql-an3-hrcore-portal-stg-mysql/backupRuns"
+
+
+(ex) backup_portal.json
+{
+  "restoreBackupContext":
+  {
+    "backupRunId": 1647912672544,
+    "project": "pjt-hrcore-stg-316104",
+    "instanceId": "csql-an3-hrcore-portal-stg-mysql"
+  }
+}
+
+
+curl -X POST \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @backup_portal.json \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-qa3/instances/csql-an3-hrcore-portal-qa3-mysql/restoreBackup"
+***********************************************************************************************************************************
