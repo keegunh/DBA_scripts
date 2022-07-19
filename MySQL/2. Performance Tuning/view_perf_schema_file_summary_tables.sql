@@ -1,0 +1,53 @@
+-- 이벤트 클래스별로 분류해서 집계한 파일 I/O 작업 관련 소요 시간 통계 정보 확인
+SELECT event_name
+     , count_star
+     , sum_timer_wait
+     , min_timer_wait
+     , avg_timer_wait
+     , max_timer_wait
+     , count_read
+     , sum_timer_read
+     , min_timer_read
+     , avg_timer_read
+     , max_timer_read
+     , sum_number_of_bytes_read
+     , count_write
+     , sum_timer_write
+     , min_timer_write
+     , avg_timer_write
+     , max_timer_write
+     , sum_number_of_bytes_write
+     , count_misc
+     , sum_timer_misc
+     , min_timer_misc
+     , avg_timer_misc
+     , max_timer_misc
+  FROM performance_schema.file_summary_by_event_name;
+
+-- 이벤트 인스턴스별로 분류해서 집계한 파일 I/O 작업 관련 소요 시간 통계 정보 확인
+SELECT file_name
+     , event_name
+     , object_instance_begin
+     , count_star
+     , sum_timer_wait
+     , min_timer_wait
+     , avg_timer_wait
+     , max_timer_wait
+     , count_read
+     , sum_timer_read
+     , min_timer_read
+     , avg_timer_read
+     , max_timer_read
+     , sum_number_of_bytes_read
+     , count_write
+     , sum_timer_write
+     , min_timer_write
+     , avg_timer_write
+     , max_timer_write
+     , sum_number_of_bytes_write
+     , count_misc
+     , sum_timer_misc
+     , min_timer_misc
+     , avg_timer_misc
+     , max_timer_misc
+  FROM performance_schema.file_summary_by_instance;

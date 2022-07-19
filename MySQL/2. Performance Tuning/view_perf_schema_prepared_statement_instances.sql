@@ -1,0 +1,37 @@
+-- 생성된 prepared statement 인스턴스 목록 조회
+SELECT object_instance_begin
+     , statement_id
+     , statement_name
+     , sql_text
+     , owner_thread_id
+     , owner_event_id
+     , owner_object_type
+     , owner_object_schema
+     , owner_object_name
+     , timer_prepare
+     , count_reprepare
+     , count_execute
+     , sum_timer_execute
+     , min_timer_execute
+     , avg_timer_execute
+     , max_timer_execute
+     , sum_lock_time
+     , sum_errors
+     , sum_warnings
+     , sum_rows_affected
+     , sum_rows_sent
+     , sum_rows_examined
+     , sum_created_tmp_disk_tables
+     , sum_created_tmp_tables
+     , sum_select_full_join
+     , sum_select_full_range_join
+     , sum_select_range
+     , sum_select_range_check
+     , sum_select_scan
+     , sum_sort_merge_passes
+     , sum_sort_range
+     , sum_sort_rows
+     , sum_sort_scan
+     , sum_no_index_used
+     , sum_no_good_index_used
+  FROM performance_schema.prepared_statements_instances;
