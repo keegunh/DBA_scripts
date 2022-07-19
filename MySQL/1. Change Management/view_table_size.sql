@@ -1,0 +1,26 @@
+SELECT TABLE_SCHEMA "DB_NAME"
+     , TABLE_NAME 
+     , ROUND(SUM(DATA_LENGTH + INDEX_LENGTH)/1024/1024/1024, 2) "DB_SIZE_GB" 
+  FROM INFORMATION_SCHEMA.TABLES 
+ WHERE TABLE_SCHEMA NOT IN ( 
+  'mysql'
+, 'information_schema'
+, 'performance_schema'
+, 'sys'
+)
+ GROUP BY TABLE_SCHEMA, TABLE_NAME
+ ORDER BY 1,2
+;
+
+SELECT TABLE_SCHEMA "DB_NAME"
+     , TABLE_NAME 
+     , CONCAT('SELECT ''', TABLE_SCHEMA, '.', TABLE_NAME, ''' AS TABLE_NAME, COUNT(1) AS CNT FROM ', TABLE_SCHEMA, '.', TABLE_NAME, ' UNION ALL ') AS SELECT_CNT
+  FROM INFORMATION_SCHEMA.TABLES 
+ WHERE TABLE_SCHEMA NOT IN ( 
+       'mysql'
+     , 'information_schema'
+     , 'performance_schema'
+     , 'sys'
+     )
+ ORDER BY 1,2
+;
