@@ -1,0 +1,31 @@
+-- MySQL의 호스트 캐시 정보 확인
+SELECT ip
+     , host
+     , host_validated
+     , sum_connect_errors
+     , count_host_blocked_errors
+     , count_nameinfo_transient_errors
+     , count_nameinfo_permanent_errors
+     , count_format_errors
+     , count_addrinfo_transient_errors
+     , count_addrinfo_permanent_errors
+     , count_fcrdns_errors
+     , count_host_acl_errors
+     , count_no_auth_plugin_errors
+     , count_auth_plugin_errors
+     , count_handshake_errors
+     , count_proxy_user_errors
+     , count_proxy_user_acl_errors
+     , count_authentication_errors
+     , count_ssl_errors
+     , count_max_user_connections_errors
+     , count_max_user_connections_per_hour_errors
+     , count_default_database_errors
+     , count_init_connect_errors
+     , count_local_errors
+     , count_unknown_errors
+     , first_seen
+     , last_seen
+     , first_error_seen
+     , last_error_seen
+  FROM performance_schema.host_cache;
