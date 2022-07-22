@@ -1,0 +1,143 @@
+## 환경변수
+gcloud config set project pjt-hrcore-stg-316104
+export PROJECT_ID=`gcloud config get-value project`
+export BUCKET_PATH="gcs-an3-hrcore-stg-bucket-log/db-application-access-history"
+export SQL_INSTANCE="csql-an3-hrcore-lgc-stg-mysql-clone"
+export GCF_NAME="gcf-cloudsql-export-mysqldump"
+export PUBSUB_TOPIC="topic-cloudsql-export"
+export SCHEDULER_JOB="job-cloudsql-export"
+export GCF_SVCACC="svcacc-gcf-cloudsql-expimp"
+
+
+
+## Cloud Functions 만들기 - main.py
+cat <<EOF > main.py
+
+import base64
+import logging
+import json
+
+from datetime import datetime
+from httplib2 import Http
+
+from googleapiclient import discovery
+from googleapiclient.errors import HttpError
+from oauth2client.client import GoogleCredentials
+
+def main(event, context):
+    pubsub_message = json.loads(base64.b64decode(event['data']).decode('utf-8'))
+    credentials = GoogleCredentials.get_application_default()
+
+    service = discovery.build('sqladmin', 'v1beta4', http=credentials.authorize(Http()), cache_discovery=False)
+
+    datestamp = datetime.now().strftime("%Y%m%d%H%M") # format timestamp: YearMonthDayHourMinute
+    uri = "{0}/backup-{1}-{2}-{3}.gz".format(pubsub_message['gs'], pubsub_message['db'], pubsub_message['table'], datestamp)
+
+    instances_export_request_body = {
+      "exportContext": {
+        "kind": "sql#exportContext",
+        "fileType": "SQL",
+        "uri": uri,
+        "databases": [
+          pubsub_message['db']
+        ],
+        "sqlExportOptions": {
+          "tables" : [
+            pubsub_message['table']
+          ]
+        }
+      }
+    }
+    
+    try:
+      request = service.instances().export(
+            project=pubsub_message['project'],
+            instance=pubsub_message['instance'],
+            body=instances_export_request_body
+        )
+      response = request.execute()
+    except HttpError as err:
+        logging.error("Could NOT run backup. Reason: {}".format(err))
+    else:
+      logging.info("Backup task status: {}".format(response))
+EOF
+
+
+
+## Cloud Functions 만들기 - requirements.txt
+cat <<EOF > requirements.txt
+google-api-python-client
+Oauth2client
+EOF
+
+
+
+## Cloud Functions 만들기 - 코드 배포
+gcloud functions deploy ${GCF_NAME} \
+    --trigger-topic ${PUBSUB_TOPIC} \
+    --runtime python37 \
+    --entry-point main \
+    --service-account ${GCF_SVCACC}@${PROJECT_ID}.iam.gserviceaccount.com
+
+
+
+## Cloud Scheduler 작업 만들기
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB} \
+    --schedule '0 23 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"db":"ERPAPP","table":"CM_USER_LOGIN","instance":'\"${SQL_INSTANCE}\"',"project":'\"${PROJECT_ID}\"',"gs":'\"gs://${BUCKET_PATH}\"'}' \
+    --time-zone 'Asia/Seoul'
+
+
+
+## Cloud Scheduler 작업을 수동으로 실행하여 데이터베이스의 MySQL 덤프를 트리거
+gcloud scheduler jobs run ${SCHEDULER_JOB}
+
+
+
+## Cloud SQL 정상 EXPORT 실행 여부 확인
+gcloud sql operations list --instance ${SQL_INSTANCE} --limit 1
+
+
+
+## Cloud Storage 백업 정상 생성 여부 확인
+gsutil ls gs://${BUCKET_PATH} | grep backup-ERPAPP
+
+
+
+################################################# API 정상 작동 여부 테스트 스크립트 #################################################
+##	Source : csql-an3-hrcore-lgc-stg-mysql-clone	<- 여기서 export 함.
+##	Target : csql-an3-hrcore-log-stg-mysql			<- 여기로 import 함.
+##  export 함수 설명 : https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/instances/export
+##  REST API (exportContext) 설명 : https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/operations#ExportContext
+
+cat <<EOF > export_mysqldump.json
+{
+  "exportContext":
+  {
+    "kind": "sql#exportContext",
+    "fileType": "SQL",
+    "uri": "gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history/EXPORT_MYSQLDUMP_TEST.gz",
+    "databases": [
+      "ERPAPP"
+    ],
+    "sqlExportOptions": {
+      "tables" : [
+        "CM_USER_LOGIN"
+      ]
+    }
+  }
+}
+EOF
+
+
+
+curl -X POST \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @export_mysqldump.json \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-stg-316104/instances/csql-an3-hrcore-lgc-stg-mysql-clone/export"
+
+
+
+gcloud sql operations list --instance csql-an3-hrcore-lgc-stg-mysql-clone --limit 3
+###################################################################################################################

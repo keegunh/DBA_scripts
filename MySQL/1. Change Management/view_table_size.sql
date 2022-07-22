@@ -9,6 +9,7 @@ SELECT TABLE_SCHEMA "DB_NAME"
 , 'performance_schema'
 , 'sys'
 )
+   AND TABLE_TYPE = 'BASE TABLE'
  GROUP BY TABLE_SCHEMA, TABLE_NAME
  ORDER BY 1,2
 ;
