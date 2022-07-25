@@ -143,7 +143,7 @@ cat <<EOF > export_sql.json
      , IF(EXEC_END_DT IS NULL, ', ', ', '''), IFNULL(EXEC_END_DT, 'NULL'), IF(EXEC_END_DT IS NULL, '', '''')
      , ', ', IFNULL(TIME_GAP, 'NULL') 
      , IF(RESULT_STATUS IS NULL, ', ', ', '''), IFNULL(RESULT_STATUS, 'NULL'), IF(RESULT_STATUS IS NULL, '', '''')
-     , IF(RESULT_MESSAGE IS NULL, ', ', ', '''), IFNULL(RESULT_MESSAGE, 'NULL'), IF(RESULT_MESSAGE IS NULL, '', '''')
+     , IF(RESULT_MESSAGE IS NULL, ', ', ', '''), REPLACE(IFNULL(RESULT_MESSAGE, 'NULL'), '''', ''''''), IF(RESULT_MESSAGE IS NULL, '', '''')
      , ', ', CRT_ID, ', '
      , '''', CRT_DT, ''''
      , ', ', UPDT_ID, ', '
