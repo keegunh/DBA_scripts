@@ -25,6 +25,7 @@ SELECT TABLE_SCHEMA "DB_NAME"
      , 'performance_schema'
      , 'sys'
      )
+   AND TABLE_TYPE = 'BASE TABLE'
  ORDER BY 1,2
 ;
 
