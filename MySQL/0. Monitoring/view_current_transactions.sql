@@ -36,5 +36,5 @@ SELECT
   FROM information_schema.innodb_trx t
  INNER JOIN information_schema.processlist p
     ON p.id = t.trx_mysql_thread_id
- ORDER BY 3 DESC
+ ORDER BY 2 DESC
 ;

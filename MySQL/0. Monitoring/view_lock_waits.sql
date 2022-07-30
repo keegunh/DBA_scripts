@@ -1,8 +1,8 @@
 -- performance_schema 스키마 활용해서 data lock 대기 확인
 SELECT TIMEDIFF(NOW(), CONVERT_TZ(r.trx_started, 'UTC', '+09:00')) AS wait_age
+     , CONVERT_TZ(r.trx_started, 'UTC', '+09:00') AS wait_trx_started
      , r.trx_id waiting_trx_id
      , r.trx_mysql_thread_id waiting_thread
-     , CONVERT_TZ(r.trx_started, 'UTC', '+09:00') AS wait_trx_started
      , r.trx_query waiting_query
      , b.trx_id blocking_trx_id
      , b.trx_mysql_thread_id blocking_thread
@@ -27,6 +27,7 @@ SELECT TIMEDIFF(NOW(), CONVERT_TZ(r.trx_started, 'UTC', '+09:00')) AS wait_age
     ON r.trx_id = w.requesting_engine_transaction_id
  ORDER BY 1
 ;
+
  
 -- sys 스키마 활용해서 data lock 대기 확인
 SELECT
