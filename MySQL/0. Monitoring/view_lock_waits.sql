@@ -1,19 +1,28 @@
 -- performance_schema 스키마 활용해서 data lock 대기 확인
-SELECT TIMEDIFF(NOW(), CONVERT_TZ(r.trx_started, 'UTC', '+09:00')) AS wait_age
+SELECT 
+       TIMEDIFF(NOW(), CONVERT_TZ(r.trx_started, 'UTC', '+09:00')) AS wait_age
      , CONVERT_TZ(r.trx_started, 'UTC', '+09:00') AS wait_trx_started
-     , r.trx_id waiting_trx_id
-     , r.trx_mysql_thread_id waiting_thread
-     , r.trx_query waiting_query
-     , b.trx_id blocking_trx_id
-     , b.trx_mysql_thread_id blocking_thread
-     , b.trx_query blocking_query
+     , rp.user AS wait_user
+     , rp.host AS wait_host
+     , rp.db AS wait_db
+     , rp.command AS wait_command
+     , r.trx_id wait_trx_id
+     , r.trx_mysql_thread_id wait_thread
+     , r.trx_query wait_query
+     , bp.user AS block_user
+     , bp.host AS block_host
+     , bp.db AS block_db
+     , bp.command AS block_command
+     , b.trx_id block_trx_id
+     , b.trx_mysql_thread_id block_thread
+     , b.trx_query block_query
      , l.object_schema
      , l.object_name
      , l.index_name
      , l.lock_type
      , l.lock_mode
-     , CONCAT('KILL ', w.blocking_thread_id, ';') AS kill_session
-     , CONCAT('KILL QUERY', w.blocking_thread_id, ';') AS kill_session_query
+     , CONCAT('KILL ', b.trx_mysql_thread_id, ';') AS kill_session
+     , CONCAT('KILL QUERY ', b.trx_mysql_thread_id, ';') AS kill_session_query
   FROM performance_schema.data_locks l
  INNER JOIN performance_schema.data_lock_waits w
     ON l.engine = w.engine
@@ -25,6 +34,10 @@ SELECT TIMEDIFF(NOW(), CONVERT_TZ(r.trx_started, 'UTC', '+09:00')) AS wait_age
     ON b.trx_id = w.blocking_engine_transaction_id
  INNER JOIN information_schema.innodb_trx r
     ON r.trx_id = w.requesting_engine_transaction_id
+ INNER JOIN information_schema.processlist bp
+    ON bp.id = b.trx_mysql_thread_id
+ INNER JOIN information_schema.processlist rp
+    ON rp.id = r.trx_mysql_thread_id
  ORDER BY 1
 ;
 
