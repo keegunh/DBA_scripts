@@ -2,7 +2,7 @@
 TEST#1
 테스트 배경 : 
      실제 DDL 배포할 때 장애 발생한 상황 재현.
-     특정 테이블 ROW에 트랜잭션이 진행되고 있는 상태에서 ALTER문이 수행 가능한지 테스트.
+     특정 테이블 ROW에 트랜잭션이 진행되고 있는 상태에서 ALTER TABLE ... ADD KEY문이 수행 가능한지 테스트.
 수행 순서 :
      SESSION1 -> SESSION2 -> SESSION3
 테스트 DDL 유형 :
@@ -16,33 +16,51 @@ TEST#1
      이 때 SESSION2 이후에 실행되는 모든 트랜잭션(예를 들면 SESSION3)은 SESSION2를 대기하게 된다.        
      모든 ONLINE DDL은 결국에는 EXCLUSIVE METADATA LOCK을 걸어야 한다. 그래서 트랜잭션이 진행 중인 테이블에 DDL 수행 시 대형 장애로 이어질 수 있다.
 */
-#SESSION1
+#SESSION1 - LOCK 생성 세션
 	SELECT CONNECTION_ID();	-- 154854
- 	USE ERPAPP;
-	show tables LIKE 'CM_USER_LOGIN';
-	SHOW KEYS FROM CM_USER_LOGIN;
-	select * from CM_USER_LOGIN LIMIT 100;
+    USE ERPAPP;
+    SELECT COUNT(1) FROM ERPAPP.HR_IF_USER_SEND;
+    SELECT * FROM ERPAPP.HR_IF_USER_SEND LIMIT 100;
+    SHOW KEYS FROM ERPAPP.HR_IF_USER_SEND;
+    DESC ERPAPP.HR_IF_USER_SEND;
 
-	START TRANSACTION;
-    SELECT * FROM CM_USER_LOGIN WHERE AUTO_INC_SEQ_ID = 3; 
-	UPDATE CM_USER_LOGIN SET USER_ID = 33333 WHERE AUTO_INC_SEQ_ID = 3;
-	-- ROLLBACK; 
+    START TRANSACTION;
+    SELECT * FROM ERPAPP.HR_IF_USER_SEND WHERE SEQ_ID = 4209328;
+    UPDATE ERPAPP.HR_IF_USER_SEND SET USER_NM='ALLO' WHERE SEQ_ID = 4209328;
+    ROLLBACK;
 
-#SESSION2
+#SESSION2 - 유형별 ALTER문 작업
 	SELECT CONNECTION_ID();	-- 154918
 	USE ERPAPP;
-	SHOW KEYS FROM CM_USER_LOGIN; 
+    DESC ERPAPP.HR_IF_USER_SEND;
+    SHOW KEYS FROM ERPAPP.HR_IF_USER_SEND;
+ 
+    -- 인덱스 추가 : 시작, 끝
+    ALTER TABLE HR_IF_USER_SEND ADD KEY HR_IF_USER_SEND_N05(USER_NM);
 
-	ALTER TABLE CM_USER_LOGIN ADD KEY CM_USER_LOGIN_N01(USER_ID), ALGORITHM=INPLACE, LOCK=NONE;
-	ALTER TABLE CM_USER_LOGIN DROP KEY CM_USER_LOGIN_N01;
+    -- 인덱스 제거 : 끝
+    ALTER TABLE HR_IF_USER_SEND DROP KEY HR_IF_USER_SEND_N05;
 
-	ALTER TABLE CM_USER_LOGIN ADD KEY CM_USER_LOGIN_N02(CLIENT_IP), ALGORITHM=INPLACE, LOCK=NONE;
-	ALTER TABLE CM_USER_LOGIN DROP KEY CM_USER_LOGIN_N02;
+	-- 컬럼 추가 : 시작, 끝
+    ALTER TABLE HR_IF_USER_SEND ADD COLUMN COL_TEST VARCHAR(100) NULL AFTER USER_ID;
 
-#SESSION3
+    -- 컬럼 데이터타입 변경 (VARCHAR -> DECIMAL): 끝
+    ALTER TABLE HR_IF_USER_SEND MODIFY COL_TEST DECIMAL(10,2) NULL AFTER USER_ID;
+    ALTER TABLE HR_IF_USER_SEND MODIFY COL_TEST DECIMAL(10,3) NULL AFTER USER_ID;
+
+    -- 컬럼 삭제 : 시작, 끝
+    ALTER TABLE HR_IF_USER_SEND DROP COLUMN COL_TEST;    
+    
+   	-- 컬럼 사이즈 증가 (VARCHAR) : 끝
+    ALTER TABLE HR_IF_USER_SEND MODIFY USER_NM VARCHAR(200) NOT NULL;
+
+	-- 컬럼 사이즈 감소 (VARCHAR) : 끝
+    ALTER TABLE HR_IF_USER_SEND MODIFY USER_NM VARCHAR(100) NOT NULL;
+
+#SESSION3 - 일반 세션 (테이블 조회 세션)
 	SELECT CONNECTION_ID();	-- 154919
 	USE ERPAPP;
-	select * from CM_USER_LOGIN LIMIT 100;
+    select NOW(), SEQ_ID from HR_IF_USER_SEND LIMIT 100;
 	
 	
 /*
@@ -139,110 +157,6 @@ FLYWAY로 작업 가능한 DDL
 
 
 #MONITORING SESSION
--- INFORMATION_SCHEMA 스키마 사용해서 현재 트랜잭션 조회
-SELECT
-       t.trx_mysql_thread_id
-     , CONVERT_TZ(t.trx_started, 'UTC', '+09:00') as trx_started
-     , CONVERT_TZ(t.trx_wait_started, 'UTC', '+09:00') as trx_wait_started
-     , t.trx_state
-     , p.user
-     -- , p.time
-     , p.host
-     , p.db
-     , p.command
-     -- , p.state
-     , t.trx_query
-     -- , p.info
-     -- , t.trx_id
-     , t.trx_operation_state
-     , t.trx_tables_in_use
-     , t.trx_tables_locked
-     , t.trx_rows_locked
-     , t.trx_rows_modified
-     , t.trx_isolation_level
-     -- , t.trx_requested_lock_id
-     -- , t.trx_weight
-     -- , t.trx_lock_structs
-     -- , t.trx_lock_memory_bytes
-     -- , t.trx_concurrency_tickets
-     -- , t.trx_unique_checks
-     -- , t.trx_foreign_key_checks
-     -- , t.trx_last_foreign_key_error
-     -- , t.trx_adaptive_hash_latched
-     -- , t.trx_adaptive_hash_timeout
-     -- , t.trx_is_read_only
-     -- , t.trx_autocommit_non_locking
-     , CONCAT('KILL QUERY ', t.trx_mysql_thread_id, ';') AS kill_query
-     , CONCAT('KILL ', t.trx_mysql_thread_id, ';') AS kill_session
-  FROM information_schema.innodb_trx t
- INNER JOIN information_schema.processlist p
-    ON p.id = t.trx_mysql_thread_id
- ORDER BY 2
-;
-
--- performance_schema 스키마 활용해서 data lock 대기 확인
-SELECT 
-       TIMEDIFF(NOW(), CONVERT_TZ(r.trx_started, 'UTC', '+09:00')) AS wait_age
-     , CONVERT_TZ(r.trx_started, 'UTC', '+09:00') AS wait_trx_started
-     , rp.user AS wait_user
-     , rp.host AS wait_host
-     , rp.db AS wait_db
-     , rp.command AS wait_command
-     , r.trx_id wait_trx_id
-     , r.trx_mysql_thread_id wait_thread
-     , r.trx_query wait_query
-     , bp.user AS block_user
-     , bp.host AS block_host
-     , bp.db AS block_db
-     , bp.command AS block_command
-     , b.trx_id block_trx_id
-     , b.trx_mysql_thread_id block_thread
-     , b.trx_query block_query
-     , l.object_schema
-     , l.object_name
-     , l.index_name
-     , l.lock_type
-     , l.lock_mode
-     , CONCAT('KILL ', b.trx_mysql_thread_id, ';') AS kill_session
-     , CONCAT('KILL QUERY ', b.trx_mysql_thread_id, ';') AS kill_session_query
-  FROM performance_schema.data_locks l
- INNER JOIN performance_schema.data_lock_waits w
-    ON l.engine = w.engine
-   AND l.engine_lock_id = w.blocking_engine_lock_id
-   AND l.engine_transaction_id = w.blocking_engine_transaction_id
-   AND l.thread_id = w.blocking_thread_id
-   AND l.event_id = w.blocking_event_id
- INNER JOIN information_schema.innodb_trx b
-    ON b.trx_id = w.blocking_engine_transaction_id
- INNER JOIN information_schema.innodb_trx r
-    ON r.trx_id = w.requesting_engine_transaction_id
- INNER JOIN information_schema.processlist bp
-    ON bp.id = b.trx_mysql_thread_id
- INNER JOIN information_schema.processlist rp
-    ON rp.id = r.trx_mysql_thread_id
- ORDER BY 1
-;
-
--- sys 스키마 활용해서 data lock 대기 확인
-SELECT
-       CONVERT_TZ(wait_started, 'UTC', '+09:00') AS wait_started
-     , TIMEDIFF(NOW(), CONVERT_TZ(wait_started, 'UTC', '+09:00')) AS wait_age
-     , waiting_pid
-     , waiting_query
-     , waiting_lock_mode
-     , blocking_pid
-     , blocking_query
-     , blocking_lock_mode
-     , blocking_trx_started
-     , locked_table
-     , locked_index
-     , locked_type
-     , CONCAT(sql_kill_blocking_query, ';') AS sql_kill_blocking_query
-     , CONCAT(sql_kill_blocking_connection, ';') AS sql_kill_blocking_connection
-  FROM sys.innodb_lock_waits
- ORDER BY 1
-;
-
 -- performance_schema 스키마 활용해서 전체 metadata lock 확인
 SELECT object_type
      , object_schema
@@ -275,3 +189,16 @@ SELECT waiting_query_secs
  WHERE waiting_pid <> blocking_pid
  ORDER BY 1 DESC
 ;
+
+-- ALTER 작업 진행률 확인
+SELECT estc.NESTING_EVENT_ID
+     , esmc.SQL_TEXT
+     , estc.EVENT_NAME
+     , estc.WORK_COMPLETED
+     , estc.WORK_ESTIMATED
+     , ROUND((estc.WORK_COMPLETED/estc.WORK_ESTIMATED)*100,2) as `PROGRESS(%)`
+  FROM performance_schema.events_stages_current estc
+ INNER JOIN performance_schema.events_statements_current esmc
+    ON estc.NESTING_EVENT_ID = esmc.EVENT_ID
+ WHERE estc.EVENT_NAME LIKE 'stage/innodb/alter%'
+    OR estc.EVENT_NAME = 'stage/sql/copy to tmp table';

@@ -8,8 +8,8 @@ SELECT estc.NESTING_EVENT_ID
   FROM performance_schema.events_stages_current estc
  INNER JOIN performance_schema.events_statements_current esmc
     ON estc.NESTING_EVENT_ID = esmc.EVENT_ID
- WHERE estc.EVENT_NAME LIKE 'stage/innodb/alter%';
-
+ WHERE estc.EVENT_NAME LIKE 'stage/innodb/alter%'
+    OR estc.EVENT_NAME = 'stage/sql/copy to tmp table';
 
 /*
 	performance_schema 설정 확인

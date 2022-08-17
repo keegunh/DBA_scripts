@@ -9,7 +9,7 @@
 *    memory_summary_global_by_event_name
 */
 
--- DB 계정별, 이벤트 클래스별로 분류해서 집계한 메모리 할당 및 해제에 대한 통게 정보 확인
+-- DB 계정별, 이벤트 클래스별로 분류해서 집계한 메모리 할당 및 해제에 대한 통계 정보 확인
 SELECT user
      , host
      , event_name
@@ -26,7 +26,7 @@ SELECT user
   FROM performance_schema.memory_summary_by_account_by_event_name
  ORDER BY sum_number_of_bytes_alloc DESC;
 
--- 호스트별, 이벤트 클래스별로 분류해서 집계한 메모리 할당 및 해제에 대한 통게 정보 확인
+-- 호스트별, 이벤트 클래스별로 분류해서 집계한 메모리 할당 및 해제에 대한 통계 정보 확인
 SELECT host
      , event_name
      , count_alloc
@@ -42,7 +42,7 @@ SELECT host
   FROM performance_schema.memory_summary_by_host_by_event_name
  ORDER BY sum_number_of_bytes_alloc DESC;
 
--- 스레드별, 이벤트 클래스별로 분류해서 집계한 메모리 할당 및 해제에 대한 통게 정보 확인
+-- 스레드별, 이벤트 클래스별로 분류해서 집계한 메모리 할당 및 해제에 대한 통계 정보 확인
 SELECT thread_id
      , event_name
      , count_alloc
@@ -58,7 +58,7 @@ SELECT thread_id
   FROM performance_schema.memory_summary_by_thread_by_event_name
  ORDER BY sum_number_of_bytes_alloc DESC;
 
--- DB 계정명별, 이벤트 클래스별로 분류해서 집계한 메모리 할당 및 해제에 대한 통게 정보 확인
+-- DB 계정명별, 이벤트 클래스별로 분류해서 집계한 메모리 할당 및 해제에 대한 통계 정보 확인
 SELECT user
      , event_name
      , count_alloc
@@ -74,7 +74,7 @@ SELECT user
   FROM performance_schema.memory_summary_by_user_by_event_name
  ORDER BY sum_number_of_bytes_alloc DESC;
 
--- 이벤트 클래스별로 분류해서 집계한 메몸리 할당 및 해제에 대한 통게 정보 확인
+-- 이벤트 클래스별로 분류해서 집계한 메모리 할당 및 해제에 대한 통계 정보 확인
 SELECT event_name
      , count_alloc
      , count_free
