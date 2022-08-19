@@ -113,47 +113,6 @@ TEST#1
 
 
 
-/*
-FLYWAY로 수행하면 안되는 DDL
-1. 테이블
-	- 테이블 생성 및 테이블명 변경을 제외한 모든 테이블 작업
-
-2. 인덱스
-	- FULLTEXT INDEX 추가 (CREATE FULLTEXT INDEX 인덱스명 ON 테이블명(컬럼명);)
-	- SPATIAL INDEX 추가 (ALTER TABLE 테이블명 ADD SPATIAL INDEX(인덱스명);)
-
-3. 컬럼
-	- 컬럼 추가
-	- 컬럼 제거
-	- 컬럼 순서 변경
-	- 컬럼 데이터 타입 변경 (VARCHAR -> DATETIME, 등)
-	- 컬럼 NOT NULL 여부 변경
-
-4. PK
-	- PK 제거
-	- PK 추가
-
-FLYWAY로 작업 가능한 DDL
-1. 테이블
-	- 테이블 생성
-	- 테이블명 변경
-	
-2. 인덱스
-	- FULLTEXT INDEX, SPATIAL INDEX를 제외한 모든 인덱스 생성, 삭제, 변경 작업
-
-3. 컬럼 
-	- 컬럼명 변경
-	- 컬럼 DEFAULT값 변경
-	- 컬럼 DEFAULT값 제거
-	- 컬럼 사이즈 증가 
-
-4. PK
-	- 없음
-*/
-
-
-
-
 
 
 #MONITORING SESSION
@@ -202,3 +161,17 @@ SELECT estc.NESTING_EVENT_ID
     ON estc.NESTING_EVENT_ID = esmc.EVENT_ID
  WHERE estc.EVENT_NAME LIKE 'stage/innodb/alter%'
     OR estc.EVENT_NAME = 'stage/sql/copy to tmp table';
+
+
+-- 자주 쓰는 테이블 조회 (자주 쓰는 테이블의 경우, FLYWAY를 통한 자동배포 진행하지 않도록 가이드 필요)	
+SELECT table_schema
+     , table_name
+     , rows_fetched
+     , rows_inserted
+     , rows_updated
+     , rows_deleted
+     , io_read
+     , io_write
+  FROM sys.schema_table_statistics
+ WHERE table_schema NOT IN ('mysql','performance_schema','information_schema','sys')
+ ORDER BY rows_fetched DESC;

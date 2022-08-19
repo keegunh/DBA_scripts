@@ -81,11 +81,11 @@ gcloud functions deploy ${GCF_NAME} \
 ## Cloud Scheduler 작업 만들기
 gcloud scheduler jobs create pubsub ${SCHEDULER_JOB1} \
     --schedule '0 23 * * *' --topic ${PUBSUB_TOPIC} \
-    --message-body '{"db":"ERPAPP","table":"CM_USER_LOGIN","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --message-body '{"db":"STG_PORTAL","table":"CM_USER_LOGIN","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
     --time-zone 'Asia/Seoul'
 gcloud scheduler jobs create pubsub ${SCHEDULER_JOB2} \
     --schedule '10 23 * * *' --topic ${PUBSUB_TOPIC} \
-    --message-body '{"db":"ERPAPP","table":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --message-body '{"db":"STG_PORTAL","table":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
     --time-zone 'Asia/Seoul'
 
 

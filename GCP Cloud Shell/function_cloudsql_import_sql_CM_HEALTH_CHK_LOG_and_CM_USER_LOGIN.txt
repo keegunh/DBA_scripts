@@ -1,0 +1,169 @@
+## 환경변수
+gcloud config set project pjt-hrcore-stg-316104
+export PROJECT_ID=`gcloud config get-value project`
+export BUCKET_PATH="gcs-an3-hrcore-stg-bucket-log/db-application-access-history"
+export SQL_INSTANCE="csql-an3-hrcore-log-stg-mysql"
+export GCF_NAME="gcf-cloudsql-import"
+export PUBSUB_TOPIC="topic-cloudsql-import"
+export SCHEDULER_JOB1="job-cloudsql-import-portal-cm-user-login"
+export SCHEDULER_JOB2="job-cloudsql-import-lgcns-cm-user-login"
+export SCHEDULER_JOB3="job-cloudsql-import-lgc-cm-user-login"
+export SCHEDULER_JOB4="job-cloudsql-import-lges-cm-user-login"
+export SCHEDULER_JOB5="job-cloudsql-import-portal-cm-health-chk-log"
+export SCHEDULER_JOB6="job-cloudsql-import-lgcns-cm-health-chk-log"
+export SCHEDULER_JOB7="job-cloudsql-import-lgc-cm-health-chk-log"
+export SCHEDULER_JOB8="job-cloudsql-import-lges-cm-health-chk-log"
+export GCF_SVCACC="svcacc-gcf-cloudsql-expimp"
+
+
+
+## Cloud Functions 만들기 - main.py
+cat <<EOF > main.py
+
+import base64
+import logging
+import json
+
+from datetime import datetime
+from httplib2 import Http
+
+from googleapiclient import discovery
+from googleapiclient.errors import HttpError
+from oauth2client.client import GoogleCredentials
+
+def main(event, context):
+    pubsub_message = json.loads(base64.b64decode(event['data']).decode('utf-8'))
+    credentials = GoogleCredentials.get_application_default()
+
+    service = discovery.build('sqladmin', 'v1beta4', http=credentials.authorize(Http()), cache_discovery=False)
+
+    datestamp = datetime.now().strftime("%Y%m%d") # format timestamp: YearMonthDay
+    uri = "{0}/SQL-{1}-{2}-{3}".format(pubsub_message['gs'], pubsub_message['div'], pubsub_message['filename'], datestamp)
+
+    instances_import_request_body = {
+      "importContext": {
+        "uri": uri,
+        "database": pubsub_message['db'],
+        "kind": "sql#importContext",
+        "fileType": "SQL"
+      }  
+    }
+    
+    try:
+      request = service.instances().import_(
+            project=pubsub_message['project'],
+            instance=pubsub_message['instance'],
+            body=instances_import_request_body
+        )
+      response = request.execute()
+    except HttpError as err:
+        logging.error("Could NOT run import. Reason: {}".format(err))
+    else:
+      logging.info("Import task status: {}".format(response))
+EOF
+
+
+
+## Cloud Functions 만들기 - requirements.txt
+cat <<EOF > requirements.txt
+google-api-python-client
+Oauth2client
+EOF
+
+
+
+## Cloud Functions 만들기 - 코드 배포
+gcloud functions deploy ${GCF_NAME} \
+    --trigger-topic ${PUBSUB_TOPIC} \
+    --runtime python37 \
+    --entry-point main \
+    --service-account ${GCF_SVCACC}@${PROJECT_ID}.iam.gserviceaccount.com
+
+
+
+## Cloud Scheduler 작업 만들기
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB1} \
+    --schedule '30 22 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PORTAL", "db":"STG_PORTAL","filename":"CM_USER_LOGIN","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB2} \
+    --schedule '40 22 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"LGCNS", "db":"STG_LGCNS","filename":"CM_USER_LOGIN","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB3} \
+    --schedule '50 22 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"LGC", "db":"STG_LGC","filename":"CM_USER_LOGIN","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB4} \
+    --schedule '0 23 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"LGES", "db":"STG_LGES","filename":"CM_USER_LOGIN","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+	
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB5} \
+    --schedule '10 23 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PORTAL", "db":"STG_PORTAL","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB6} \
+    --schedule '20 23 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"LGCNS", "db":"STG_LGCNS","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB7} \
+    --schedule '30 23 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"LGC", "db":"STG_LGC","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB8} \
+    --schedule '40 23 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"LGES", "db":"STG_LGES","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+
+
+## Cloud Scheduler 작업을 수동으로 실행하여 데이터베이스의 MySQL 덤프를 트리거
+gcloud scheduler jobs run ${SCHEDULER_JOB1}
+gcloud scheduler jobs run ${SCHEDULER_JOB2}
+gcloud scheduler jobs run ${SCHEDULER_JOB3}
+gcloud scheduler jobs run ${SCHEDULER_JOB4}
+gcloud scheduler jobs run ${SCHEDULER_JOB5}
+gcloud scheduler jobs run ${SCHEDULER_JOB6}
+gcloud scheduler jobs run ${SCHEDULER_JOB7}
+gcloud scheduler jobs run ${SCHEDULER_JOB8}
+
+## Cloud SQL 정상 IMPORT 실행 여부 확인
+gcloud sql operations list --instance ${SQL_INSTANCE} --limit 3
+
+
+
+## Cloud Storage 백업 정상 생성 여부 확인
+gsutil ls gs://${BUCKET_PATH} | grep backup-ERPAPP
+
+
+
+################################################# API 정상 작동 여부 테스트 스크립트 #################################################
+##	Source : csql-an3-hrcore-lgc-stg-mysql-clone	<- 여기서 export 함.
+##	Target : csql-an3-hrcore-log-stg-mysql			<- 여기로 import 함.
+##  import 함수 설명 : https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/instances/import
+##  REST API (importContext) 설명 : https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/operations#ImportContext
+
+cat <<EOF > import_mysqldump.json
+{
+  "importContext":
+  {
+    "uri": "gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history/EXPORT_TEST_CM_USER_LOGIN.gz",
+    "database": "STG_LGC",
+    "kind": "sql#importContext",
+    "fileType": "SQL"
+  }
+}
+EOF
+
+
+
+curl -X POST \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @import_mysqldump.json \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-stg-316104/instances/csql-an3-hrcore-log-stg-mysql/import"
+
+
+
+gcloud sql operations list --instance csql-an3-hrcore-log-stg-mysql --limit 3
+###################################################################################################################
