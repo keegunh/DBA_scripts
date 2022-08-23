@@ -4,14 +4,15 @@ export PROJECT_ID=`gcloud config get-value project`
 export BUCKET_PATH="gcs-an3-hrcore-stg-bucket-log/db-application-access-history"
 export SQL_INSTANCE="csql-an3-hrcore-lgc-stg-mysql-clone"
 export GCF_NAME="gcf-cloudsql-export-csv-cm-user-login"
-export PUBSUB_TOPIC="topic-cloudsql-export-csv"
+export PUBSUB_TOPIC="topic-cloudsql-export-csv-cm-user-login"
 export SCHEDULER_JOB1="job-cloudsql-export-csv-portal-cm-user-login"
 export SCHEDULER_JOB2="job-cloudsql-export-csv-lgcns-cm-user-login"
 export SCHEDULER_JOB3="job-cloudsql-export-csv-lgc-cm-user-login"
 export SCHEDULER_JOB4="job-cloudsql-export-csv-lges-cm-user-login"
 export GCF_SVCACC="svcacc-gcf-cloudsql-expimp"
 
-
+## Pub/Sub 주제 만들기
+gcloud pubsub topics create ${PUBSUB_TOPIC}
 
 ## Cloud Functions 만들기 - main.py
 cat <<EOF > main.py
@@ -56,7 +57,8 @@ def main(event, context):
      , CRT_DT, ''', '
      , UPDT_ID, ', '''
      , UPDT_DT, ''');') AS INSERT_DML
-  FROM ERPAPP.CM_USER_LOGIN;""",
+  FROM ERPAPP.CM_USER_LOGIN
+ WHERE CRT_DT LIKE CONCAT(DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), INTERVAL -1 DAY), '%Y%m%d'),'%');""",
           "escapeCharacter": "5C",
           "quoteCharacter": "0A",
           "fieldsTerminatedBy": "2C",
@@ -171,7 +173,8 @@ cat <<EOF > export_sql.json
      , CRT_DT, ''', '
      , UPDT_ID, ', '''
      , UPDT_DT, ''');') AS INSERT_DML
-  FROM ERPAPP.CM_USER_LOGIN;",
+  FROM ERPAPP.CM_USER_LOGIN
+ WHERE CRT_DT LIKE CONCAT(DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), INTERVAL -1 DAY), '%Y%m%d'),'%');",
       "escapeCharacter": "5C",
       "quoteCharacter": "0A",
       "fieldsTerminatedBy": "2C",
@@ -193,7 +196,7 @@ curl -X POST \
 
 gcloud sql operations list --instance csql-an3-hrcore-lgc-stg-mysql-clone --limit 3
 ###################################################################################################################
-
+-- 조건절은 어제치 DATA를 조회
 SELECT CONCAT('INSERT INTO CM_USER_LOGIN VALUES ('
      , AUTO_INC_SEQ_ID, ', '
      , USER_ID
@@ -205,4 +208,5 @@ SELECT CONCAT('INSERT INTO CM_USER_LOGIN VALUES ('
      , CRT_DT, ''', '
      , UPDT_ID, ', '''
      , UPDT_DT, ''');') AS INSERT_DML
-  FROM ERPAPP.CM_USER_LOGIN;
+  FROM ERPAPP.CM_USER_LOGIN
+ WHERE CRT_DT LIKE CONCAT(DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), INTERVAL -1 DAY), '%Y%m%d'),'%');

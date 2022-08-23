@@ -4,14 +4,15 @@ export PROJECT_ID=`gcloud config get-value project`
 export BUCKET_PATH="gcs-an3-hrcore-stg-bucket-log/db-application-access-history"
 export SQL_INSTANCE="csql-an3-hrcore-lgc-stg-mysql-clone"
 export GCF_NAME="gcf-cloudsql-export-csv-cm-health-chk-log"
-export PUBSUB_TOPIC="topic-cloudsql-export-csv"
+export PUBSUB_TOPIC="topic-cloudsql-export-csv-cm-health-chk-log"
 export SCHEDULER_JOB1="job-cloudsql-export-csv-portal-cm-health-chk-log"
 export SCHEDULER_JOB2="job-cloudsql-export-csv-lgcns-cm-health-chk-log"
 export SCHEDULER_JOB3="job-cloudsql-export-csv-lgc-cm-health-chk-log"
 export SCHEDULER_JOB4="job-cloudsql-export-csv-lges-cm-health-chk-log"
 export GCF_SVCACC="svcacc-gcf-cloudsql-expimp"
 
-
+## Pub/Sub 주제 만들기
+gcloud pubsub topics create ${PUBSUB_TOPIC}
 
 ## Cloud Functions 만들기 - main.py
 cat <<EOF > main.py
@@ -77,7 +78,8 @@ def main(event, context):
      , IF(ATTR15 IS NULL, ', ', ', '''), IFNULL(ATTR15, 'NULL'), IF(ATTR15 IS NULL, '', '''')
      , IF(CLIENT_IP IS NULL, ', ', ', '''), IFNULL(CLIENT_IP, 'NULL'), IF(CLIENT_IP IS NULL, '', '''')
      , ');') AS INSERT_DML
-  FROM ERPAPP.CM_HEALTH_CHK_LOG;""",
+  FROM ERPAPP.CM_HEALTH_CHK_LOG
+ WHERE EXEC_START_DT LIKE CONCAT(DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), INTERVAL -1 DAY), '%Y%m%d'),'%');""",
           "escapeCharacter": "5C",
           "quoteCharacter": "0A",
           "fieldsTerminatedBy": "2C",
@@ -213,7 +215,8 @@ cat <<EOF > export_sql.json
      , IF(ATTR15 IS NULL, ', ', ', '''), IFNULL(ATTR15, 'NULL'), IF(ATTR15 IS NULL, '', '''')
      , IF(CLIENT_IP IS NULL, ', ', ', '''), IFNULL(CLIENT_IP, 'NULL'), IF(CLIENT_IP IS NULL, '', '''')
      , ');') AS INSERT_DML
-  FROM ERPAPP.CM_HEALTH_CHK_LOG;",
+  FROM ERPAPP.CM_HEALTH_CHK_LOG
+ WHERE EXEC_START_DT LIKE CONCAT(DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), INTERVAL -1 DAY), '%Y%m%d'),'%');",
       "escapeCharacter": "5C",
       "quoteCharacter": "0A",
       "fieldsTerminatedBy": "2C",
@@ -235,7 +238,7 @@ curl -X POST \
 
 gcloud sql operations list --instance csql-an3-hrcore-lgc-stg-mysql-clone --limit 3
 ###################################################################################################################
-
+-- 조건절은 어제치 DATA를 조회
 SELECT CONCAT('INSERT INTO CM_HEALTH_CHK_LOG VALUES (',
        AUTO_INC_SEQ_ID, ', '
      , '''', SERVICE_ID, ''''
@@ -268,4 +271,5 @@ SELECT CONCAT('INSERT INTO CM_HEALTH_CHK_LOG VALUES (',
      , IF(ATTR15 IS NULL, ', ', ', '''), IFNULL(ATTR15, 'NULL'), IF(ATTR15 IS NULL, '', '''')
      , IF(CLIENT_IP IS NULL, ', ', ', '''), IFNULL(CLIENT_IP, 'NULL'), IF(CLIENT_IP IS NULL, '', '''')
      , ');') AS INSERT_DML
-  FROM ERPAPP.CM_HEALTH_CHK_LOG;
+  FROM ERPAPP.CM_HEALTH_CHK_LOG
+ WHERE EXEC_START_DT LIKE CONCAT(DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), INTERVAL -1 DAY), '%Y%m%d'),'%');
