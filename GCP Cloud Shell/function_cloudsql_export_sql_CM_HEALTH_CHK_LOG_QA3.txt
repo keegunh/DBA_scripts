@@ -1,0 +1,274 @@
+## 환경변수
+gcloud config set project pjt-hrcore-stg-316104
+export PROJECT_ID=`gcloud config get-value project`
+export BUCKET_PATH="gcs-an3-hrcore-stg-bucket-log/db-application-access-history"
+export GCF_NAME="gcf-cloudsql-export-csv-cm-health-chk-log"
+export PUBSUB_TOPIC="topic-cloudsql-export-csv-cm-health-chk-log"
+export SCHEDULER_JOB1="qa3-job-cloudsql-export-csv-portal-cm-health-chk-log"
+export SCHEDULER_JOB2="qa3-job-cloudsql-export-csv-lgcns-cm-health-chk-log"
+export SCHEDULER_JOB3="qa3-job-cloudsql-export-csv-lgc-cm-health-chk-log"
+export SCHEDULER_JOB4="qa3-job-cloudsql-export-csv-lges-cm-health-chk-log"
+export GCF_SVCACC="svcacc-gcf-cloudsql-expimp"
+
+## Pub/Sub 주제 만들기
+gcloud pubsub topics create ${PUBSUB_TOPIC}
+
+## Cloud Functions 만들기 - main.py
+cat <<EOF > main.py
+
+import base64
+import logging
+import json
+
+from datetime import datetime
+from httplib2 import Http
+
+from googleapiclient import discovery
+from googleapiclient.errors import HttpError
+from oauth2client.client import GoogleCredentials
+
+def main(event, context):
+    pubsub_message = json.loads(base64.b64decode(event['data']).decode('utf-8'))
+    credentials = GoogleCredentials.get_application_default()
+
+    service = discovery.build('sqladmin', 'v1beta4', http=credentials.authorize(Http()), cache_discovery=False)
+
+    datestamp = datetime.now().strftime("%Y%m%d") # format timestamp: YearMonthDay
+    uri = "{0}/SQL-{1}-{2}-{3}".format(pubsub_message['gs'], pubsub_message['div'], pubsub_message['filename'], datestamp)
+
+    instances_export_request_body = {
+      "exportContext": {
+        "kind": "sql#exportContext",
+        "fileType": "CSV",
+        "uri": uri,
+        "databases": [
+          pubsub_message['db']
+        ],
+        "csvExportOptions": {
+          "selectQuery": """SELECT CONCAT('INSERT INTO CM_HEALTH_CHK_LOG VALUES (',
+       AUTO_INC_SEQ_ID, ', '
+     , '''', SERVICE_ID, ''''
+     , IF(MENU_URL IS NULL, ', ', ', '''), IFNULL(MENU_URL, 'NULL'), IF(MENU_URL IS NULL, '', '''')
+     , IF(MENU_CD IS NULL, ', ', ', '''), IFNULL(MENU_CD, 'NULL'), IF(MENU_CD IS NULL, '', '''')	 
+     , IF(ARGUMENT_TEXT IS NULL, ', ', ', '''), REPLACE(IFNULL(ARGUMENT_TEXT, 'NULL'), '''', ''''''), IF(ARGUMENT_TEXT IS NULL, '', '''')
+     , IF(EXEC_START_DT IS NULL, ', ', ', '''), IFNULL(EXEC_START_DT, 'NULL'), IF(EXEC_START_DT IS NULL, '', '''')
+     , IF(EXEC_END_DT IS NULL, ', ', ', '''), IFNULL(EXEC_END_DT, 'NULL'), IF(EXEC_END_DT IS NULL, '', '''')
+     , ', ', IFNULL(TIME_GAP, 'NULL') 
+     , IF(RESULT_STATUS IS NULL, ', ', ', '''), IFNULL(RESULT_STATUS, 'NULL'), IF(RESULT_STATUS IS NULL, '', '''')
+     , IF(RESULT_MESSAGE IS NULL, ', ', ', '''), REPLACE(IFNULL(RESULT_MESSAGE, 'NULL'), '''', ''''''), IF(RESULT_MESSAGE IS NULL, '', '''')
+     , ', ', CRT_ID, ', '
+     , '''', CRT_DT, ''''
+     , ', ', UPDT_ID, ', '
+     , '''', UPDT_DT, ''''
+     , IF(ATTR1 IS NULL, ', ', ', '''), IFNULL(ATTR1, 'NULL'), IF(ATTR1 IS NULL, '', '''')
+     , IF(ATTR2 IS NULL, ', ', ', '''), IFNULL(ATTR2, 'NULL'), IF(ATTR2 IS NULL, '', '''')
+     , IF(ATTR3 IS NULL, ', ', ', '''), IFNULL(ATTR3, 'NULL'), IF(ATTR3 IS NULL, '', '''')
+     , IF(ATTR4 IS NULL, ', ', ', '''), IFNULL(ATTR4, 'NULL'), IF(ATTR4 IS NULL, '', '''')
+     , IF(ATTR5 IS NULL, ', ', ', '''), IFNULL(ATTR5, 'NULL'), IF(ATTR5 IS NULL, '', '''')
+     , IF(ATTR6 IS NULL, ', ', ', '''), IFNULL(ATTR6, 'NULL'), IF(ATTR6 IS NULL, '', '''')
+     , IF(ATTR7 IS NULL, ', ', ', '''), IFNULL(ATTR7, 'NULL'), IF(ATTR7 IS NULL, '', '''')
+     , IF(ATTR8 IS NULL, ', ', ', '''), IFNULL(ATTR8, 'NULL'), IF(ATTR8 IS NULL, '', '''')
+     , IF(ATTR9 IS NULL, ', ', ', '''), IFNULL(ATTR9, 'NULL'), IF(ATTR9 IS NULL, '', '''')
+     , IF(ATTR10 IS NULL, ', ', ', '''), IFNULL(ATTR10, 'NULL'), IF(ATTR10 IS NULL, '', '''')
+     , IF(ATTR11 IS NULL, ', ', ', '''), IFNULL(ATTR11, 'NULL'), IF(ATTR11 IS NULL, '', '''')
+     , IF(ATTR12 IS NULL, ', ', ', '''), IFNULL(ATTR12, 'NULL'), IF(ATTR12 IS NULL, '', '''')
+     , IF(ATTR13 IS NULL, ', ', ', '''), IFNULL(ATTR13, 'NULL'), IF(ATTR13 IS NULL, '', '''')
+     , IF(ATTR14 IS NULL, ', ', ', '''), IFNULL(ATTR14, 'NULL'), IF(ATTR14 IS NULL, '', '''')
+     , IF(ATTR15 IS NULL, ', ', ', '''), IFNULL(ATTR15, 'NULL'), IF(ATTR15 IS NULL, '', '''')
+     , IF(CLIENT_IP IS NULL, ', ', ', '''), IFNULL(CLIENT_IP, 'NULL'), IF(CLIENT_IP IS NULL, '', '''')
+     , ');') AS INSERT_DML
+  FROM ERPAPP.CM_HEALTH_CHK_LOG
+ WHERE EXEC_START_DT LIKE CONCAT(DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), INTERVAL -1 DAY), '%Y%m%d'),'%');""",
+          "escapeCharacter": "5C",
+          "quoteCharacter": "0A",
+          "fieldsTerminatedBy": "2C",
+          "linesTerminatedBy": "0A"
+        }
+      }
+    }
+    
+    try:
+      request = service.instances().export(
+            project=pubsub_message['project'],
+            instance=pubsub_message['instance'],
+            body=instances_export_request_body
+        )
+      response = request.execute()
+    except HttpError as err:
+        logging.error("Could NOT run export. Reason: {}".format(err))
+    else:
+      logging.info("Export task status: {}".format(response))
+EOF
+
+
+
+## Cloud Functions 만들기 - requirements.txt
+cat <<EOF > requirements.txt
+google-api-python-client
+Oauth2client
+EOF
+
+
+
+## Cloud Functions 만들기 - 코드 배포
+gcloud functions deploy ${GCF_NAME} \
+    --trigger-topic ${PUBSUB_TOPIC} \
+    --runtime python37 \
+    --entry-point main \
+    --service-account ${GCF_SVCACC}@${PROJECT_ID}.iam.gserviceaccount.com
+
+
+
+## Cloud Scheduler 작업 만들기
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB1} \
+    --schedule '10 22 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"ERPAPP","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-portal-qa3-mysql","project":"pjt-hrcore-qa3","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB2} \
+    --schedule '10 22 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"ERPAPP","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-cns-qa3-mysql","project":"pjt-hrcore-qa3-cns","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB3} \
+    --schedule '10 22 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"ERPAPP","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-lgc-qa3-mysql","project":"pjt-hrcore-qa3-lgc","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB4} \
+    --schedule '10 22 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"ERPAPP","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-lges-qa3-mysql","project":"pjt-hrcore-qa3-lges","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+
+
+## Cloud Scheduler 작업을 수동으로 실행하여 데이터베이스의 MySQL 덤프를 트리거
+gcloud scheduler jobs run ${SCHEDULER_JOB1}
+gcloud scheduler jobs run ${SCHEDULER_JOB2}
+gcloud scheduler jobs run ${SCHEDULER_JOB3}
+gcloud scheduler jobs run ${SCHEDULER_JOB4}
+
+
+
+## Cloud SQL 정상 EXPORT 실행 여부 확인
+gcloud sql operations list --instance csql-an3-hrcore-portal-stg-mysql --limit 3
+gcloud sql operations list --instance csql-an3-hrcore-lgcns-stg-mysql --limit 3
+gcloud sql operations list --instance csql-an3-hrcore-lgc-stg-mysql --limit 3
+gcloud sql operations list --instance csql-an3-hrcore-lges-stg-mysql --limit 3
+
+
+
+
+
+## Cloud Storage 백업 정상 생성 여부 확인
+gsutil ls gs://${BUCKET_PATH} | grep backup-ERPAPP
+
+
+
+################################################# API 정상 작동 여부 테스트 스크립트 #################################################
+##	Source : csql-an3-hrcore-portal-qa3-mysql		<- 여기서 export 함.
+##	Target : csql-an3-hrcore-log-stg-mysql			<- 여기로 import 함.
+##  export 함수 설명 : https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/instances/export
+##  REST API (exportContext) 설명 : https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/operations#ExportContext
+##
+##  본 파일은 "fileType": "CSV"로 export를 하되, INSERT 문을 출력하는 쿼리를 export 함.
+##  IMPORT 할 때는 "fileType": "SQL"로 import 처리할 것.
+## escapeCharacter, quoteCharacter, fieldsTerminatedBy, linesTerminatedBy 는 모두 ASCII 16진수 코드임.
+
+cat <<EOF > export_sql.json
+{
+  "exportContext":
+  {
+    "kind": "sql#exportContext",
+    "fileType": "CSV",
+    "uri": "gs://gcs-an3-hrcore-stg-bucket-log/db-application-access-history/EXPORT_SQL_TEST",
+    "databases": [
+      "ERPAPP"
+    ],
+    "csvExportOptions": {
+      "selectQuery": "SELECT CONCAT('INSERT INTO CM_HEALTH_CHK_LOG VALUES (',
+       AUTO_INC_SEQ_ID, ', '
+     , '''', SERVICE_ID, ''''
+     , IF(MENU_URL IS NULL, ', ', ', '''), IFNULL(MENU_URL, 'NULL'), IF(MENU_URL IS NULL, '', '''')
+     , IF(MENU_CD IS NULL, ', ', ', '''), IFNULL(MENU_CD, 'NULL'), IF(MENU_CD IS NULL, '', '''')	 
+     , IF(ARGUMENT_TEXT IS NULL, ', ', ', '''), REPLACE(IFNULL(ARGUMENT_TEXT, 'NULL'), '''', ''''''), IF(ARGUMENT_TEXT IS NULL, '', '''')
+     , IF(EXEC_START_DT IS NULL, ', ', ', '''), IFNULL(EXEC_START_DT, 'NULL'), IF(EXEC_START_DT IS NULL, '', '''')
+     , IF(EXEC_END_DT IS NULL, ', ', ', '''), IFNULL(EXEC_END_DT, 'NULL'), IF(EXEC_END_DT IS NULL, '', '''')
+     , ', ', IFNULL(TIME_GAP, 'NULL') 
+     , IF(RESULT_STATUS IS NULL, ', ', ', '''), IFNULL(RESULT_STATUS, 'NULL'), IF(RESULT_STATUS IS NULL, '', '''')
+     , IF(RESULT_MESSAGE IS NULL, ', ', ', '''), REPLACE(IFNULL(RESULT_MESSAGE, 'NULL'), '''', ''''''), IF(RESULT_MESSAGE IS NULL, '', '''')
+     , ', ', CRT_ID, ', '
+     , '''', CRT_DT, ''''
+     , ', ', UPDT_ID, ', '
+     , '''', UPDT_DT, ''''
+     , IF(ATTR1 IS NULL, ', ', ', '''), IFNULL(ATTR1, 'NULL'), IF(ATTR1 IS NULL, '', '''')
+     , IF(ATTR2 IS NULL, ', ', ', '''), IFNULL(ATTR2, 'NULL'), IF(ATTR2 IS NULL, '', '''')
+     , IF(ATTR3 IS NULL, ', ', ', '''), IFNULL(ATTR3, 'NULL'), IF(ATTR3 IS NULL, '', '''')
+     , IF(ATTR4 IS NULL, ', ', ', '''), IFNULL(ATTR4, 'NULL'), IF(ATTR4 IS NULL, '', '''')
+     , IF(ATTR5 IS NULL, ', ', ', '''), IFNULL(ATTR5, 'NULL'), IF(ATTR5 IS NULL, '', '''')
+     , IF(ATTR6 IS NULL, ', ', ', '''), IFNULL(ATTR6, 'NULL'), IF(ATTR6 IS NULL, '', '''')
+     , IF(ATTR7 IS NULL, ', ', ', '''), IFNULL(ATTR7, 'NULL'), IF(ATTR7 IS NULL, '', '''')
+     , IF(ATTR8 IS NULL, ', ', ', '''), IFNULL(ATTR8, 'NULL'), IF(ATTR8 IS NULL, '', '''')
+     , IF(ATTR9 IS NULL, ', ', ', '''), IFNULL(ATTR9, 'NULL'), IF(ATTR9 IS NULL, '', '''')
+     , IF(ATTR10 IS NULL, ', ', ', '''), IFNULL(ATTR10, 'NULL'), IF(ATTR10 IS NULL, '', '''')
+     , IF(ATTR11 IS NULL, ', ', ', '''), IFNULL(ATTR11, 'NULL'), IF(ATTR11 IS NULL, '', '''')
+     , IF(ATTR12 IS NULL, ', ', ', '''), IFNULL(ATTR12, 'NULL'), IF(ATTR12 IS NULL, '', '''')
+     , IF(ATTR13 IS NULL, ', ', ', '''), IFNULL(ATTR13, 'NULL'), IF(ATTR13 IS NULL, '', '''')
+     , IF(ATTR14 IS NULL, ', ', ', '''), IFNULL(ATTR14, 'NULL'), IF(ATTR14 IS NULL, '', '''')
+     , IF(ATTR15 IS NULL, ', ', ', '''), IFNULL(ATTR15, 'NULL'), IF(ATTR15 IS NULL, '', '''')
+     , IF(CLIENT_IP IS NULL, ', ', ', '''), IFNULL(CLIENT_IP, 'NULL'), IF(CLIENT_IP IS NULL, '', '''')
+     , ');') AS INSERT_DML
+  FROM ERPAPP.CM_HEALTH_CHK_LOG
+ WHERE EXEC_START_DT LIKE CONCAT(DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), INTERVAL -1 DAY), '%Y%m%d'),'%');",
+      "escapeCharacter": "5C",
+      "quoteCharacter": "0A",
+      "fieldsTerminatedBy": "2C",
+      "linesTerminatedBy": "0A"
+    }
+  }
+}
+EOF
+
+
+
+curl -X POST \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @export_sql.json \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-qa3/instances/csql-an3-hrcore-portal-qa3-mysql/export"
+
+
+
+gcloud sql operations list --instance csql-an3-hrcore-lgc-stg-mysql-clone --limit 3
+###################################################################################################################
+-- 조건절은 어제치 DATA를 조회
+SELECT CONCAT('INSERT INTO CM_HEALTH_CHK_LOG VALUES (',
+       AUTO_INC_SEQ_ID, ', '
+     , '''', SERVICE_ID, ''''
+     , IF(MENU_URL IS NULL, ', ', ', '''), IFNULL(MENU_URL, 'NULL'), IF(MENU_URL IS NULL, '', '''')
+     , IF(MENU_CD IS NULL, ', ', ', '''), IFNULL(MENU_CD, 'NULL'), IF(MENU_CD IS NULL, '', '''')	 
+     , IF(ARGUMENT_TEXT IS NULL, ', ', ', '''), REPLACE(IFNULL(ARGUMENT_TEXT, 'NULL'), '''', ''''''), IF(ARGUMENT_TEXT IS NULL, '', '''')
+     , IF(EXEC_START_DT IS NULL, ', ', ', '''), IFNULL(EXEC_START_DT, 'NULL'), IF(EXEC_START_DT IS NULL, '', '''')
+     , IF(EXEC_END_DT IS NULL, ', ', ', '''), IFNULL(EXEC_END_DT, 'NULL'), IF(EXEC_END_DT IS NULL, '', '''')
+     , ', ', IFNULL(TIME_GAP, 'NULL') 
+     , IF(RESULT_STATUS IS NULL, ', ', ', '''), IFNULL(RESULT_STATUS, 'NULL'), IF(RESULT_STATUS IS NULL, '', '''')
+     , IF(RESULT_MESSAGE IS NULL, ', ', ', '''), REPLACE(IFNULL(RESULT_MESSAGE, 'NULL'), '''', ''''''), IF(RESULT_MESSAGE IS NULL, '', '''')
+     , ', ', CRT_ID, ', '
+     , '''', CRT_DT, ''''
+     , ', ', UPDT_ID, ', '
+     , '''', UPDT_DT, ''''
+     , IF(ATTR1 IS NULL, ', ', ', '''), IFNULL(ATTR1, 'NULL'), IF(ATTR1 IS NULL, '', '''')
+     , IF(ATTR2 IS NULL, ', ', ', '''), IFNULL(ATTR2, 'NULL'), IF(ATTR2 IS NULL, '', '''')
+     , IF(ATTR3 IS NULL, ', ', ', '''), IFNULL(ATTR3, 'NULL'), IF(ATTR3 IS NULL, '', '''')
+     , IF(ATTR4 IS NULL, ', ', ', '''), IFNULL(ATTR4, 'NULL'), IF(ATTR4 IS NULL, '', '''')
+     , IF(ATTR5 IS NULL, ', ', ', '''), IFNULL(ATTR5, 'NULL'), IF(ATTR5 IS NULL, '', '''')
+     , IF(ATTR6 IS NULL, ', ', ', '''), IFNULL(ATTR6, 'NULL'), IF(ATTR6 IS NULL, '', '''')
+     , IF(ATTR7 IS NULL, ', ', ', '''), IFNULL(ATTR7, 'NULL'), IF(ATTR7 IS NULL, '', '''')
+     , IF(ATTR8 IS NULL, ', ', ', '''), IFNULL(ATTR8, 'NULL'), IF(ATTR8 IS NULL, '', '''')
+     , IF(ATTR9 IS NULL, ', ', ', '''), IFNULL(ATTR9, 'NULL'), IF(ATTR9 IS NULL, '', '''')
+     , IF(ATTR10 IS NULL, ', ', ', '''), IFNULL(ATTR10, 'NULL'), IF(ATTR10 IS NULL, '', '''')
+     , IF(ATTR11 IS NULL, ', ', ', '''), IFNULL(ATTR11, 'NULL'), IF(ATTR11 IS NULL, '', '''')
+     , IF(ATTR12 IS NULL, ', ', ', '''), IFNULL(ATTR12, 'NULL'), IF(ATTR12 IS NULL, '', '''')
+     , IF(ATTR13 IS NULL, ', ', ', '''), IFNULL(ATTR13, 'NULL'), IF(ATTR13 IS NULL, '', '''')
+     , IF(ATTR14 IS NULL, ', ', ', '''), IFNULL(ATTR14, 'NULL'), IF(ATTR14 IS NULL, '', '''')
+     , IF(ATTR15 IS NULL, ', ', ', '''), IFNULL(ATTR15, 'NULL'), IF(ATTR15 IS NULL, '', '''')
+     , IF(CLIENT_IP IS NULL, ', ', ', '''), IFNULL(CLIENT_IP, 'NULL'), IF(CLIENT_IP IS NULL, '', '''')
+     , ');') AS INSERT_DML
+  FROM ERPAPP.CM_HEALTH_CHK_LOG
+ WHERE EXEC_START_DT LIKE CONCAT(DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), INTERVAL -1 DAY), '%Y%m%d'),'%');

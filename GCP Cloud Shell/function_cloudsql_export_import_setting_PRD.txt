@@ -1,0 +1,109 @@
+생성방법:
+아래 정리된 스크립트들을 GCP 콘솔에서 실행합니다.
+아래 스크립트는 prd 프로젝트 환경에서의 일일백업 자동화 구성을 예시로 들었습니다.
+
+작업에 필요한 Role :
+- Project IAM Admin
+- Role Administrator
+- Security Admin
+
+생성 사항 요약
+pub/sub : topic-cloudsql-export, topic-cloudsql-import
+IAM role : Simple Storage Role, SQL Exporter Role, SQL Importer Role
+service account : svcacc-gcf-cloudsql-expimp@pjt-hrcore-prd-316104.iam.gserviceaccount.com
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## 환경변수
+gcloud config set project pjt-hrcore-prd-316104
+export PROJECT_ID=`gcloud config get-value project`
+export BUCKET_NAME="gcs-an3-hrcore-prd-bucket-log"
+export BUCKET_PATH="gcs-an3-hrcore-prd-bucket-log/db-application-access-history"
+export SQL_INSTANCE_PORTAL="csql-an3-hrcore-portal-prd-mysql"
+export SQL_INSTANCE_CNS="csql-an3-hrcore-cns-prd-mysql"
+export SQL_INSTANCE_LGC="csql-an3-hrcore-lgc-prd-mysql"
+export SQL_INSTANCE_LGES="csql-an3-hrcore-lges-prd-mysql"
+export SQL_INSTANCE_LOG="csql-an3-hrcore-log-prd-mysql"
+export SQL_ROLE_EXP="role_cloudsql_export"
+export SQL_ROLE_IMP="role_cloudsql_import"
+export STORAGE_ROLE="role_storage_create_get"
+export REGION="asia-northeast3"
+export PUBSUB_TOPIC_EXP="topic-cloudsql-export"
+export PUBSUB_TOPIC_IMP="topic-cloudsql-import"
+export GCF_SVCACC="svcacc-gcf-cloudsql-expimp"
+
+
+## Storage용 Role 생성
+gcloud iam roles create ${STORAGE_ROLE} --project ${PROJECT_ID} \
+    --title "Simple Storage Role" \
+    --description "Grant permissions to view and create objects in Cloud Storage" \
+    --permissions "storage.objects.create,storage.objects.get"
+
+
+## SQL Export용 Role 생성
+gcloud iam roles create ${SQL_ROLE_EXP} --project ${PROJECT_ID} \
+    --title "SQL Exporter Role" \
+    --description "Grant permissions to export data from a Cloud SQL instance to a Cloud Storage bucket as a SQL dump or CSV file" \
+    --permissions "cloudsql.instances.export"
+
+
+## SQL Import용 Role 생성
+gcloud iam roles create ${SQL_ROLE_IMP} --project ${PROJECT_ID} \
+    --title "SQL Importer Role" \
+    --description "Grant permissions to import data from a Cloud SQL instance to a Cloud Storage bucket as a SQL dump or CSV file" \
+    --permissions "cloudsql.instances.import"
+
+
+## Cloud SQL 서비스 계정에 권한 부여
+export SQL_SA_PORTAL=(`gcloud sql instances describe ${SQL_INSTANCE_PORTAL} \
+    --project ${PROJECT_ID} \
+    --format "value(serviceAccountEmailAddress)"`)
+gsutil iam ch serviceAccount:${SQL_SA_PORTAL}:projects/${PROJECT_ID}/roles/${STORAGE_ROLE} gs://${BUCKET_NAME}
+
+export SQL_SA_CNS=(`gcloud sql instances describe ${SQL_INSTANCE_CNS} \
+    --project pjt-hrcore-prd-cns \
+    --format "value(serviceAccountEmailAddress)"`)
+gsutil iam ch serviceAccount:${SQL_SA_CNS}:projects/${PROJECT_ID}/roles/${STORAGE_ROLE} gs://${BUCKET_NAME}
+
+export SQL_SA_LGC=(`gcloud sql instances describe ${SQL_INSTANCE_LGC} \
+    --project pjt-hrcore-prd-lgc \
+    --format "value(serviceAccountEmailAddress)"`)
+gsutil iam ch serviceAccount:${SQL_SA_LGC}:projects/${PROJECT_ID}/roles/${STORAGE_ROLE} gs://${BUCKET_NAME}
+
+export SQL_SA_LGES=(`gcloud sql instances describe ${SQL_INSTANCE_LGES} \
+    --project pjt-hrcore-prd-lges \
+    --format "value(serviceAccountEmailAddress)"`)
+gsutil iam ch serviceAccount:${SQL_SA_LGES}:projects/${PROJECT_ID}/roles/${STORAGE_ROLE} gs://${BUCKET_NAME}
+
+export SQL_SA_LOG=(`gcloud sql instances describe ${SQL_INSTANCE_LOG} \
+    --project ${PROJECT_ID} \
+    --format "value(serviceAccountEmailAddress)"`)
+gsutil iam ch serviceAccount:${SQL_SA_LOG}:projects/${PROJECT_ID}/roles/${STORAGE_ROLE} gs://${BUCKET_NAME}
+
+
+## Cloud Functions 서비스 계정 만들기
+## 다른 프로젝트에서 export를 한다면 해당 프로젝트에도 똑같은 서비스 계정을 만들어줘야함!
+## 예를 들어 STG 프로젝트에서 export function을 수행하는데 QA3 프로젝트에 있는 DB에서 export 작업을 하고 싶으면
+## STG 프로젝트의 GCF_SVCACC (서비스 계정)를 IAM & ADMIN 에서 email 형태 값으로 복사한 뒤 QA3 프로젝트에서 똑같은 계정을 생성해줘야 한다.
+## 이 때 QA3 프로젝트에서 생성한 서비스계정에는 STG 프로젝트와 권한을 동일하게 설정해줘야 한다.
+gcloud iam service-accounts create ${GCF_SVCACC} \
+    --display-name "Service Account for GCF and SQL Import / Export API"
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${GCF_SVCACC}@${PROJECT_ID}.iam.gserviceaccount.com" \
+    --role="projects/${PROJECT_ID}/roles/${SQL_ROLE_EXP}"
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member="serviceAccount:${GCF_SVCACC}@${PROJECT_ID}.iam.gserviceaccount.com" \
+    --role="projects/${PROJECT_ID}/roles/${SQL_ROLE_IMP}"
+
+
+## Pub/Sub 주제 만들기
+gcloud pubsub topics create ${PUBSUB_TOPIC_EXP}
+gcloud pubsub topics create ${PUBSUB_TOPIC_IMP}
+gcloud pubsub topics create ${PUBSUB_TOPIC_EXP}_csv
+gcloud pubsub topics create ${PUBSUB_TOPIC_IMP}_csv
+
+
+## App Engine 인스턴스 생성
+gcloud app create --region=${REGION}
