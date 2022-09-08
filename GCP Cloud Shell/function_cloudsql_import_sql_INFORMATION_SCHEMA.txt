@@ -5,6 +5,8 @@ export BUCKET_PATH="gcs-an3-hrcore-stg-bucket-log/db-information-schema"
 export SQL_INSTANCE="csql-an3-hrcore-log-stg-mysql"
 export GCF_NAME="gcf-cloudsql-import"
 export PUBSUB_TOPIC="topic-cloudsql-import"
+export GCF_SVCACC="svcacc-gcf-cloudsql-expimp"
+
 export SCHEDULER_JOB_STG_TABLES1="job-cloudsql-import-stg-portal-information-schema-tables"
 export SCHEDULER_JOB_STG_TABLES2="job-cloudsql-import-stg-lgcns-information-schema-tables"
 export SCHEDULER_JOB_STG_TABLES3="job-cloudsql-import-stg-lgc-information-schema-tables"
@@ -26,8 +28,171 @@ export SCHEDULER_JOB_STG_COLUMNS1="job-cloudsql-import-stg-portal-information-sc
 export SCHEDULER_JOB_STG_COLUMNS2="job-cloudsql-import-stg-lgcns-information-schema-columns"
 export SCHEDULER_JOB_STG_COLUMNS3="job-cloudsql-import-stg-lgc-information-schema-columns"
 export SCHEDULER_JOB_STG_COLUMNS4="job-cloudsql-import-stg-lges-information-schema-columns"
-export GCF_SVCACC="svcacc-gcf-cloudsql-expimp"
+export SCHEDULER_JOB_DEV_COLUMNS1="job-cloudsql-import-dev-portal-information-schema-columns"
+export SCHEDULER_JOB_DEV_COLUMNS2="job-cloudsql-import-dev-lgcns-information-schema-columns"
+export SCHEDULER_JOB_DEV_COLUMNS3="job-cloudsql-import-dev-lgc-information-schema-columns"
+export SCHEDULER_JOB_DEV_COLUMNS4="job-cloudsql-import-dev-lges-information-schema-columns"
+export SCHEDULER_JOB_QA3_COLUMNS1="job-cloudsql-import-qa3-portal-information-schema-columns"
+export SCHEDULER_JOB_QA3_COLUMNS2="job-cloudsql-import-qa3-lgcns-information-schema-columns"
+export SCHEDULER_JOB_QA3_COLUMNS3="job-cloudsql-import-qa3-lgc-information-schema-columns"
+export SCHEDULER_JOB_QA3_COLUMNS4="job-cloudsql-import-qa3-lges-information-schema-columns"
+export SCHEDULER_JOB_PRD_COLUMNS1="job-cloudsql-import-prd-portal-information-schema-columns"
+export SCHEDULER_JOB_PRD_COLUMNS2="job-cloudsql-import-prd-lgcns-information-schema-columns"
+export SCHEDULER_JOB_PRD_COLUMNS3="job-cloudsql-import-prd-lgc-information-schema-columns"
+export SCHEDULER_JOB_PRD_COLUMNS4="job-cloudsql-import-prd-lges-information-schema-columns"
 
+export SCHEDULER_JOB_STG_PARTITIONS1="job-cloudsql-import-stg-portal-information-schema-partitions"
+export SCHEDULER_JOB_STG_PARTITIONS2="job-cloudsql-import-stg-lgcns-information-schema-partitions"
+export SCHEDULER_JOB_STG_PARTITIONS3="job-cloudsql-import-stg-lgc-information-schema-partitions"
+export SCHEDULER_JOB_STG_PARTITIONS4="job-cloudsql-import-stg-lges-information-schema-partitions"
+export SCHEDULER_JOB_DEV_PARTITIONS1="job-cloudsql-import-dev-portal-information-schema-partitions"
+export SCHEDULER_JOB_DEV_PARTITIONS2="job-cloudsql-import-dev-lgcns-information-schema-partitions"
+export SCHEDULER_JOB_DEV_PARTITIONS3="job-cloudsql-import-dev-lgc-information-schema-partitions"
+export SCHEDULER_JOB_DEV_PARTITIONS4="job-cloudsql-import-dev-lges-information-schema-partitions"
+export SCHEDULER_JOB_QA3_PARTITIONS1="job-cloudsql-import-qa3-portal-information-schema-partitions"
+export SCHEDULER_JOB_QA3_PARTITIONS2="job-cloudsql-import-qa3-lgcns-information-schema-partitions"
+export SCHEDULER_JOB_QA3_PARTITIONS3="job-cloudsql-import-qa3-lgc-information-schema-partitions"
+export SCHEDULER_JOB_QA3_PARTITIONS4="job-cloudsql-import-qa3-lges-information-schema-partitions"
+export SCHEDULER_JOB_PRD_PARTITIONS1="job-cloudsql-import-prd-portal-information-schema-partitions"
+export SCHEDULER_JOB_PRD_PARTITIONS2="job-cloudsql-import-prd-lgcns-information-schema-partitions"
+export SCHEDULER_JOB_PRD_PARTITIONS3="job-cloudsql-import-prd-lgc-information-schema-partitions"
+export SCHEDULER_JOB_PRD_PARTITIONS4="job-cloudsql-import-prd-lges-information-schema-partitions"
+
+export SCHEDULER_JOB_STG_STATISTICS1="job-cloudsql-import-stg-portal-information-schema-statistics"
+export SCHEDULER_JOB_STG_STATISTICS2="job-cloudsql-import-stg-lgcns-information-schema-statistics"
+export SCHEDULER_JOB_STG_STATISTICS3="job-cloudsql-import-stg-lgc-information-schema-statistics"
+export SCHEDULER_JOB_STG_STATISTICS4="job-cloudsql-import-stg-lges-information-schema-statistics"
+export SCHEDULER_JOB_DEV_STATISTICS1="job-cloudsql-import-dev-portal-information-schema-statistics"
+export SCHEDULER_JOB_DEV_STATISTICS2="job-cloudsql-import-dev-lgcns-information-schema-statistics"
+export SCHEDULER_JOB_DEV_STATISTICS3="job-cloudsql-import-dev-lgc-information-schema-statistics"
+export SCHEDULER_JOB_DEV_STATISTICS4="job-cloudsql-import-dev-lges-information-schema-statistics"
+export SCHEDULER_JOB_QA3_STATISTICS1="job-cloudsql-import-qa3-portal-information-schema-statistics"
+export SCHEDULER_JOB_QA3_STATISTICS2="job-cloudsql-import-qa3-lgcns-information-schema-statistics"
+export SCHEDULER_JOB_QA3_STATISTICS3="job-cloudsql-import-qa3-lgc-information-schema-statistics"
+export SCHEDULER_JOB_QA3_STATISTICS4="job-cloudsql-import-qa3-lges-information-schema-statistics"
+export SCHEDULER_JOB_PRD_STATISTICS1="job-cloudsql-import-prd-portal-information-schema-statistics"
+export SCHEDULER_JOB_PRD_STATISTICS2="job-cloudsql-import-prd-lgcns-information-schema-statistics"
+export SCHEDULER_JOB_PRD_STATISTICS3="job-cloudsql-import-prd-lgc-information-schema-statistics"
+export SCHEDULER_JOB_PRD_STATISTICS4="job-cloudsql-import-prd-lges-information-schema-statistics"
+
+export SCHEDULER_JOB_STG_ROUTINES1="job-cloudsql-import-stg-portal-information-schema-routines"
+export SCHEDULER_JOB_STG_ROUTINES2="job-cloudsql-import-stg-lgcns-information-schema-routines"
+export SCHEDULER_JOB_STG_ROUTINES3="job-cloudsql-import-stg-lgc-information-schema-routines"
+export SCHEDULER_JOB_STG_ROUTINES4="job-cloudsql-import-stg-lges-information-schema-routines"
+export SCHEDULER_JOB_DEV_ROUTINES1="job-cloudsql-import-dev-portal-information-schema-routines"
+export SCHEDULER_JOB_DEV_ROUTINES2="job-cloudsql-import-dev-lgcns-information-schema-routines"
+export SCHEDULER_JOB_DEV_ROUTINES3="job-cloudsql-import-dev-lgc-information-schema-routines"
+export SCHEDULER_JOB_DEV_ROUTINES4="job-cloudsql-import-dev-lges-information-schema-routines"
+export SCHEDULER_JOB_QA3_ROUTINES1="job-cloudsql-import-qa3-portal-information-schema-routines"
+export SCHEDULER_JOB_QA3_ROUTINES2="job-cloudsql-import-qa3-lgcns-information-schema-routines"
+export SCHEDULER_JOB_QA3_ROUTINES3="job-cloudsql-import-qa3-lgc-information-schema-routines"
+export SCHEDULER_JOB_QA3_ROUTINES4="job-cloudsql-import-qa3-lges-information-schema-routines"
+export SCHEDULER_JOB_PRD_ROUTINES1="job-cloudsql-import-prd-portal-information-schema-routines"
+export SCHEDULER_JOB_PRD_ROUTINES2="job-cloudsql-import-prd-lgcns-information-schema-routines"
+export SCHEDULER_JOB_PRD_ROUTINES3="job-cloudsql-import-prd-lgc-information-schema-routines"
+export SCHEDULER_JOB_PRD_ROUTINES4="job-cloudsql-import-prd-lges-information-schema-routines"
+
+export SCHEDULER_JOB_STG_TRIGGERS1="job-cloudsql-import-stg-portal-information-schema-triggers"
+export SCHEDULER_JOB_STG_TRIGGERS2="job-cloudsql-import-stg-lgcns-information-schema-triggers"
+export SCHEDULER_JOB_STG_TRIGGERS3="job-cloudsql-import-stg-lgc-information-schema-triggers"
+export SCHEDULER_JOB_STG_TRIGGERS4="job-cloudsql-import-stg-lges-information-schema-triggers"
+export SCHEDULER_JOB_DEV_TRIGGERS1="job-cloudsql-import-dev-portal-information-schema-triggers"
+export SCHEDULER_JOB_DEV_TRIGGERS2="job-cloudsql-import-dev-lgcns-information-schema-triggers"
+export SCHEDULER_JOB_DEV_TRIGGERS3="job-cloudsql-import-dev-lgc-information-schema-triggers"
+export SCHEDULER_JOB_DEV_TRIGGERS4="job-cloudsql-import-dev-lges-information-schema-triggers"
+export SCHEDULER_JOB_QA3_TRIGGERS1="job-cloudsql-import-qa3-portal-information-schema-triggers"
+export SCHEDULER_JOB_QA3_TRIGGERS2="job-cloudsql-import-qa3-lgcns-information-schema-triggers"
+export SCHEDULER_JOB_QA3_TRIGGERS3="job-cloudsql-import-qa3-lgc-information-schema-triggers"
+export SCHEDULER_JOB_QA3_TRIGGERS4="job-cloudsql-import-qa3-lges-information-schema-triggers"
+export SCHEDULER_JOB_PRD_TRIGGERS1="job-cloudsql-import-prd-portal-information-schema-triggers"
+export SCHEDULER_JOB_PRD_TRIGGERS2="job-cloudsql-import-prd-lgcns-information-schema-triggers"
+export SCHEDULER_JOB_PRD_TRIGGERS3="job-cloudsql-import-prd-lgc-information-schema-triggers"
+export SCHEDULER_JOB_PRD_TRIGGERS4="job-cloudsql-import-prd-lges-information-schema-triggers"
+
+export SCHEDULER_JOB_STG_VIEWS1="job-cloudsql-import-stg-portal-information-schema-views"
+export SCHEDULER_JOB_STG_VIEWS2="job-cloudsql-import-stg-lgcns-information-schema-views"
+export SCHEDULER_JOB_STG_VIEWS3="job-cloudsql-import-stg-lgc-information-schema-views"
+export SCHEDULER_JOB_STG_VIEWS4="job-cloudsql-import-stg-lges-information-schema-views"
+export SCHEDULER_JOB_DEV_VIEWS1="job-cloudsql-import-dev-portal-information-schema-views"
+export SCHEDULER_JOB_DEV_VIEWS2="job-cloudsql-import-dev-lgcns-information-schema-views"
+export SCHEDULER_JOB_DEV_VIEWS3="job-cloudsql-import-dev-lgc-information-schema-views"
+export SCHEDULER_JOB_DEV_VIEWS4="job-cloudsql-import-dev-lges-information-schema-views"
+export SCHEDULER_JOB_QA3_VIEWS1="job-cloudsql-import-qa3-portal-information-schema-views"
+export SCHEDULER_JOB_QA3_VIEWS2="job-cloudsql-import-qa3-lgcns-information-schema-views"
+export SCHEDULER_JOB_QA3_VIEWS3="job-cloudsql-import-qa3-lgc-information-schema-views"
+export SCHEDULER_JOB_QA3_VIEWS4="job-cloudsql-import-qa3-lges-information-schema-views"
+export SCHEDULER_JOB_PRD_VIEWS1="job-cloudsql-import-prd-portal-information-schema-views"
+export SCHEDULER_JOB_PRD_VIEWS2="job-cloudsql-import-prd-lgcns-information-schema-views"
+export SCHEDULER_JOB_PRD_VIEWS3="job-cloudsql-import-prd-lgc-information-schema-views"
+export SCHEDULER_JOB_PRD_VIEWS4="job-cloudsql-import-prd-lges-information-schema-views"
+
+export SCHEDULER_JOB_STG_SCHEMATA1="job-cloudsql-import-stg-portal-information-schema-schemata"
+export SCHEDULER_JOB_STG_SCHEMATA2="job-cloudsql-import-stg-lgcns-information-schema-schemata"
+export SCHEDULER_JOB_STG_SCHEMATA3="job-cloudsql-import-stg-lgc-information-schema-schemata"
+export SCHEDULER_JOB_STG_SCHEMATA4="job-cloudsql-import-stg-lges-information-schema-schemata"
+export SCHEDULER_JOB_DEV_SCHEMATA1="job-cloudsql-import-dev-portal-information-schema-schemata"
+export SCHEDULER_JOB_DEV_SCHEMATA2="job-cloudsql-import-dev-lgcns-information-schema-schemata"
+export SCHEDULER_JOB_DEV_SCHEMATA3="job-cloudsql-import-dev-lgc-information-schema-schemata"
+export SCHEDULER_JOB_DEV_SCHEMATA4="job-cloudsql-import-dev-lges-information-schema-schemata"
+export SCHEDULER_JOB_QA3_SCHEMATA1="job-cloudsql-import-qa3-portal-information-schema-schemata"
+export SCHEDULER_JOB_QA3_SCHEMATA2="job-cloudsql-import-qa3-lgcns-information-schema-schemata"
+export SCHEDULER_JOB_QA3_SCHEMATA3="job-cloudsql-import-qa3-lgc-information-schema-schemata"
+export SCHEDULER_JOB_QA3_SCHEMATA4="job-cloudsql-import-qa3-lges-information-schema-schemata"
+export SCHEDULER_JOB_PRD_SCHEMATA1="job-cloudsql-import-prd-portal-information-schema-schemata"
+export SCHEDULER_JOB_PRD_SCHEMATA2="job-cloudsql-import-prd-lgcns-information-schema-schemata"
+export SCHEDULER_JOB_PRD_SCHEMATA3="job-cloudsql-import-prd-lgc-information-schema-schemata"
+export SCHEDULER_JOB_PRD_SCHEMATA4="job-cloudsql-import-prd-lges-information-schema-schemata"
+
+export SCHEDULER_JOB_STG_INNODB_TABLES1="job-cloudsql-import-stg-portal-information-schema-innodb-tables"
+export SCHEDULER_JOB_STG_INNODB_TABLES2="job-cloudsql-import-stg-lgcns-information-schema-innodb-tables"
+export SCHEDULER_JOB_STG_INNODB_TABLES3="job-cloudsql-import-stg-lgc-information-schema-innodb-tables"
+export SCHEDULER_JOB_STG_INNODB_TABLES4="job-cloudsql-import-stg-lges-information-schema-innodb-tables"
+export SCHEDULER_JOB_DEV_INNODB_TABLES1="job-cloudsql-import-dev-portal-information-schema-innodb-tables"
+export SCHEDULER_JOB_DEV_INNODB_TABLES2="job-cloudsql-import-dev-lgcns-information-schema-innodb-tables"
+export SCHEDULER_JOB_DEV_INNODB_TABLES3="job-cloudsql-import-dev-lgc-information-schema-innodb-tables"
+export SCHEDULER_JOB_DEV_INNODB_TABLES4="job-cloudsql-import-dev-lges-information-schema-innodb-tables"
+export SCHEDULER_JOB_QA3_INNODB_TABLES1="job-cloudsql-import-qa3-portal-information-schema-innodb-tables"
+export SCHEDULER_JOB_QA3_INNODB_TABLES2="job-cloudsql-import-qa3-lgcns-information-schema-innodb-tables"
+export SCHEDULER_JOB_QA3_INNODB_TABLES3="job-cloudsql-import-qa3-lgc-information-schema-innodb-tables"
+export SCHEDULER_JOB_QA3_INNODB_TABLES4="job-cloudsql-import-qa3-lges-information-schema-innodb-tables"
+export SCHEDULER_JOB_PRD_INNODB_TABLES1="job-cloudsql-import-prd-portal-information-schema-innodb-tables"
+export SCHEDULER_JOB_PRD_INNODB_TABLES2="job-cloudsql-import-prd-lgcns-information-schema-innodb-tables"
+export SCHEDULER_JOB_PRD_INNODB_TABLES3="job-cloudsql-import-prd-lgc-information-schema-innodb-tables"
+export SCHEDULER_JOB_PRD_INNODB_TABLES4="job-cloudsql-import-prd-lges-information-schema-innodb-tables"
+
+export SCHEDULER_JOB_STG_INNODB_TABLESPACES1="job-cloudsql-import-stg-portal-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_STG_INNODB_TABLESPACES2="job-cloudsql-import-stg-lgcns-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_STG_INNODB_TABLESPACES3="job-cloudsql-import-stg-lgc-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_STG_INNODB_TABLESPACES4="job-cloudsql-import-stg-lges-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_DEV_INNODB_TABLESPACES1="job-cloudsql-import-dev-portal-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_DEV_INNODB_TABLESPACES2="job-cloudsql-import-dev-lgcns-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_DEV_INNODB_TABLESPACES3="job-cloudsql-import-dev-lgc-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_DEV_INNODB_TABLESPACES4="job-cloudsql-import-dev-lges-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_QA3_INNODB_TABLESPACES1="job-cloudsql-import-qa3-portal-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_QA3_INNODB_TABLESPACES2="job-cloudsql-import-qa3-lgcns-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_QA3_INNODB_TABLESPACES3="job-cloudsql-import-qa3-lgc-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_QA3_INNODB_TABLESPACES4="job-cloudsql-import-qa3-lges-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_PRD_INNODB_TABLESPACES1="job-cloudsql-import-prd-portal-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_PRD_INNODB_TABLESPACES2="job-cloudsql-import-prd-lgcns-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_PRD_INNODB_TABLESPACES3="job-cloudsql-import-prd-lgc-information-schema-innodb-tablespaces"
+export SCHEDULER_JOB_PRD_INNODB_TABLESPACES4="job-cloudsql-import-prd-lges-information-schema-innodb-tablespaces"
+
+export SCHEDULER_JOB_STG_INNODB_INDEXES1="job-cloudsql-import-stg-portal-information-schema-innodb-indexes"
+export SCHEDULER_JOB_STG_INNODB_INDEXES2="job-cloudsql-import-stg-lgcns-information-schema-innodb-indexes"
+export SCHEDULER_JOB_STG_INNODB_INDEXES3="job-cloudsql-import-stg-lgc-information-schema-innodb-indexes"
+export SCHEDULER_JOB_STG_INNODB_INDEXES4="job-cloudsql-import-stg-lges-information-schema-innodb-indexes"
+export SCHEDULER_JOB_DEV_INNODB_INDEXES1="job-cloudsql-import-dev-portal-information-schema-innodb-indexes"
+export SCHEDULER_JOB_DEV_INNODB_INDEXES2="job-cloudsql-import-dev-lgcns-information-schema-innodb-indexes"
+export SCHEDULER_JOB_DEV_INNODB_INDEXES3="job-cloudsql-import-dev-lgc-information-schema-innodb-indexes"
+export SCHEDULER_JOB_DEV_INNODB_INDEXES4="job-cloudsql-import-dev-lges-information-schema-innodb-indexes"
+export SCHEDULER_JOB_QA3_INNODB_INDEXES1="job-cloudsql-import-qa3-portal-information-schema-innodb-indexes"
+export SCHEDULER_JOB_QA3_INNODB_INDEXES2="job-cloudsql-import-qa3-lgcns-information-schema-innodb-indexes"
+export SCHEDULER_JOB_QA3_INNODB_INDEXES3="job-cloudsql-import-qa3-lgc-information-schema-innodb-indexes"
+export SCHEDULER_JOB_QA3_INNODB_INDEXES4="job-cloudsql-import-qa3-lges-information-schema-innodb-indexes"
+export SCHEDULER_JOB_PRD_INNODB_INDEXES1="job-cloudsql-import-prd-portal-information-schema-innodb-indexes"
+export SCHEDULER_JOB_PRD_INNODB_INDEXES2="job-cloudsql-import-prd-lgcns-information-schema-innodb-indexes"
+export SCHEDULER_JOB_PRD_INNODB_INDEXES3="job-cloudsql-import-prd-lgc-information-schema-innodb-indexes"
+export SCHEDULER_JOB_PRD_INNODB_INDEXES4="job-cloudsql-import-prd-lges-information-schema-innodb-indexes"
 
 
 ## Cloud Functions 만들기 - main.py
@@ -164,32 +329,695 @@ gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_TABLES4} \
     --time-zone 'Asia/Seoul'
 
 
-
-
-
-
-
-
-
-
-
-
 gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_COLUMNS1} \
-    --schedule '20 3 * * *' --topic ${PUBSUB_TOPIC} \
+    --schedule '20 4 * * *' --topic ${PUBSUB_TOPIC} \
     --message-body '{"div":"STG-PORTAL", "db":"STG_PORTAL","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
     --time-zone 'Asia/Seoul'
 gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_COLUMNS2} \
-    --schedule '25 3 * * *' --topic ${PUBSUB_TOPIC} \
+    --schedule '25 4 * * *' --topic ${PUBSUB_TOPIC} \
     --message-body '{"div":"STG-LGCNS", "db":"STG_LGCNS","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
     --time-zone 'Asia/Seoul'
 gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_COLUMNS3} \
-    --schedule '30 3 * * *' --topic ${PUBSUB_TOPIC} \
+    --schedule '30 4 * * *' --topic ${PUBSUB_TOPIC} \
     --message-body '{"div":"STG-LGC", "db":"STG_LGC","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
     --time-zone 'Asia/Seoul'
 gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_COLUMNS4} \
-    --schedule '35 3 * * *' --topic ${PUBSUB_TOPIC} \
+    --schedule '35 4 * * *' --topic ${PUBSUB_TOPIC} \
     --message-body '{"div":"STG-LGES", "db":"STG_LGES","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
     --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_COLUMNS1} \
+    --schedule '40 4 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"DEV_PORTAL","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_COLUMNS2} \
+    --schedule '45 4 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"DEV_LGCNS","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_COLUMNS3} \
+    --schedule '50 4 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"DEV_LGC","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_COLUMNS4} \
+    --schedule '55 4 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"DEV_LGES","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_COLUMNS1} \
+    --schedule '0 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"QA3_PORTAL","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_COLUMNS2} \
+    --schedule '5 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"QA3_LGCNS","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_COLUMNS3} \
+    --schedule '10 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"QA3_LGC","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_COLUMNS4} \
+    --schedule '15 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"QA3_LGES","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_COLUMNS1} \
+    --schedule '20 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"PRD_PORTAL","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_COLUMNS2} \
+    --schedule '25 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"PRD_LGCNS","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_COLUMNS3} \
+    --schedule '30 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"PRD_LGC","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_COLUMNS4} \
+    --schedule '35 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"PRD_LGES","filename":"COLUMNS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_PARTITIONS1} \
+    --schedule '40 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-PORTAL", "db":"STG_PORTAL","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_PARTITIONS2} \
+    --schedule '45 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGCNS", "db":"STG_LGCNS","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_PARTITIONS3} \
+    --schedule '50 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGC", "db":"STG_LGC","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_PARTITIONS4} \
+    --schedule '55 5 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGES", "db":"STG_LGES","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_PARTITIONS1} \
+    --schedule '0 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"DEV_PORTAL","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_PARTITIONS2} \
+    --schedule '5 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"DEV_LGCNS","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_PARTITIONS3} \
+    --schedule '10 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"DEV_LGC","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_PARTITIONS4} \
+    --schedule '15 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"DEV_LGES","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_PARTITIONS1} \
+    --schedule '20 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"QA3_PORTAL","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_PARTITIONS2} \
+    --schedule '25 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"QA3_LGCNS","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_PARTITIONS3} \
+    --schedule '30 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"QA3_LGC","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_PARTITIONS4} \
+    --schedule '35 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"QA3_LGES","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_PARTITIONS1} \
+    --schedule '40 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"PRD_PORTAL","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_PARTITIONS2} \
+    --schedule '45 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"PRD_LGCNS","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_PARTITIONS3} \
+    --schedule '50 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"PRD_LGC","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_PARTITIONS4} \
+    --schedule '55 6 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"PRD_LGES","filename":"PARTITIONS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_STATISTICS1} \
+    --schedule '0 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-PORTAL", "db":"STG_PORTAL","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_STATISTICS2} \
+    --schedule '5 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGCNS", "db":"STG_LGCNS","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_STATISTICS3} \
+    --schedule '10 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGC", "db":"STG_LGC","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_STATISTICS4} \
+    --schedule '15 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGES", "db":"STG_LGES","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_STATISTICS1} \
+    --schedule '20 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"DEV_PORTAL","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_STATISTICS2} \
+    --schedule '25 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"DEV_LGCNS","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_STATISTICS3} \
+    --schedule '30 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"DEV_LGC","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_STATISTICS4} \
+    --schedule '35 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"DEV_LGES","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_STATISTICS1} \
+    --schedule '40 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"QA3_PORTAL","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_STATISTICS2} \
+    --schedule '45 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"QA3_LGCNS","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_STATISTICS3} \
+    --schedule '50 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"QA3_LGC","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_STATISTICS4} \
+    --schedule '55 7 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"QA3_LGES","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_STATISTICS1} \
+    --schedule '0 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"PRD_PORTAL","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_STATISTICS2} \
+    --schedule '5 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"PRD_LGCNS","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_STATISTICS3} \
+    --schedule '10 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"PRD_LGC","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_STATISTICS4} \
+    --schedule '15 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"PRD_LGES","filename":"STATISTICS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_ROUTINES1} \
+    --schedule '20 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-PORTAL", "db":"STG_PORTAL","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_ROUTINES2} \
+    --schedule '25 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGCNS", "db":"STG_LGCNS","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_ROUTINES3} \
+    --schedule '30 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGC", "db":"STG_LGC","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_ROUTINES4} \
+    --schedule '35 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGES", "db":"STG_LGES","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_ROUTINES1} \
+    --schedule '40 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"DEV_PORTAL","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_ROUTINES2} \
+    --schedule '45 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"DEV_LGCNS","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_ROUTINES3} \
+    --schedule '50 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"DEV_LGC","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_ROUTINES4} \
+    --schedule '55 8 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"DEV_LGES","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_ROUTINES1} \
+    --schedule '0 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"QA3_PORTAL","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_ROUTINES2} \
+    --schedule '5 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"QA3_LGCNS","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_ROUTINES3} \
+    --schedule '10 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"QA3_LGC","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_ROUTINES4} \
+    --schedule '15 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"QA3_LGES","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_ROUTINES1} \
+    --schedule '20 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"PRD_PORTAL","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_ROUTINES2} \
+    --schedule '25 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"PRD_LGCNS","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_ROUTINES3} \
+    --schedule '30 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"PRD_LGC","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_ROUTINES4} \
+    --schedule '35 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"PRD_LGES","filename":"ROUTINES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_TRIGGERS1} \
+    --schedule '40 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-PORTAL", "db":"STG_PORTAL","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_TRIGGERS2} \
+    --schedule '45 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGCNS", "db":"STG_LGCNS","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_TRIGGERS3} \
+    --schedule '50 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGC", "db":"STG_LGC","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_TRIGGERS4} \
+    --schedule '55 9 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGES", "db":"STG_LGES","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_TRIGGERS1} \
+    --schedule '0 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"DEV_PORTAL","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_TRIGGERS2} \
+    --schedule '5 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"DEV_LGCNS","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_TRIGGERS3} \
+    --schedule '10 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"DEV_LGC","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_TRIGGERS4} \
+    --schedule '15 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"DEV_LGES","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_TRIGGERS1} \
+    --schedule '20 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"QA3_PORTAL","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_TRIGGERS2} \
+    --schedule '25 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"QA3_LGCNS","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_TRIGGERS3} \
+    --schedule '30 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"QA3_LGC","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_TRIGGERS4} \
+    --schedule '35 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"QA3_LGES","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_TRIGGERS1} \
+    --schedule '40 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"PRD_PORTAL","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_TRIGGERS2} \
+    --schedule '45 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"PRD_LGCNS","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_TRIGGERS3} \
+    --schedule '50 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"PRD_LGC","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_TRIGGERS4} \
+    --schedule '55 10 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"PRD_LGES","filename":"TRIGGERS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_VIEWS1} \
+    --schedule '0 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-PORTAL", "db":"STG_PORTAL","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_VIEWS2} \
+    --schedule '5 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGCNS", "db":"STG_LGCNS","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_VIEWS3} \
+    --schedule '10 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGC", "db":"STG_LGC","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_VIEWS4} \
+    --schedule '15 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGES", "db":"STG_LGES","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_VIEWS1} \
+    --schedule '20 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"DEV_PORTAL","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_VIEWS2} \
+    --schedule '25 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"DEV_LGCNS","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_VIEWS3} \
+    --schedule '30 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"DEV_LGC","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_VIEWS4} \
+    --schedule '35 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"DEV_LGES","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_VIEWS1} \
+    --schedule '40 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"QA3_PORTAL","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_VIEWS2} \
+    --schedule '45 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"QA3_LGCNS","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_VIEWS3} \
+    --schedule '50 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"QA3_LGC","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_VIEWS4} \
+    --schedule '55 11 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"QA3_LGES","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_VIEWS1} \
+    --schedule '0 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"PRD_PORTAL","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_VIEWS2} \
+    --schedule '5 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"PRD_LGCNS","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_VIEWS3} \
+    --schedule '10 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"PRD_LGC","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_VIEWS4} \
+    --schedule '15 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"PRD_LGES","filename":"VIEWS","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_SCHEMATA1} \
+    --schedule '20 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-PORTAL", "db":"STG_PORTAL","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_SCHEMATA2} \
+    --schedule '25 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGCNS", "db":"STG_LGCNS","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_SCHEMATA3} \
+    --schedule '30 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGC", "db":"STG_LGC","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_SCHEMATA4} \
+    --schedule '35 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGES", "db":"STG_LGES","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_SCHEMATA1} \
+    --schedule '40 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"DEV_PORTAL","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_SCHEMATA2} \
+    --schedule '45 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"DEV_LGCNS","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_SCHEMATA3} \
+    --schedule '50 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"DEV_LGC","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_SCHEMATA4} \
+    --schedule '55 12 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"DEV_LGES","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_SCHEMATA1} \
+    --schedule '0 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"QA3_PORTAL","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_SCHEMATA2} \
+    --schedule '5 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"QA3_LGCNS","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_SCHEMATA3} \
+    --schedule '10 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"QA3_LGC","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_SCHEMATA4} \
+    --schedule '15 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"QA3_LGES","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_SCHEMATA1} \
+    --schedule '20 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"PRD_PORTAL","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_SCHEMATA2} \
+    --schedule '25 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"PRD_LGCNS","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_SCHEMATA3} \
+    --schedule '30 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"PRD_LGC","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_SCHEMATA4} \
+    --schedule '35 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"PRD_LGES","filename":"SCHEMATA","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_TABLES1} \
+    --schedule '40 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-PORTAL", "db":"STG_PORTAL","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_TABLES2} \
+    --schedule '45 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGCNS", "db":"STG_LGCNS","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_TABLES3} \
+    --schedule '50 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGC", "db":"STG_LGC","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_TABLES4} \
+    --schedule '55 13 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGES", "db":"STG_LGES","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_TABLES1} \
+    --schedule '0 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"DEV_PORTAL","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_TABLES2} \
+    --schedule '5 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"DEV_LGCNS","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_TABLES3} \
+    --schedule '10 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"DEV_LGC","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_TABLES4} \
+    --schedule '15 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"DEV_LGES","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_TABLES1} \
+    --schedule '20 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"QA3_PORTAL","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_TABLES2} \
+    --schedule '25 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"QA3_LGCNS","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_TABLES3} \
+    --schedule '30 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"QA3_LGC","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_TABLES4} \
+    --schedule '35 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"QA3_LGES","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_TABLES1} \
+    --schedule '40 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"PRD_PORTAL","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_TABLES2} \
+    --schedule '45 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"PRD_LGCNS","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_TABLES3} \
+    --schedule '50 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"PRD_LGC","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_TABLES4} \
+    --schedule '55 14 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"PRD_LGES","filename":"INNODB_TABLES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_TABLESPACES1} \
+    --schedule '0 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-PORTAL", "db":"STG_PORTAL","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_TABLESPACES2} \
+    --schedule '5 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGCNS", "db":"STG_LGCNS","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_TABLESPACES3} \
+    --schedule '10 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGC", "db":"STG_LGC","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_TABLESPACES4} \
+    --schedule '15 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGES", "db":"STG_LGES","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_TABLESPACES1} \
+    --schedule '20 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"DEV_PORTAL","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_TABLESPACES2} \
+    --schedule '25 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"DEV_LGCNS","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_TABLESPACES3} \
+    --schedule '30 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"DEV_LGC","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_TABLESPACES4} \
+    --schedule '35 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"DEV_LGES","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_TABLESPACES1} \
+    --schedule '40 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"QA3_PORTAL","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_TABLESPACES2} \
+    --schedule '45 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"QA3_LGCNS","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_TABLESPACES3} \
+    --schedule '50 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"QA3_LGC","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_TABLESPACES4} \
+    --schedule '55 15 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"QA3_LGES","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_TABLESPACES1} \
+    --schedule '0 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"PRD_PORTAL","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_TABLESPACES2} \
+    --schedule '5 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"PRD_LGCNS","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_TABLESPACES3} \
+    --schedule '10 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"PRD_LGC","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_TABLESPACES4} \
+    --schedule '15 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"PRD_LGES","filename":"INNODB_TABLESPACES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_INDEXES1} \
+    --schedule '20 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-PORTAL", "db":"STG_PORTAL","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_INDEXES2} \
+    --schedule '25 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGCNS", "db":"STG_LGCNS","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_INDEXES3} \
+    --schedule '30 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGC", "db":"STG_LGC","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG_INNODB_INDEXES4} \
+    --schedule '35 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGES", "db":"STG_LGES","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_INDEXES1} \
+    --schedule '40 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"DEV_PORTAL","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_INDEXES2} \
+    --schedule '45 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"DEV_LGCNS","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_INDEXES3} \
+    --schedule '50 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"DEV_LGC","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV_INNODB_INDEXES4} \
+    --schedule '55 16 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"DEV_LGES","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_INDEXES1} \
+    --schedule '0 17 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"QA3_PORTAL","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_INDEXES2} \
+    --schedule '5 17 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"QA3_LGCNS","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_INDEXES3} \
+    --schedule '10 17 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"QA3_LGC","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA3_INNODB_INDEXES4} \
+    --schedule '15 17 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"QA3_LGES","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_INDEXES1} \
+    --schedule '20 17 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"PRD_PORTAL","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_INDEXES2} \
+    --schedule '25 17 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"PRD_LGCNS","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_INDEXES3} \
+    --schedule '30 17 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"PRD_LGC","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD_INNODB_INDEXES4} \
+    --schedule '35 17 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"PRD_LGES","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-log-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
 
 
 ## Cloud Scheduler 작업을 수동으로 실행하여 데이터베이스의 MySQL 덤프를 트리거
@@ -197,21 +1025,189 @@ gcloud scheduler jobs run ${SCHEDULER_JOB_STG_TABLES1}
 gcloud scheduler jobs run ${SCHEDULER_JOB_STG_TABLES2}
 gcloud scheduler jobs run ${SCHEDULER_JOB_STG_TABLES3}
 gcloud scheduler jobs run ${SCHEDULER_JOB_STG_TABLES4}
-
 gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_TABLES1}
 gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_TABLES2}
 gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_TABLES3}
 gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_TABLES4}
-
 gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_TABLES1}
 gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_TABLES2}
 gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_TABLES3}
 gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_TABLES4}
-
 gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_TABLES1}
 gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_TABLES2}
 gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_TABLES3}
 gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_TABLES4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_COLUMNS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_COLUMNS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_COLUMNS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_COLUMNS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_COLUMNS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_COLUMNS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_COLUMNS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_COLUMNS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_COLUMNS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_COLUMNS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_COLUMNS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_COLUMNS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_COLUMNS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_COLUMNS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_COLUMNS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_COLUMNS4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_PARTITIONS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_PARTITIONS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_PARTITIONS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_PARTITIONS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_PARTITIONS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_PARTITIONS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_PARTITIONS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_PARTITIONS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_PARTITIONS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_PARTITIONS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_PARTITIONS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_PARTITIONS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_PARTITIONS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_PARTITIONS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_PARTITIONS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_PARTITIONS4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_STATISTICS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_STATISTICS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_STATISTICS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_STATISTICS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_STATISTICS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_STATISTICS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_STATISTICS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_STATISTICS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_STATISTICS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_STATISTICS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_STATISTICS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_STATISTICS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_STATISTICS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_STATISTICS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_STATISTICS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_STATISTICS4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_ROUTINES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_ROUTINES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_ROUTINES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_ROUTINES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_ROUTINES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_ROUTINES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_ROUTINES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_ROUTINES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_ROUTINES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_ROUTINES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_ROUTINES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_ROUTINES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_ROUTINES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_ROUTINES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_ROUTINES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_ROUTINES4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_TRIGGERS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_TRIGGERS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_TRIGGERS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_TRIGGERS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_TRIGGERS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_TRIGGERS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_TRIGGERS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_TRIGGERS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_TRIGGERS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_TRIGGERS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_TRIGGERS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_TRIGGERS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_TRIGGERS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_TRIGGERS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_TRIGGERS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_TRIGGERS4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_VIEWS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_VIEWS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_VIEWS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_VIEWS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_VIEWS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_VIEWS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_VIEWS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_VIEWS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_VIEWS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_VIEWS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_VIEWS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_VIEWS4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_VIEWS1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_VIEWS2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_VIEWS3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_VIEWS4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_SCHEMATA1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_SCHEMATA2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_SCHEMATA3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_SCHEMATA4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_SCHEMATA1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_SCHEMATA2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_SCHEMATA3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_SCHEMATA4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_SCHEMATA1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_SCHEMATA2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_SCHEMATA3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_SCHEMATA4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_SCHEMATA1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_SCHEMATA2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_SCHEMATA3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_SCHEMATA4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_TABLES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_TABLES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_TABLES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_TABLES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_TABLES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_TABLES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_TABLES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_TABLES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_TABLES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_TABLES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_TABLES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_TABLES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_TABLES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_TABLES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_TABLES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_TABLES4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_TABLESPACES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_TABLESPACES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_TABLESPACES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_TABLESPACES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_TABLESPACES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_TABLESPACES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_TABLESPACES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_TABLESPACES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_TABLESPACES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_TABLESPACES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_TABLESPACES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_TABLESPACES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_TABLESPACES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_TABLESPACES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_TABLESPACES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_TABLESPACES4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_INDEXES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_INDEXES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_INDEXES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG_INNODB_INDEXES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_INDEXES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_INDEXES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_INDEXES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV_INNODB_INDEXES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_INDEXES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_INDEXES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_INDEXES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA3_INNODB_INDEXES4}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_INDEXES1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_INDEXES2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_INDEXES3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD_INNODB_INDEXES4}
+
 
 ## Cloud SQL 정상 IMPORT 실행 여부 확인
 gcloud sql operations list --instance ${SQL_INSTANCE} --limit 3

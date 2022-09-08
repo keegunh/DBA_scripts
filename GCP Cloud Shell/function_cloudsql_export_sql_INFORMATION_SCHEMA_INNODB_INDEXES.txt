@@ -1,0 +1,302 @@
+## 환경변수
+gcloud config set project pjt-hrcore-stg-316104
+export PROJECT_ID=`gcloud config get-value project`
+export BUCKET_PATH="gcs-an3-hrcore-stg-bucket-log/db-information-schema"
+export GCF_NAME="gcf-cloudsql-export-csv-information-schema-innodb-indexes"
+export PUBSUB_TOPIC="topic-cloudsql-export-csv-information-schema-innodb-indexes"
+export GCF_SVCACC="svcacc-gcf-cloudsql-expimp"
+export SCHEDULER_JOB_STG1="job-cloudsql-export-csv-stg-portal-information-schema-innodb-indexes"
+export SCHEDULER_JOB_STG2="job-cloudsql-export-csv-stg-lgcns-information-schema-innodb-indexes"
+export SCHEDULER_JOB_STG3="job-cloudsql-export-csv-stg-lgc-information-schema-innodb-indexes"
+export SCHEDULER_JOB_STG4="job-cloudsql-export-csv-stg-lges-information-schema-innodb-indexes"
+export SCHEDULER_JOB_DEV1="job-cloudsql-export-csv-dev-portal-information-schema-innodb-indexes"
+export SCHEDULER_JOB_DEV2="job-cloudsql-export-csv-dev-lgcns-information-schema-innodb-indexes"
+export SCHEDULER_JOB_DEV3="job-cloudsql-export-csv-dev-lgc-information-schema-innodb-indexes"
+export SCHEDULER_JOB_DEV4="job-cloudsql-export-csv-dev-lges-information-schema-innodb-indexes"
+export SCHEDULER_JOB_QA31="job-cloudsql-export-csv-qa3-portal-information-schema-innodb-indexes"
+export SCHEDULER_JOB_QA32="job-cloudsql-export-csv-qa3-lgcns-information-schema-innodb-indexes"
+export SCHEDULER_JOB_QA33="job-cloudsql-export-csv-qa3-lgc-information-schema-innodb-indexes"
+export SCHEDULER_JOB_QA34="job-cloudsql-export-csv-qa3-lges-information-schema-innodb-indexes"
+export SCHEDULER_JOB_PRD1="job-cloudsql-export-csv-prd-portal-information-schema-innodb-indexes"
+export SCHEDULER_JOB_PRD2="job-cloudsql-export-csv-prd-lgcns-information-schema-innodb-indexes"
+export SCHEDULER_JOB_PRD3="job-cloudsql-export-csv-prd-lgc-information-schema-innodb-indexes"
+export SCHEDULER_JOB_PRD4="job-cloudsql-export-csv-prd-lges-information-schema-innodb-indexes"
+
+
+## Pub/Sub 주제 만들기
+gcloud pubsub topics create ${PUBSUB_TOPIC}
+
+## Cloud Functions 만들기 - main.py
+cat <<EOF > main.py
+
+import base64
+import logging
+import json
+
+from datetime import datetime
+from httplib2 import Http
+
+from googleapiclient import discovery
+from googleapiclient.errors import HttpError
+from oauth2client.client import GoogleCredentials
+
+def main(event, context):
+    pubsub_message = json.loads(base64.b64decode(event['data']).decode('utf-8'))
+    credentials = GoogleCredentials.get_application_default()
+
+    service = discovery.build('sqladmin', 'v1beta4', http=credentials.authorize(Http()), cache_discovery=False)
+
+    datestamp = datetime.now().strftime("%Y%m%d") # format timestamp: YearMonthDay
+    uri = "{0}/SQL-{1}-{2}-{3}".format(pubsub_message['gs'], pubsub_message['div'], pubsub_message['filename'], datestamp)
+
+    instances_export_request_body = {
+      "exportContext": {
+        "kind": "sql#exportContext",
+        "fileType": "CSV",
+        "uri": uri,
+        "databases": [
+          pubsub_message['db']
+        ],
+        "csvExportOptions": {
+          "selectQuery": """SELECT CONCAT('INSERT INTO INNODB_INDEXES VALUES (',
+       INDEX_ID
+     , ', ''', NAME, ''''
+     , ', ', TABLE_ID
+     , ', ', TYPE
+     , ', ', N_FIELDS
+     , ', ', PAGE_NO
+     , ', ', SPACE
+     , ', ', MERGE_THRESHOLD
+     , ');') AS INSERT_DML
+  FROM INFORMATION_SCHEMA.INNODB_INDEXES;""",
+          "escapeCharacter": "5C",
+          "quoteCharacter": "0A",
+          "fieldsTerminatedBy": "2C",
+          "linesTerminatedBy": "0A"
+        }
+      }
+    }
+    
+    try:
+      request = service.instances().export(
+            project=pubsub_message['project'],
+            instance=pubsub_message['instance'],
+            body=instances_export_request_body
+        )
+      response = request.execute()
+    except HttpError as err:
+        logging.error("Could NOT run export. Reason: {}".format(err))
+    else:
+      logging.info("Export task status: {}".format(response))
+EOF
+
+
+
+## Cloud Functions 만들기 - requirements.txt
+cat <<EOF > requirements.txt
+google-api-python-client
+Oauth2client
+EOF
+
+
+
+## Cloud Functions 만들기 - 코드 배포
+gcloud functions deploy ${GCF_NAME} \
+    --trigger-topic ${PUBSUB_TOPIC} \
+    --runtime python37 \
+    --entry-point main \
+    --service-account ${GCF_SVCACC}@${PROJECT_ID}.iam.gserviceaccount.com
+
+
+
+## Cloud Scheduler 작업 만들기
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG1} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-PORTAL", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-portal-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG2} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGCNS", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-lgcns-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG3} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGC", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-lgc-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_STG4} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"STG-LGES", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-lges-stg-mysql","project":"pjt-hrcore-stg-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV1} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-PORTAL", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-portal-dev-mysql","project":"pjt-hrcore-dev","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV2} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGCNS", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-lgcns-dev-mysql","project":"pjt-hrcore-dev","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV3} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGC", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-lgc-dev-mysql","project":"pjt-hrcore-dev","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_DEV4} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"DEV-LGES", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-lges-dev-mysql","project":"pjt-hrcore-dev","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA31} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-PORTAL", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-portal-qa3-mysql","project":"pjt-hrcore-qa3","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA32} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGCNS", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-cns-qa3-mysql","project":"pjt-hrcore-qa3-cns","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA33} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGC", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-lgc-qa3-mysql","project":"pjt-hrcore-qa3-lgc","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_QA34} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"QA3-LGES", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-lges-qa3-mysql","project":"pjt-hrcore-qa3-lges","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+	
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD1} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-PORTAL", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-portal-prd-mysql","project":"pjt-hrcore-prd-316104","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD2} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGCNS", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-cns-prd-mysql","project":"pjt-hrcore-prd-cns","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD3} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGC", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-lgc-prd-mysql","project":"pjt-hrcore-prd-lgc","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB_PRD4} \
+    --schedule '50 1 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"PRD-LGES", "db":"INFORMATION_SCHEMA","filename":"INNODB_INDEXES","instance":"csql-an3-hrcore-lges-prd-mysql","project":"pjt-hrcore-prd-lges","gs":"gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema"}' \
+    --time-zone 'Asia/Seoul'
+
+## Cloud Scheduler 작업을 수동으로 실행하여 데이터베이스의 MySQL 덤프를 트리거
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_STG4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_DEV4}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA31}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA32}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA33}
+gcloud scheduler jobs run ${SCHEDULER_JOB_QA34}
+
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD1}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD2}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD3}
+gcloud scheduler jobs run ${SCHEDULER_JOB_PRD4}
+
+
+## Cloud SQL 정상 EXPORT 실행 여부 확인
+gcloud config set project pjt-hrcore-stg-316104
+gcloud sql operations list --instance csql-an3-hrcore-portal-stg-mysql --limit 3
+gcloud sql operations list --instance csql-an3-hrcore-lgcns-stg-mysql --limit 3
+gcloud sql operations list --instance csql-an3-hrcore-lgc-stg-mysql --limit 3
+gcloud sql operations list --instance csql-an3-hrcore-lges-stg-mysql --limit 3
+
+gcloud config set project pjt-hrcore-dev
+gcloud sql operations list --instance csql-an3-hrcore-portal-dev-mysql --limit 3
+gcloud sql operations list --instance csql-an3-hrcore-lgcns-dev-mysql --limit 3
+gcloud sql operations list --instance csql-an3-hrcore-lgc-dev-mysql --limit 3
+gcloud sql operations list --instance csql-an3-hrcore-lges-dev-mysql --limit 3
+
+gcloud config set project pjt-hrcore-qa3
+gcloud sql operations list --instance csql-an3-hrcore-portal-qa3-mysql --limit 3
+gcloud config set project pjt-hrcore-qa3-cns
+gcloud sql operations list --instance csql-an3-hrcore-cns-qa3-mysql --limit 3
+gcloud config set project pjt-hrcore-qa3-lgc
+gcloud sql operations list --instance csql-an3-hrcore-lgc-qa3-mysql --limit 3
+gcloud config set project pjt-hrcore-qa3-lges
+gcloud sql operations list --instance csql-an3-hrcore-lges-qa3-mysql --limit 3
+
+gcloud config set project pjt-hrcore-prd-316104
+gcloud sql operations list --instance csql-an3-hrcore-portal-prd-mysql --limit 3
+gcloud config set project pjt-hrcore-prd-cns
+gcloud sql operations list --instance csql-an3-hrcore-cns-prd-mysql --limit 3
+gcloud config set project pjt-hrcore-prd-lgc
+gcloud sql operations list --instance csql-an3-hrcore-lgc-prd-mysql --limit 3
+gcloud config set project pjt-hrcore-prd-lges
+gcloud sql operations list --instance csql-an3-hrcore-lges-prd-mysql --limit 3
+
+## Cloud Storage 백업 정상 생성 여부 확인
+gsutil ls gs://${BUCKET_PATH} | grep backup-ERPAPP
+
+
+
+################################################# API 정상 작동 여부 테스트 스크립트 #################################################
+##	Source : csql-an3-hrcore-portal-stg-mysql		<- 여기서 export 함.
+##	Target : csql-an3-hrcore-log-stg-mysql			<- 여기로 import 함.
+##  export 함수 설명 : https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/instances/export
+##  REST API (exportContext) 설명 : https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/operations#ExportContext
+##
+##  본 파일은 "fileType": "CSV"로 export를 하되, INSERT 문을 출력하는 쿼리를 export 함.
+##  IMPORT 할 때는 "fileType": "SQL"로 import 처리할 것.
+## escapeCharacter, quoteCharacter, fieldsTerminatedBy, linesTerminatedBy 는 모두 ASCII 16진수 코드임.
+
+cat <<EOF > export_sql.json
+{
+  "exportContext":
+  {
+    "kind": "sql#exportContext",
+    "fileType": "CSV",
+    "uri": "gs://gcs-an3-hrcore-stg-bucket-log/db-information-schema/EXPORT_SQL_TEST",
+    "databases": [
+      "ERPAPP"
+    ],
+    "csvExportOptions": {
+      "selectQuery": "SELECT CONCAT('INSERT INTO INNODB_INDEXES VALUES (',
+       INDEX_ID
+     , ', ''', NAME, ''''
+     , ', ', TABLE_ID
+     , ', ', TYPE
+     , ', ', N_FIELDS
+     , ', ', PAGE_NO
+     , ', ', SPACE
+     , ', ', MERGE_THRESHOLD
+     , ');') AS INSERT_DML
+  FROM INFORMATION_SCHEMA.INNODB_INDEXES;",
+      "escapeCharacter": "5C",
+      "quoteCharacter": "0A",
+      "fieldsTerminatedBy": "2C",
+      "linesTerminatedBy": "0A"
+    }
+  }
+}
+EOF
+
+
+
+curl -X POST \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @export_sql.json \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-qa3-lges/instances/csql-an3-hrcore-lges-qa3-mysql/export"
+
+
+
+gcloud sql operations list --instance csql-an3-hrcore-lgc-stg-mysql-clone --limit 3
+###################################################################################################################
+SELECT CONCAT('INSERT INTO INNODB_INDEXES VALUES (',
+       INDEX_ID
+     , ', ''', NAME, ''''
+     , ', ', TABLE_ID
+     , ', ', TYPE
+     , ', ', N_FIELDS
+     , ', ', PAGE_NO
+     , ', ', SPACE
+     , ', ', MERGE_THRESHOLD
+     , ');') AS INSERT_DML
+  FROM INFORMATION_SCHEMA.INNODB_INDEXES;

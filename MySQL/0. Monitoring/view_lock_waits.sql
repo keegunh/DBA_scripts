@@ -43,6 +43,8 @@ SELECT
 
  
 -- sys 스키마 활용해서 data lock 대기 확인
+-- 현재 실행 중인 트랜잭션에서 획득하기 위해 기다리고 있는 InnoDB 잠금에 대한 정보 확인
+-- x$innodb_lock_waits
 SELECT
        CONVERT_TZ(wait_started, 'UTC', '+09:00') AS wait_started
      , TIMEDIFF(NOW(), CONVERT_TZ(wait_started, 'UTC', '+09:00')) AS wait_age
@@ -61,3 +63,25 @@ SELECT
   FROM sys.innodb_lock_waits
  ORDER BY 1
 ;
+
+-- 메타데이터 잠금을 획득하기 위해 대기 중인 세션과 해당 세션을 대기시킨 세션에 대한 정보 확인
+-- x$schema_table_lock_waits
+SELECT object_schema
+     , object_name
+     , waiting_thread_id
+     , waiting_pid
+     , waiting_account
+     , waiting_lock_type
+     , waiting_lock_duration
+     , waiting_query
+     , waiting_query_secs
+     , waiting_query_rows_affected
+     , waiting_query_rows_examined
+     , blocking_thread_id
+     , blocking_pid
+     , blocking_account
+     , blocking_lock_type
+     , blocking_lock_duration
+     , sql_kill_blocking_query
+     , sql_kill_blocking_connection
+  FROM sys.schema_table_lock_waits;
