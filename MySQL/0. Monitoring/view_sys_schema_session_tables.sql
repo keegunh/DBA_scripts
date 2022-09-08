@@ -1,0 +1,71 @@
+-- 현재 실행 중인 스레드들에 대한 정보 확인
+-- 실행 중인 포그라운드 및 백그라운드 스레드들이 모두 표시됨
+-- x$processlist
+SELECT thd_id
+     , conn_id
+     , user
+     , db
+     , command
+     , state
+     , time
+     , current_statement
+     , statement_latency
+     , progress
+     , lock_latency
+     , rows_examined
+     , rows_sent
+     , rows_affected
+     , tmp_tables
+     , tmp_disk_tables
+     , full_scan
+     , last_statement
+     , last_statement_latency
+     , current_memory
+     , last_wait
+     , last_wait_latency
+     , source
+     , trx_latency
+     , trx_state
+     , trx_autocommit
+     , pid
+     , program_name
+  FROM sys.processlist;
+
+-- processlist 또는 x$processlist 뷰와 동일한 정보를 제공하나 유저 세션에 해당하는 스레드들의 정보만 제공한다는 점이 다름
+-- x$session
+SELECT thd_id
+     , conn_id
+     , user
+     , db
+     , command
+     , state
+     , time
+     , current_statement
+     , statement_latency
+     , progress
+     , lock_latency
+     , rows_examined
+     , rows_sent
+     , rows_affected
+     , tmp_tables
+     , tmp_disk_tables
+     , full_scan
+     , last_statement
+     , last_statement_latency
+     , current_memory
+     , last_wait
+     , last_wait_latency
+     , source
+     , trx_latency
+     , trx_state
+     , trx_autocommit
+     , pid
+     , program_name
+  FROM sys.session;
+
+-- 각 클라이언트 연결에 대해 SSL 버전 및 암호화 방식(Cipher), SSL 세션 재사용 횟수 정보를 확인
+SELECT thread_id
+     , ssl_version
+     , ssl_cipher
+     , ssl_sessions_reused
+  FROM sys.session_ssl_status;
