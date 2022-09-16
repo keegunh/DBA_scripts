@@ -25,7 +25,7 @@ DELIMITER //
 CREATE PROCEDURE `ERPAPP`.`sp_del_cm_health_chk_log` ()
 BEGIN
 	DELETE FROM ERPAPP.CM_HEALTH_CHK_LOG 
-     WHERE date_format(date_add(date_format(NOW(), '%Y-%m-%d %H:%i:%s'), interval -7 day), '%Y%m%d') > CRT_DT;
+     WHERE date_format(date_add(date_format(NOW(), '%Y-%m-%d %H:%i:%s'), interval -7 day), '%Y%m%d') > EXEC_START_DT;
 END//
 DELIMITER ;
 
