@@ -3,6 +3,8 @@ SELECT
        t.trx_mysql_thread_id
      , CONVERT_TZ(t.trx_started, 'UTC', '+09:00') as trx_started
      , CONVERT_TZ(t.trx_wait_started, 'UTC', '+09:00') as trx_wait_started
+     , NOW() as now
+     , (UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(t.trx_started) - 32400) as lasting_sec
      , t.trx_state
      , p.user
      -- , p.time
@@ -36,5 +38,6 @@ SELECT
   FROM information_schema.innodb_trx t
  INNER JOIN information_schema.processlist p
     ON p.id = t.trx_mysql_thread_id
+ WHERE (UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(t.trx_started)) > 5 
  ORDER BY 2
 ;

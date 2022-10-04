@@ -96,13 +96,9 @@ gcloud scheduler jobs run ${SCHEDULER_JOB2}
 
 
 
-## Cloud SQL 정상 EXPORT 실행 여부 확인
+## Cloud SQL 정상 IMPORT 실행 여부 확인
 gcloud sql operations list --instance ${SQL_INSTANCE} --limit 1
 
-
-
-## Cloud Storage 백업 정상 생성 여부 확인
-gsutil ls gs://${BUCKET_PATH} | grep backup-ERPAPP
 
 
 

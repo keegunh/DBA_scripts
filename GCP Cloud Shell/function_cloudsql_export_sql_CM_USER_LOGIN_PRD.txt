@@ -50,8 +50,9 @@ def main(event, context):
      , USER_ID
      , IF(CLIENT_IP IS NULL, ', ', ', '''), IFNULL(CLIENT_IP, 'NULL'), IF(CLIENT_IP IS NULL, '', '''')
      , IF(BROWSER_TYPE IS NULL, ', ', ', '''), IFNULL(BROWSER_TYPE, 'NULL'), IF(BROWSER_TYPE IS NULL, '', '''')
-     , IF(LOGIN_TYPE IS NULL, ', ', ', '''), IFNULL(LOGIN_TYPE, 'NULL'), IF(LOGIN_TYPE IS NULL, ', ''', ''', ''')
-     , LOGIN_DT, ''', '
+     , IF(LOGIN_TYPE IS NULL, ', ', ', '''), IFNULL(LOGIN_TYPE, 'NULL'), IF(LOGIN_TYPE IS NULL, '', '''')
+     , IF(REPLACE(LOGIN_REASON,'''', '''''') IS NULL, ', ', ', '''), IFNULL(REPLACE(LOGIN_REASON,'''', ''''''), 'NULL'), IF(REPLACE(LOGIN_REASON,'''', '''''') IS NULL, '', '''')
+     , ', ''', LOGIN_DT, ''', '
      , CRT_ID, ', '''
      , CRT_DT, ''', '
      , UPDT_ID, ', '''
@@ -166,8 +167,9 @@ cat <<EOF > export_sql.json
      , USER_ID
      , IF(CLIENT_IP IS NULL, ', ', ', '''), IFNULL(CLIENT_IP, 'NULL'), IF(CLIENT_IP IS NULL, '', '''')
      , IF(BROWSER_TYPE IS NULL, ', ', ', '''), IFNULL(BROWSER_TYPE, 'NULL'), IF(BROWSER_TYPE IS NULL, '', '''')
-     , IF(LOGIN_TYPE IS NULL, ', ', ', '''), IFNULL(LOGIN_TYPE, 'NULL'), IF(LOGIN_TYPE IS NULL, ', ''', ''', ''')
-     , LOGIN_DT, ''', '
+     , IF(LOGIN_TYPE IS NULL, ', ', ', '''), IFNULL(LOGIN_TYPE, 'NULL'), IF(LOGIN_TYPE IS NULL, '', '''')
+     , IF(REPLACE(LOGIN_REASON,'''', '''''') IS NULL, ', ', ', '''), IFNULL(REPLACE(LOGIN_REASON,'''', ''''''), 'NULL'), IF(REPLACE(LOGIN_REASON,'''', '''''') IS NULL, '', '''')
+     , ', ''', LOGIN_DT, ''', '
      , CRT_ID, ', '''
      , CRT_DT, ''', '
      , UPDT_ID, ', '''
@@ -201,8 +203,9 @@ SELECT CONCAT('INSERT INTO CM_USER_LOGIN VALUES ('
      , USER_ID
      , IF(CLIENT_IP IS NULL, ', ', ', '''), IFNULL(CLIENT_IP, 'NULL'), IF(CLIENT_IP IS NULL, '', '''')
      , IF(BROWSER_TYPE IS NULL, ', ', ', '''), IFNULL(BROWSER_TYPE, 'NULL'), IF(BROWSER_TYPE IS NULL, '', '''')
-     , IF(LOGIN_TYPE IS NULL, ', ', ', '''), IFNULL(LOGIN_TYPE, 'NULL'), IF(LOGIN_TYPE IS NULL, ', ''', ''', ''')
-     , LOGIN_DT, ''', '
+     , IF(LOGIN_TYPE IS NULL, ', ', ', '''), IFNULL(LOGIN_TYPE, 'NULL'), IF(LOGIN_TYPE IS NULL, '', '''')
+     , IF(REPLACE(LOGIN_REASON,'''', '''''') IS NULL, ', ', ', '''), IFNULL(REPLACE(LOGIN_REASON,'''', ''''''), 'NULL'), IF(REPLACE(LOGIN_REASON,'''', '''''') IS NULL, '', '''')
+     , ', ''', LOGIN_DT, ''', '
      , CRT_ID, ', '''
      , CRT_DT, ''', '
      , UPDT_ID, ', '''

@@ -45,4 +45,3 @@ UPDATE performance_schema.setup_instruments
 UPDATE performance_schema.setup_consumers
    SET ENABLED = 'NO'
  WHERE NAME LIKE '%stages%';
- WHERE NAME LIKE '%stages%';

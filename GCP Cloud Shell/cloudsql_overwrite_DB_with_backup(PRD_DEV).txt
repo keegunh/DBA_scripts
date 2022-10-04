@@ -1,0 +1,194 @@
+
+## PORTAL
+	Source : csql-an3-hrcore-portal-prd-mysql
+	Target : csql-an3-hrcore-portal-dev-mysql
+
+gcloud config set project pjt-hrcore-prd-316104 
+curl -X GET \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-prd-316104/instances/csql-an3-hrcore-portal-prd-mysql/backupRuns"
+
+
+cat << EOF > backup_portal.json
+{
+  "restoreBackupContext":
+  {
+    "backupRunId": 1663700400000,
+    "project": "pjt-hrcore-prd-316104",
+    "instanceId": "csql-an3-hrcore-portal-prd-mysql"
+  }
+}
+EOF
+
+curl -X POST \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @backup_portal.json \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-dev/instances/csql-an3-hrcore-portal-dev-mysql/restoreBackup"
+
+***********************************************************************************************************************************
+
+## LGCNS
+	Source : csql-an3-hrcore-cns-prd-mysql
+	Target : csql-an3-hrcore-lgcns-dev-mysql
+
+gcloud config set project pjt-hrcore-prd-cns 
+curl -X GET \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-prd-cns/instances/csql-an3-hrcore-cns-prd-mysql/backupRuns"
+
+
+cat << EOF > backup_lgcns.json
+{
+  "restoreBackupContext":
+  {
+    "backupRunId": 1663700400000,
+    "project": "pjt-hrcore-prd-cns",
+    "instanceId": "csql-an3-hrcore-cns-prd-mysql"
+  }
+}
+EOF
+
+curl -X POST \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @backup_lgcns.json \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-dev/instances/csql-an3-hrcore-lgcns-dev-mysql/restoreBackup"
+
+***********************************************************************************************************************************
+
+## LGC
+	Source : csql-an3-hrcore-lgc-prd-mysql
+	Target : csql-an3-hrcore-lgc-dev-mysql
+
+gcloud config set project pjt-hrcore-prd-lgc
+curl -X GET \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-prd-lgc/instances/csql-an3-hrcore-lgc-prd-mysql/backupRuns"
+
+
+cat << EOF > backup_lgc.json
+{
+  "restoreBackupContext":
+  {
+    "backupRunId": 1663700400000,
+    "project": "pjt-hrcore-prd-lgc",
+    "instanceId": "csql-an3-hrcore-lgc-prd-mysql"
+  }
+}
+EOF
+
+curl -X POST \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @backup_lgc.json \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-dev/instances/csql-an3-hrcore-lgc-dev-mysql/restoreBackup"
+
+***********************************************************************************************************************************
+
+## LGES
+	Source : csql-an3-hrcore-lges-prd-mysql
+	Target : csql-an3-hrcore-lges-dev-mysql
+
+gcloud config set project pjt-hrcore-prd-lges
+curl -X GET \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-prd-lges/instances/csql-an3-hrcore-lges-prd-mysql/backupRuns"
+
+
+cat << EOF > backup_lges.json
+{
+  "restoreBackupContext":
+  {
+    "backupRunId": 1663700400000,
+    "project": "pjt-hrcore-prd-lges",
+    "instanceId": "csql-an3-hrcore-lges-prd-mysql"
+  }
+}
+EOF
+
+curl -X POST \
+-H "Authorization: Bearer "$(gcloud auth print-access-token) \
+-H "Content-Type: application/json; charset=utf-8" \
+-d @backup_lges.json \
+"https://sqladmin.googleapis.com/v1/projects/pjt-hrcore-dev/instances/csql-an3-hrcore-lges-dev-mysql/restoreBackup"
+
+***********************************************************************************************************************************
+
+
+
+
+gcloud config set project pjt-hrcore-dev
+gcloud sql users set-password erpconv --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpconv --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpconv --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpconv --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password hrrtconv --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password hrrtconv --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password hrrtconv --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password hrrtconv --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorgconv --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorgconv --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorgconv --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorgconv --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password sacconv --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password sacconv --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password sacconv --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password sacconv --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password hrrtview --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password hrrtview --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password hrrtview --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password hrrtview --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorgview --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorgview --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorgview --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorgview --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password sacview --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password sacview --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password sacview --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password sacview --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpapp --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpapp --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpapp --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpapp --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erphrrt --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erphrrt --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erphrrt --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erphrrt --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpdep --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpdep --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpdep --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpdep --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorg --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorg --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorg --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password inorg --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='roqkf00'
+gcloud sql users set-password erpview --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='erpview@'
+gcloud sql users set-password erpview --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='erpview@'
+gcloud sql users set-password erpview --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='erpview@'
+gcloud sql users set-password erpview --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='erpview@'
+gcloud sql users set-password sac --instance=csql-an3-hrcore-portal-dev-mysql --async --host=% --password='sac@'
+gcloud sql users set-password sac --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host=% --password='sac@'
+gcloud sql users set-password sac --instance=csql-an3-hrcore-lgc-dev-mysql --async --host=% --password='sac@'
+gcloud sql users set-password sac --instance=csql-an3-hrcore-lges-dev-mysql --async --host=% --password='sac@'
+
+gcloud sql users set-password root --instance=csql-an3-hrcore-portal-dev-mysql --async --host='10.1.121.193' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host='10.1.121.193' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lgc-dev-mysql --async --host='10.1.121.193' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lges-dev-mysql --async --host='10.1.121.193' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-portal-dev-mysql --async --host='10.2.183.12' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host='10.2.183.12' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lgc-dev-mysql --async --host='10.2.183.12' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lges-dev-mysql --async --host='10.2.183.12' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-portal-dev-mysql --async --host='10.65.60.10' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host='10.65.60.10' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lgc-dev-mysql --async --host='10.65.60.10' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lges-dev-mysql --async --host='10.65.60.10' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-portal-dev-mysql --async --host='10.65.62.115' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host='10.65.62.115' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lgc-dev-mysql --async --host='10.65.62.115' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lges-dev-mysql --async --host='10.65.62.115' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-portal-dev-mysql --async --host='10.65.78.123' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lgcns-dev-mysql --async --host='10.65.78.123' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lgc-dev-mysql --async --host='10.65.78.123' --password='SingleHrvmffotvha!'
+gcloud sql users set-password root --instance=csql-an3-hrcore-lges-dev-mysql --async --host='10.65.78.123' --password='SingleHrvmffotvha!'

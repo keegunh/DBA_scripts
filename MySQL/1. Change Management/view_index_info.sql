@@ -60,3 +60,14 @@ SELECT
 	 , 'SAC')
  ORDER BY 1, 2, 3, 6
 ;
+
+
+-- 사용자가 생성한 테이블들에 존재하는 인덱스들의 목록 확인
+-- 인덱스 이름 및 유니크 속성, 구성 칼럼 등의 정보 확인
+SELECT table_schema
+     , table_name
+     , index_name
+     , non_unique
+     , subpart_exists
+     , index_columns
+  FROM sys.x$schema_flattened_keys;

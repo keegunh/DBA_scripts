@@ -91,3 +91,23 @@ SELECT
  WHERE p.user = 'erpconv'
  ORDER BY 2
 ;
+
+
+
+
+ALTER USER `erpconv`@`%` PASSWORD EXPIRE NEVER;
+ALTER USER `erpview`@`%` PASSWORD EXPIRE NEVER;
+ALTER USER `hrrtconv`@`%` PASSWORD EXPIRE NEVER;
+ALTER USER `hrrtview`@`%` PASSWORD EXPIRE NEVER;
+ALTER USER `inorgconv`@`%` PASSWORD EXPIRE NEVER;
+ALTER USER `inorgview`@`%` PASSWORD EXPIRE NEVER;
+ALTER USER `sacconv`@`%` PASSWORD EXPIRE NEVER;
+ALTER USER `sacview`@`%` PASSWORD EXPIRE NEVER;
+
+select host
+     , user
+	 , password_expired
+	 , password_last_changed
+	 , password_lifetime
+	 , account_locked
+  from mysql.user;

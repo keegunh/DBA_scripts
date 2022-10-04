@@ -84,4 +84,7 @@ SELECT object_schema
      , blocking_lock_duration
      , sql_kill_blocking_query
      , sql_kill_blocking_connection
-  FROM sys.schema_table_lock_waits;
+  FROM sys.schema_table_lock_waits
+ WHERE waiting_pid <> blocking_pid
+ ORDER BY 1 DESC
+;

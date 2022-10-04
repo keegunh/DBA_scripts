@@ -1,127 +1,229 @@
 ################### LOG DB ######################
 show schemas;
 
--- STG PORTAL (그제까지의 데이터)
-select count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT) -- 202891
-  from STG_PORTAL.CM_HEALTH_CHK_LOG where EXEC_START_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-select count(1), max(AUTO_INC_SEQ_ID), max(CRT_DT) -- 15042
-  from STG_PORTAL.CM_USER_LOGIN where CRT_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
+-- CM_USER_LOGIN
+-- PRD_PORTAL
+SELECT SUBSTR(YYYYMMDD, 1, 6) AS YYYYMM
+     , COUNT(CNT) DAY_COUNT
+	 , SUM(CNT) AS DATA_COUNT
+	 , MAX(AUTO_INC_SEQ_ID) AS MAX_AUTO_INC_SEQ_ID
+	 , MAX(CRT_DT) AS MAX_CRT_DT
+  FROM (SELECT SUBSTR(CRT_DT, 1, 8) AS YYYYMMDD
+             , COUNT(1) AS CNT
+			 , MAX(AUTO_INC_SEQ_ID) AS AUTO_INC_SEQ_ID
+			 , MAX(CRT_DT) AS CRT_DT
+          FROM PRD_PORTAL.CM_USER_LOGIN
+         -- WHERE CRT_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+         GROUP BY SUBSTR(CRT_DT, 1, 8)) X
+ GROUP BY SUBSTR(YYYYMMDD, 1, 6);
+SELECT SUBSTR(EXEC_START_DT, 1, 8)
+     , COUNT(1)
+	 , MAX(AUTO_INC_SEQ_ID)
+	 , MAX(EXEC_START_DT)
+  FROM PRD_PORTAL.CM_HEALTH_CHK_LOG
+ -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+ GROUP BY SUBSTR(EXEC_START_DT, 1, 8);
 
--- STG PORTAL (어제 + 오늘 데이터)
-select count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT) -- 0
-  from STG_PORTAL.CM_HEALTH_CHK_LOG where EXEC_START_DT >= date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-select count(1), max(AUTO_INC_SEQ_ID), max(CRT_DT) -- 0
-  from STG_PORTAL.CM_USER_LOGIN where CRT_DT >= date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-
-  
-  
--- STG LGCNS (그제까지의 데이터)
-select count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT) -- 1141127
-  from STG_LGCNS.CM_HEALTH_CHK_LOG where EXEC_START_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-select count(1), max(AUTO_INC_SEQ_ID), max(CRT_DT) -- 27154
-  from STG_LGCNS.CM_USER_LOGIN where CRT_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-
--- STG LGCNS (어제 + 오늘 데이터)
-select count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT) -- 0
-  from STG_LGCNS.CM_HEALTH_CHK_LOG where EXEC_START_DT >= date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-select count(1), max(AUTO_INC_SEQ_ID), max(CRT_DT) -- 0
-  from STG_LGCNS.CM_USER_LOGIN where CRT_DT >= date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-
-  
-  
--- STG LGC (그제까지의 데이터)
-select count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT) -- 770900
-  from STG_LGC.CM_HEALTH_CHK_LOG where EXEC_START_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-select count(1), max(AUTO_INC_SEQ_ID), max(CRT_DT) -- 21634
-  from STG_LGC.CM_USER_LOGIN where CRT_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-
--- STG LGC (어제 + 오늘 데이터)
-select count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT) -- 0
-  from STG_LGC.CM_HEALTH_CHK_LOG where EXEC_START_DT >= date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-select count(1), max(AUTO_INC_SEQ_ID), max(CRT_DT) -- 0
-  from STG_LGC.CM_USER_LOGIN where CRT_DT >= date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-  
-  
-  
--- STG LGES (그제까지의 데이터)
-select count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT) -- 562518
-  from STG_LGES.CM_HEALTH_CHK_LOG where EXEC_START_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-select count(1), max(AUTO_INC_SEQ_ID), max(CRT_DT) -- 16444
-  from STG_LGES.CM_USER_LOGIN where CRT_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-
--- STG LGES (어제 + 오늘 데이터)
-select count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT) -- 0
-  from STG_LGES.CM_HEALTH_CHK_LOG where EXEC_START_DT >= date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-select count(1), max(AUTO_INC_SEQ_ID), max(CRT_DT) -- 0
-  from STG_LGES.CM_USER_LOGIN where CRT_DT >= date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-
-
-
-
-
-
-
-
-
-
-
-################### PORTAL, LGCNS, LGC, LGES DB ######################
--- (그제까지의 데이터)
-select count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT)
-  from ERPAPP.CM_HEALTH_CHK_LOG where EXEC_START_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-select count(1), max(AUTO_INC_SEQ_ID), max(CRT_DT)
-  from ERPAPP.CM_USER_LOGIN where CRT_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-
--- (어제 + 오늘 데이터)
-select count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT)
-  from ERPAPP.CM_HEALTH_CHK_LOG where EXEC_START_DT >= date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-select count(1), max(AUTO_INC_SEQ_ID), max(CRT_DT)
-  from ERPAPP.CM_USER_LOGIN where CRT_DT >= date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d');
-
-/*  
-SOURCE DB DATA
-STG PORTAL
-	그제까지의 데이터 :
-		- ERPAPP.CM_HEALTH_CHK_LOG : 202891
-		- ERPAPP.CM_USER_LOGIN : 15042
-	어제 + 오늘 데이터 :
-		- ERPAPP.CM_HEALTH_CHK_LOG : 0 
-		- ERPAPP.CM_USER_LOGIN : 17
-
-STG LGCNS
-	그제까지의 데이터 :
-		- ERPAPP.CM_HEALTH_CHK_LOG : 1141142
-		- ERPAPP.CM_USER_LOGIN : 27154
-	어제 + 오늘 데이터 :
-		- ERPAPP.CM_HEALTH_CHK_LOG : 2000
-		- ERPAPP.CM_USER_LOGIN : 34
-		
-STG LGC
-	그제까지의 데이터 :
-		- ERPAPP.CM_HEALTH_CHK_LOG : 771981
-		- ERPAPP.CM_USER_LOGIN : 21634
-	어제 + 오늘 데이터 :
-		- ERPAPP.CM_HEALTH_CHK_LOG : 2121
-		- ERPAPP.CM_USER_LOGIN : 49
-		
-STG LGES
-	그제까지의 데이터 :
-		- ERPAPP.CM_HEALTH_CHK_LOG : 562518
-		- ERPAPP.CM_USER_LOGIN : 16444
-	어제 + 오늘 데이터 :
-		- ERPAPP.CM_HEALTH_CHK_LOG : 2222
-		- ERPAPP.CM_USER_LOGIN : 34
-*/
-
-
-
-################### 누락된 데이터 찾기 ######################
-select substr(EXEC_START_DT, 1, 6), count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT) -- 770900
-  from ERPAPP.CM_HEALTH_CHK_LOG where EXEC_START_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d')
- group by substr(EXEC_START_DT, 1, 6);
+-- PRD_LGCNS
+SELECT SUBSTR(YYYYMMDD, 1, 6) AS YYYYMM
+     , COUNT(CNT) DAY_COUNT
+	 , SUM(CNT) AS DATA_COUNT
+	 , MAX(AUTO_INC_SEQ_ID) AS MAX_AUTO_INC_SEQ_ID
+	 , MAX(CRT_DT) AS MAX_CRT_DT
+  FROM (SELECT SUBSTR(CRT_DT, 1, 8) AS YYYYMMDD
+             , COUNT(1) AS CNT
+			 , MAX(AUTO_INC_SEQ_ID) AS AUTO_INC_SEQ_ID
+			 , MAX(CRT_DT) AS CRT_DT
+          FROM PRD_LGCNS.CM_USER_LOGIN
+         -- WHERE CRT_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+         GROUP BY SUBSTR(CRT_DT, 1, 8)) X
+ GROUP BY SUBSTR(YYYYMMDD, 1, 6);
+SELECT SUBSTR(EXEC_START_DT, 1, 8)
+     , COUNT(1)
+	 , MAX(AUTO_INC_SEQ_ID)
+	 , MAX(EXEC_START_DT)
+  FROM PRD_LGCNS.CM_HEALTH_CHK_LOG
+ -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+ GROUP BY SUBSTR(EXEC_START_DT, 1, 8);
  
-select substr(EXEC_START_DT, 1, 6), count(1), max(AUTO_INC_SEQ_ID), max(EXEC_START_DT) -- 770900
-  from ERPAPP.CM_HEALTH_CHK_LOG
- where EXEC_START_DT < date_format(date_add(date_format(now(), '%Y-%m-%d %H:%i:%s'), interval -1 day), '%Y%m%d')
-   and substr(EXEC_START_DT, 1, 6) = '202208' 
- group by substr(EXEC_START_DT, 1, 6);
+-- PRD_LGC 
+SELECT SUBSTR(YYYYMMDD, 1, 6) AS YYYYMM
+     , COUNT(CNT) DAY_COUNT
+	 , SUM(CNT) AS DATA_COUNT
+	 , MAX(AUTO_INC_SEQ_ID) AS MAX_AUTO_INC_SEQ_ID
+	 , MAX(CRT_DT) AS MAX_CRT_DT
+  FROM (SELECT SUBSTR(CRT_DT, 1, 8) AS YYYYMMDD
+             , COUNT(1) AS CNT
+			 , MAX(AUTO_INC_SEQ_ID) AS AUTO_INC_SEQ_ID
+			 , MAX(CRT_DT) AS CRT_DT
+          FROM PRD_LGC.CM_USER_LOGIN
+         -- WHERE CRT_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+         GROUP BY SUBSTR(CRT_DT, 1, 8)) X
+ GROUP BY SUBSTR(YYYYMMDD, 1, 6);
+SELECT SUBSTR(EXEC_START_DT, 1, 8)
+     , COUNT(1)
+	 , MAX(AUTO_INC_SEQ_ID)
+	 , MAX(EXEC_START_DT)
+  FROM PRD_LGC.CM_HEALTH_CHK_LOG
+ -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+ GROUP BY SUBSTR(EXEC_START_DT, 1, 8);
+ 
+-- PRD_LGES
+SELECT SUBSTR(YYYYMMDD, 1, 6) AS YYYYMM
+     , COUNT(CNT) DAY_COUNT
+	 , SUM(CNT) AS DATA_COUNT
+	 , MAX(AUTO_INC_SEQ_ID) AS MAX_AUTO_INC_SEQ_ID
+	 , MAX(CRT_DT) AS MAX_CRT_DT
+  FROM (SELECT SUBSTR(CRT_DT, 1, 8) AS YYYYMMDD
+             , COUNT(1) AS CNT
+			 , MAX(AUTO_INC_SEQ_ID) AS AUTO_INC_SEQ_ID
+			 , MAX(CRT_DT) AS CRT_DT
+          FROM PRD_LGES.CM_USER_LOGIN
+         -- WHERE CRT_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+         GROUP BY SUBSTR(CRT_DT, 1, 8)) X
+ GROUP BY SUBSTR(YYYYMMDD, 1, 6);
+SELECT SUBSTR(EXEC_START_DT, 1, 8)
+     , COUNT(1)
+	 , MAX(AUTO_INC_SEQ_ID)
+	 , MAX(EXEC_START_DT)
+  FROM PRD_LGES.CM_HEALTH_CHK_LOG
+ -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+ GROUP BY SUBSTR(EXEC_START_DT, 1, 8);
+
+################### PORTAL, LGCNS, LGC, LGES ######################
+-- ERPAPP 
+SELECT SUBSTR(YYYYMMDD, 1, 6) AS YYYYMM
+     , COUNT(CNT) DAY_COUNT
+	 , SUM(CNT) AS DATA_COUNT
+	 , MAX(AUTO_INC_SEQ_ID) AS MAX_AUTO_INC_SEQ_ID
+	 , MAX(CRT_DT) AS MAX_CRT_DT
+  FROM (SELECT SUBSTR(CRT_DT, 1, 8) AS YYYYMMDD
+             , COUNT(1) AS CNT
+			 , MAX(AUTO_INC_SEQ_ID) AS AUTO_INC_SEQ_ID
+			 , MAX(CRT_DT) AS CRT_DT
+          FROM ERPAPP.CM_USER_LOGIN
+         -- WHERE CRT_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+         GROUP BY SUBSTR(CRT_DT, 1, 8)) X
+ GROUP BY SUBSTR(YYYYMMDD, 1, 6);
+SELECT SUBSTR(EXEC_START_DT, 1, 8)
+     , COUNT(1)
+	 , MAX(AUTO_INC_SEQ_ID)
+	 , MAX(EXEC_START_DT)
+  FROM ERPAPP.CM_HEALTH_CHK_LOG
+ -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+ GROUP BY SUBSTR(EXEC_START_DT, 1, 8);
+
+##########################################################################################################################################
+
+################### LOG DB ######################
+-- CM_HEALTH_CHK_LOG
+-- PRD_PORTAL
+SELECT SUBSTR(YYYYMMDD, 1, 6) AS YYYYMM
+     , COUNT(CNT) DAY_COUNT
+	 , SUM(CNT) AS DATA_COUNT
+	 , MAX(AUTO_INC_SEQ_ID) AS MAX_AUTO_INC_SEQ_ID
+	 , MAX(EXEC_START_DT) AS MAX_EXEC_START_DT
+  FROM (SELECT SUBSTR(EXEC_START_DT, 1, 8) AS YYYYMMDD
+             , COUNT(1) AS CNT
+			 , MAX(AUTO_INC_SEQ_ID) AS AUTO_INC_SEQ_ID
+			 , MAX(EXEC_START_DT) AS EXEC_START_DT
+          FROM PRD_PORTAL.CM_HEALTH_CHK_LOG
+         -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+         GROUP BY SUBSTR(EXEC_START_DT, 1, 8)) X
+ GROUP BY SUBSTR(YYYYMMDD, 1, 6);
+SELECT SUBSTR(EXEC_START_DT, 1, 8)
+     , COUNT(1)
+	 , MAX(AUTO_INC_SEQ_ID)
+	 , MAX(EXEC_START_DT)
+  FROM PRD_PORTAL.CM_HEALTH_CHK_LOG
+ -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+ GROUP BY SUBSTR(EXEC_START_DT, 1, 8);
+
+-- PRD_LGCNS
+SELECT SUBSTR(YYYYMMDD, 1, 6) AS YYYYMM
+     , COUNT(CNT) DAY_COUNT
+	 , SUM(CNT) AS DATA_COUNT
+	 , MAX(AUTO_INC_SEQ_ID) AS MAX_AUTO_INC_SEQ_ID
+	 , MAX(EXEC_START_DT) AS MAX_EXEC_START_DT
+  FROM (SELECT SUBSTR(EXEC_START_DT, 1, 8) AS YYYYMMDD
+             , COUNT(1) AS CNT
+			 , MAX(AUTO_INC_SEQ_ID) AS AUTO_INC_SEQ_ID
+			 , MAX(EXEC_START_DT) AS EXEC_START_DT
+          FROM PRD_LGCNS.CM_HEALTH_CHK_LOG
+         -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+         GROUP BY SUBSTR(EXEC_START_DT, 1, 8)) X
+ GROUP BY SUBSTR(YYYYMMDD, 1, 6);
+SELECT SUBSTR(EXEC_START_DT, 1, 8)
+     , COUNT(1)
+	 , MAX(AUTO_INC_SEQ_ID)
+	 , MAX(EXEC_START_DT)
+  FROM PRD_LGCNS.CM_HEALTH_CHK_LOG
+ -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+ GROUP BY SUBSTR(EXEC_START_DT, 1, 8);
+ 
+-- PRD_LGC 
+SELECT SUBSTR(YYYYMMDD, 1, 6) AS YYYYMM
+     , COUNT(CNT) DAY_COUNT
+	 , SUM(CNT) AS DATA_COUNT
+	 , MAX(AUTO_INC_SEQ_ID) AS MAX_AUTO_INC_SEQ_ID
+	 , MAX(EXEC_START_DT) AS MAX_EXEC_START_DT
+  FROM (SELECT SUBSTR(EXEC_START_DT, 1, 8) AS YYYYMMDD
+             , COUNT(1) AS CNT
+			 , MAX(AUTO_INC_SEQ_ID) AS AUTO_INC_SEQ_ID
+			 , MAX(EXEC_START_DT) AS EXEC_START_DT
+          FROM PRD_LGC.CM_HEALTH_CHK_LOG
+         -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+         GROUP BY SUBSTR(EXEC_START_DT, 1, 8)) X
+ GROUP BY SUBSTR(YYYYMMDD, 1, 6);
+SELECT SUBSTR(EXEC_START_DT, 1, 8)
+     , COUNT(1)
+	 , MAX(AUTO_INC_SEQ_ID)
+	 , MAX(EXEC_START_DT)
+  FROM PRD_LGC.CM_HEALTH_CHK_LOG
+ -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+ GROUP BY SUBSTR(EXEC_START_DT, 1, 8);
+ 
+-- PRD_LGES
+SELECT SUBSTR(YYYYMMDD, 1, 6) AS YYYYMM
+     , COUNT(CNT) DAY_COUNT
+	 , SUM(CNT) AS DATA_COUNT
+	 , MAX(AUTO_INC_SEQ_ID) AS MAX_AUTO_INC_SEQ_ID
+	 , MAX(EXEC_START_DT) AS MAX_EXEC_START_DT
+  FROM (SELECT SUBSTR(EXEC_START_DT, 1, 8) AS YYYYMMDD
+             , COUNT(1) AS CNT
+			 , MAX(AUTO_INC_SEQ_ID) AS AUTO_INC_SEQ_ID
+			 , MAX(EXEC_START_DT) AS EXEC_START_DT
+          FROM PRD_LGES.CM_HEALTH_CHK_LOG
+         -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+         GROUP BY SUBSTR(EXEC_START_DT, 1, 8)) X
+ GROUP BY SUBSTR(YYYYMMDD, 1, 6);
+SELECT SUBSTR(EXEC_START_DT, 1, 8)
+     , COUNT(1)
+	 , MAX(AUTO_INC_SEQ_ID)
+	 , MAX(EXEC_START_DT)
+  FROM PRD_LGES.CM_HEALTH_CHK_LOG
+ -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+ GROUP BY SUBSTR(EXEC_START_DT, 1, 8);
+
+################### PORTAL, LGCNS, LGC, LGES ######################
+-- ERPAPP
+SELECT SUBSTR(YYYYMMDD, 1, 6) AS YYYYMM
+     , COUNT(CNT) DAY_COUNT
+	 , SUM(CNT) AS DATA_COUNT
+	 , MAX(AUTO_INC_SEQ_ID) AS MAX_AUTO_INC_SEQ_ID
+	 , MAX(EXEC_START_DT) AS MAX_EXEC_START_DT
+  FROM (SELECT SUBSTR(EXEC_START_DT, 1, 8) AS YYYYMMDD
+             , COUNT(1) AS CNT
+			 , MAX(AUTO_INC_SEQ_ID) AS AUTO_INC_SEQ_ID
+			 , MAX(EXEC_START_DT) AS EXEC_START_DT
+          FROM ERPAPP.CM_HEALTH_CHK_LOG
+         -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+         GROUP BY SUBSTR(EXEC_START_DT, 1, 8)) X
+ GROUP BY SUBSTR(YYYYMMDD, 1, 6);
+SELECT SUBSTR(EXEC_START_DT, 1, 8)
+     , COUNT(1)
+	 , MAX(AUTO_INC_SEQ_ID)
+	 , MAX(EXEC_START_DT)
+  FROM ERPAPP.CM_HEALTH_CHK_LOG
+ -- WHERE EXEC_START_DT BETWEEN '20220925000000' AND DATE_FORMAT(DATE_ADD(DATE_FORMAT(NOW(), '%Y%m%d%H%I%S'), INTERVAL -1 DAY), '%Y%M%D')
+ GROUP BY SUBSTR(EXEC_START_DT, 1, 8);
