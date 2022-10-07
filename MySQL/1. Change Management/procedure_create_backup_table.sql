@@ -10,6 +10,7 @@ BEGIN
 
 	-- DECLARE CONDITIONS
 	DECLARE ER_TABLE_EXISTS_ERROR CONDITION FOR SQLSTATE '42S01';
+	DECLARE ER_BAD_TABLE_ERROR CONDITION FOR SQLSTATE '42S02';
 
 	-- DECLARE HANDLERS
 	DECLARE EXIT HANDLER FOR ER_TABLE_EXISTS_ERROR
@@ -17,6 +18,12 @@ BEGIN
 		SET @sql_create = NULL;
 		SET @sql_insert = NULL;
 		SELECT CONCAT('Backup table already exists for date: ', v_yyyymmdd, '. (SQLSTATE 42S01)') AS ERROR_MESSAGE;
+	END;
+	DECLARE EXIT HANDLER FOR ER_BAD_TABLE_ERROR
+	BEGIN
+		SET @sql_create = NULL;
+		SET @sql_insert = NULL;
+		SELECT CONCAT('No such table exists. (SQLSTATE 42S02)') AS ERROR_MESSAGE;
 	END;
 		
 	DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION
@@ -30,7 +37,6 @@ BEGIN
 -- 	SELECT @sql_create AS CREATE_DDL;
 	PREPARE v_create_stmt FROM @sql_create;
 	EXECUTE v_create_stmt;
-	SET @sql_create = NULL;
 	DEALLOCATE PREPARE v_create_stmt;
 
 	SET @sql_insert = CONCAT('INSERT INTO ', p_schema_name, '.', p_table_name, '_BACKUP_', v_yyyymmdd, ' SELECT * FROM ', p_schema_name, '.', p_table_name, ';' );
@@ -38,7 +44,8 @@ BEGIN
 	PREPARE v_insert_stmt FROM @sql_insert;
 	EXECUTE v_insert_stmt;
 	COMMIT;
-	SET @sql_insert = NULL;
 	DEALLOCATE PREPARE v_insert_stmt;
+	SET @sql_create = NULL;
+	SET @sql_insert = NULL;
 END//
 DELIMITER ;
