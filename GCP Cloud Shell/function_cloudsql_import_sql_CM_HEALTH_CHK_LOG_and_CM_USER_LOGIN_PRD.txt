@@ -90,13 +90,13 @@ gcloud scheduler jobs create pubsub ${SCHEDULER_JOB2} \
     --schedule '0 23 * * *' --topic ${PUBSUB_TOPIC} \
     --message-body '{"div":"LGCNS", "db":"PRD_LGCNS","filename":"CM_USER_LOGIN","instance":"csql-an3-hrcore-log-prd-mysql","project":"pjt-hrcore-prd-316104","gs":"gs://gcs-an3-hrcore-prd-bucket-log/db-application-access-history"}' \
     --time-zone 'Asia/Seoul'
-gcloud scheduler jobs create pubsub ${SCHEDULER_JOB3} \
-    --schedule '30 23 * * *' --topic ${PUBSUB_TOPIC} \
-    --message-body '{"div":"LGC", "db":"PRD_LGC","filename":"CM_USER_LOGIN","instance":"csql-an3-hrcore-log-prd-mysql","project":"pjt-hrcore-prd-316104","gs":"gs://gcs-an3-hrcore-prd-bucket-log/db-application-access-history"}' \
-    --time-zone 'Asia/Seoul'
 gcloud scheduler jobs create pubsub ${SCHEDULER_JOB4} \
-    --schedule '0 0 * * *' --topic ${PUBSUB_TOPIC} \
+    --schedule '30 23 * * *' --topic ${PUBSUB_TOPIC} \
     --message-body '{"div":"LGES", "db":"PRD_LGES","filename":"CM_USER_LOGIN","instance":"csql-an3-hrcore-log-prd-mysql","project":"pjt-hrcore-prd-316104","gs":"gs://gcs-an3-hrcore-prd-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB3} \
+    --schedule '0 0 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"LGC", "db":"PRD_LGC","filename":"CM_USER_LOGIN","instance":"csql-an3-hrcore-log-prd-mysql","project":"pjt-hrcore-prd-316104","gs":"gs://gcs-an3-hrcore-prd-bucket-log/db-application-access-history"}' \
     --time-zone 'Asia/Seoul'
 	
 gcloud scheduler jobs create pubsub ${SCHEDULER_JOB5} \
@@ -107,15 +107,14 @@ gcloud scheduler jobs create pubsub ${SCHEDULER_JOB6} \
     --schedule '30 1 * * *' --topic ${PUBSUB_TOPIC} \
     --message-body '{"div":"LGCNS", "db":"PRD_LGCNS","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-log-prd-mysql","project":"pjt-hrcore-prd-316104","gs":"gs://gcs-an3-hrcore-prd-bucket-log/db-application-access-history"}' \
     --time-zone 'Asia/Seoul'
-gcloud scheduler jobs create pubsub ${SCHEDULER_JOB7} \
-    --schedule '30 2 * * *' --topic ${PUBSUB_TOPIC} \
-    --message-body '{"div":"LGC", "db":"PRD_LGC","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-log-prd-mysql","project":"pjt-hrcore-prd-316104","gs":"gs://gcs-an3-hrcore-prd-bucket-log/db-application-access-history"}' \
-    --time-zone 'Asia/Seoul'
 gcloud scheduler jobs create pubsub ${SCHEDULER_JOB8} \
-    --schedule '30 3 * * *' --topic ${PUBSUB_TOPIC} \
+    --schedule '30 2 * * *' --topic ${PUBSUB_TOPIC} \
     --message-body '{"div":"LGES", "db":"PRD_LGES","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-log-prd-mysql","project":"pjt-hrcore-prd-316104","gs":"gs://gcs-an3-hrcore-prd-bucket-log/db-application-access-history"}' \
     --time-zone 'Asia/Seoul'
-
+gcloud scheduler jobs create pubsub ${SCHEDULER_JOB7} \
+    --schedule '30 3 * * *' --topic ${PUBSUB_TOPIC} \
+    --message-body '{"div":"LGC", "db":"PRD_LGC","filename":"CM_HEALTH_CHK_LOG","instance":"csql-an3-hrcore-log-prd-mysql","project":"pjt-hrcore-prd-316104","gs":"gs://gcs-an3-hrcore-prd-bucket-log/db-application-access-history"}' \
+    --time-zone 'Asia/Seoul'
 
 ## Cloud Scheduler 작업을 수동으로 실행하여 데이터베이스의 MySQL 덤프를 트리거
 gcloud scheduler jobs run ${SCHEDULER_JOB1}
