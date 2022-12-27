@@ -29,7 +29,7 @@ SELECT variable_name
   FROM performance_schema.persisted_variables
 ;
 
--- 전체 시스템 변수에 대해 설정 가능한 값 범위 및 가장 최근에 변수의 값을 변경한 계정 정보 확인
+-- 전체 시스템 변수에 대해 설정 가능한 값 범위 및 가장 최근에 변수의 값을 변경한 계정 정보 확인 (참고 정보!!!)
 SELECT variable_name
      , variable_source
      , variable_path

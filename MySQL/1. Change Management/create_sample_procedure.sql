@@ -38,3 +38,81 @@ END//
 DELIMITER ;
 
 SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME LIKE 'sp_del%';
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+	GET DIAGNOSTICS EXAMPLE
+	Here is an example that uses GET DIAGNOSTICS and an exception handler in stored procedure context to assess the outcome of an insert operation. 
+	If the insert was successful, the procedure uses GET DIAGNOSTICS to get the rows-affected count. 
+	This shows that you can use GET DIAGNOSTICS multiple times to retrieve information about a statement 
+	as long as the current diagnostics area has not been cleared.
+	https://dev.mysql.com/doc/refman/8.0/en/get-diagnostics.html
+*/
+
+CREATE PROCEDURE do_insert(value INT)
+BEGIN
+  -- Declare variables to hold diagnostics area information
+  DECLARE code CHAR(5) DEFAULT '00000';
+  DECLARE msg TEXT;
+  DECLARE nrows INT;
+  DECLARE result TEXT;
+  -- Declare exception handler for failed insert
+  DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    BEGIN
+      GET DIAGNOSTICS CONDITION 1
+        code = RETURNED_SQLSTATE, msg = MESSAGE_TEXT;
+    END;
+
+  -- Perform the insert
+  INSERT INTO t1 (int_col) VALUES(value);
+  -- Check whether the insert was successful
+  IF code = '00000' THEN
+    GET DIAGNOSTICS nrows = ROW_COUNT;
+    SET result = CONCAT('insert succeeded, row count = ',nrows);
+  ELSE
+    SET result = CONCAT('insert failed, error = ',code,', message = ',msg);
+  END IF;
+  -- Say what happened
+  SELECT result;
+END;
+
+
+mysql> CALL do_insert(1);
++---------------------------------+
+| result                          |
++---------------------------------+
+| insert succeeded, row count = 1 |
++---------------------------------+
+
+mysql> CALL do_insert(NULL);
++-------------------------------------------------------------------------+
+| result                                                                  |
++-------------------------------------------------------------------------+
+| insert failed, error = 23000, message = Column 'int_col' cannot be null |
++-------------------------------------------------------------------------+
+
+
+
+
+
+
+
+
+
+GET DIAGNOSTICS @p1 = NUMBER, @p2 = ROW_COUNT;
+SELECT @p1, @p2;
+
+GET DIAGNOSTICS CONDITION @p1 @p3 = RETURNED_SQLSTATE, @p4 = MESSAGE_TEXT;
+SELECT @p3, @p4;
+SHOW ERRORS;
+SHOW WARNINGS;

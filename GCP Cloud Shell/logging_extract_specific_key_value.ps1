@@ -5,7 +5,7 @@
 $timeNow = Get-Date
 $timeFormatted = $TimeNow.ToString("yyyyMMddHHmmss")
 
-# 경로 및 파일명 설정
+# 경로 및 파일명 설정 (inDir : jsonFile 이 있는 폴더 경로, jsonFile : json 파일명, outDir : 결과 파일을 담을 폴더 경로)
 $inDir="C:\Users\80517\Downloads"
 $jsonFile="downloaded-logs-20221208-092557"
 $outDir="D:\2022 공통업무 상향 평준화 HR Core 프로젝트\스크립트\dba_private\GCP Cloud Shell\ConvertFrom-Json"

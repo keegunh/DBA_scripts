@@ -1,7 +1,10 @@
 ## POWERSHELL
 ## 운영 DB slow query 확인
 
+# DB인스턴스 별 slow query 파일을 담을 폴더 경로
 cd C:\Users\80517\Desktop\daily_check\slow_query
+
+
 $TodayUTC = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
 echo ".GCP Cloud SQL Production DB Slow Query Check" > PORTAL-SLOW-QUERY-${TodayUTC}-tmp.txt
 echo ".Today's UTC date is ${TodayUTC}" >> PORTAL-SLOW-QUERY-${TodayUTC}-tmp.txt
