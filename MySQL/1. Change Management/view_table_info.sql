@@ -69,3 +69,6 @@ CALL sys.table_exists(in_db VARCHAR(64), in_table VARCHAR(64), @out_exists)
     CALL sys.table_exists('ERPAPP', 'BACKUP_CM_CODE_M_0310', @out_exists);
     select @out_exists;
 */
+
+
+show table status from [SCHEMA];
