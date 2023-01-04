@@ -1,0 +1,50 @@
+--> SAP_HANA_SQL_and_System_Views_Reference_en.pdf을 참조
+
+--가. System View 
+
+--. BACKUP CATALOG SELECT
+M_BACKUP_CATALOG
+M_BACKUP_CATALOG_FILES
+M_XXXXESTIMATIONS
+
+--. 테이블 사용량 조회
+M_CS_TABLES
+
+-- SAP HANA 1.0 backup estimate size
+select volume_id,sum(allocated_page_size)
+from m_convert_statistics 
+group by volume_id
+
+select sum(allocated_page_size)
+from m_convert_statistics 
+
+-- SAP HANA 2.0 backup estimate size
+select sum(estimated_size) 
+from m_backup_size_estimations
+
+
+--. Non Default Value Parameter 조회, 교재 2권 p439
+SELECT * FROM M_INIFILE_CONTENTS
+WHERE LAYER_NAME != 'DEFAULT'
+
+--. ALL PRIVILEGE
+select * from effective_privileges
+where user_name = 'STUDENT04'
+
+--> CONNECT FAILED 
+select * from invalid_connect_attempts
+
+--. util 
+hdbsql -U (hdbuserstore로 생성된 key사용), -I (??.sql을 수행)
+hdbbackupdiag ( backup catalog check,generate..)
+
+--. User lock/unlock Cli
+alter user student02 deactivate user now
+alter user student02 activate user now
+
+--. Number of allowed failed logon attempts, p440
+alter user username reset connect attempts  
+--> reset invalid logon attempts (invalid_connect_attempts view 내용 0 초기화)
+alter user username drop connect attempts  
+-->delete information ( invalid_connect_attempts 내용 삭제)
+

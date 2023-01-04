@@ -1,0 +1,176 @@
+SAP HANA 2.0 SPS6 -> 2.00.060 -> SAP HANA System Install
+
+
+Gmail
+psj272709@gmail.com
+bizmaster0@gmail.com
+winnie.jooyoung@gmail.com
+keegun.h@gmail.com
+puerudin@gmail.com
+ggosea@gmail.com
+
+
+
+SAP HANA System 2.0 SPS060(GA) -> 061...062...(Revision..)
+
+Certi => OS : RHEL8.x or SLES15 SPx
+
+Appliance vs TDI 설치위한 준비사항>
+
+1. OS ? RHEL or SLES
+2. OS Version? 
+3. Disk Partitioning ( 
+/ 
+swap 
+/usr/sap 
+/hana/shared 
+/hana/data 
+/hana/log
+4. SID.. 정보 결정...
+
+
+--1. SID
+PRD=QAS=DEV UID/GID, IN=00
+SID=YSP  IN=00
+      YSQ  IN=00
+      YSD  IN=00
+1 OS = DEV(SID=H4D, IN=05), QAS ( SID=H46, IN=03)
+
+SID = H46   /* SID= SYSTEM ID = Oracle Database Name <> Oracle SID */
+영숫자대문자 3자리만..
+
+--2. Hostname ( 물리hostname)
+HostName = wdflbmt7346  /*  FQDN _(x), @(x) -(x)*/
+/etc/hosts ip hostname 기록...
+
+--3. Instance Number 
+IN=00
+
+--4. SAP HANA System Disk Partitioning
+SAPMNT=SAP HANA Installation Path = /hana/shared  ( Scale up Max 1T, Scale Out ...)
+x3 or x1.3 => Data Volume Size: /hana/data/<SID>
+Max 512G => Log Volume Size : /hana/log/<SID>
+                  (SAP HANA SR-> /hana/log : 512G -> vgextend 확장할 수..)
+
+--5. OS의 암호...
+DB USER : SYSTEM / Welcome1  -> SYSTEM
+OS USER : <sid>adm / Welcome1 -> h46adm or h47adm
+hostagent : sapadm / Welcome1
+
+SID = H46 /* 영숫자 대문자로만 구성됨 */
+        PRD-> QAS -> DEV 
+        YSP -> YSQ -> YSD 
+IN  = 00~99 /* 96: CK2.0, 00:운영 1 OS -> 1 HDB */
+Hostname = _/특수문자 안됨 -> FQDN  or /etc/hosts
+SAPMNT = SAP HANA Installation = /hana/shared
+->scale up 1T 까지 같은 사이즈 ( ex: RAM 1T -> /hana/shared 1T )
+->scale out -> 교재... 3+1 
+SYSTEM / 암호를 정해야... Welcome1 
+-> SUM/SWPM ->  AP에서 HDB Client/ HDB SYSTEM ->
+8자이상 특수문자 대문자... 
+
+hdbsql -i 00 -u system -p Welcome1 -d SYSTEMDB
+alter user SYSTEM password Sa#$!K#$$
+;
+hdbsql -i 00 -u system -p Welcome1 -d H46 or H47
+alter user SYSTEM password Sa#$!K#$$
+;
+
+DV  =>  /hana/data  -> 
+/hana/data/<SID>: APP: RAM*3   TDI: *2 ( 휴지쯔,, 레노버/델/HP....)
+LV   => /hana/log    -> /hana/log/<SID>  : Max 512G
+sapadm  -> hostagent Welcome1 ?
+<sid>adm -> h47adm / Welcome1 -> 
+SAPABAP1 -> S/4 HANA 메인유저/메인스키마...
+
+--Disk Partitioning   : M:DV:LV = Appliance 1:3:1 or TDI 1:1.3:1
+/  50G~
+swap -> 16G~
+/hana/shared  Max 1T : Scale Up  
+  ( Scale Up ->  M:128/256/512G -> 128/256/512G
+                      M:1T -> 1T  )
+  ( Scale Out -> 4 node 512G, 5 node ... ) 
+/hana/data  Appliance RAM*3 or TDI:RAM*1.3
+ 
+--.개발기 QAS/DEV
+/ 
+swap
+/data  1T  
+mkdir -p /hana/shared
+mkdir -p /hana/data
+mkdir -p /hana/log
+ln -s /data /hana/shared -> cd /hana/shared
+ln -s /data /hana/data  -> cd /hana/data
+ln -s /data /hana/log  -> cd /hana/log
+
+df -k /data
+
+LCM = Platform LCM or HALM(CTS+, SAP HANA Contents Transfer = Delivery Unit (pkg..pkg...)  )
+
+Platform LCM 
+1. Installation root LCM -> hdblcm or hdblcmgui 
+--> only root -> SAP HANA System Install/Uninstall/update 
+
+중요 2. Resident LCM  -> Component Add/Update
+         <sid>adm or root(uninstall/System update )
+          /hana/shared/<SID>/hdblcm> ./hdblcm or ./hdblcmgui
+
+
+실무...
+open.sap.com
+--> suser ->  일반이메일...
+
+help.sap.com/hana_appliance
+--> 2.00.050(GA) 전체 zip -> 2.00.051(Revision) zip...
+--> 2.00.060(GA Update) ...
+--> SAP HANA Admin Guide
+--> SAP HANA TroubleShooting Performance Guide
+--> SAP HANA Cockpit 2.0 Install 
+--> SAP HANA System Replication Guide 2.00.050/2.00.060
+
+--> SYSTEM계정을 사용중지 -> 815p Admin Guide
+create user hdbadmin password xxxxx;
+grant user admin to hdbadmin;
+exit
+hdbsql -i 00 -u hdbadmin -p xxxx -d SYSTEMDB
+alter user system deactivate user now;
+exit;
+hdbsql -i 00 -u hdbadmin -p xxxx -d SYSTEMDB
+alter user system activate user now;
+exit;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

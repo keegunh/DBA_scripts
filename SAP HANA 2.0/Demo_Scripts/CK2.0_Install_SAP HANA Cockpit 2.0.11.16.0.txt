@@ -1,0 +1,162 @@
+wdflbmt7350:/data/training/setup/install # ./hdblcm.sh
+
+
+SAP HANA Lifecycle Management - SAP HANA Cockpit 2.0.11.16.0
+************************************************************
+
+
+
+Choose an action
+
+  Index | Action            | Description
+  --------------------------------------------------------------------------------------------------------
+  1     | H4H (install)     | Install SAP HANA Cockpit on SAP HANA Database version 2.00.050.00.1592305219
+  2     | install           | Install new SAP HANA Cockpit system
+  3     | Exit (do nothing) |
+
+Enter selected action index [3]: 1
+
+
+Choose components to be installed or updated:
+
+  Index | Components | Description
+  -----------------------------------------------------------------------------
+  1     | all        | All components
+  2     | xs         | Install SAP HANA XS Advanced Runtime version 1.0.125.377
+  3     | cockpit    | Install SAP HANA Cockpit Stack version 2.0.11.16.0
+
+Enter comma-separated list of the selected indices [2,3]:
+Do you want to add hosts to the system? (y/n) [n]: ^C
+Log file written to '/var/tmp/hdb_H4H_hdblcm_update_2022-08-07_07.29.23/hdblcm.log' on host 'wdflbmt7350'.
+wdflbmt7350:/data/training/setup/install # ./hdblcm.sh
+
+
+SAP HANA Lifecycle Management - SAP HANA Cockpit 2.0.11.16.0
+************************************************************
+
+
+
+Choose an action
+
+  Index | Action            | Description
+  --------------------------------------------------------------------------------------------------------
+  1     | H4H (install)     | Install SAP HANA Cockpit on SAP HANA Database version 2.00.050.00.1592305219
+  2     | install           | Install new SAP HANA Cockpit system
+  3     | Exit (do nothing) |
+
+Enter selected action index [3]: 2
+
+Enter Installation Path [/hana/shared]:
+Enter Local Host Name [wdflbmt7350]:
+Enter SAP HANA System ID [H4C]:
+Enter Instance Number [96]:
+Enter Master Password:
+Confirm Master Password:
+
+Summary before execution:
+=========================
+
+SAP HANA Cockpit System Installation
+   Installation Parameters
+      Remote Execution: ssh
+      Use single master password for all users, created during installation: Yes
+      Database Isolation: low
+      Create initial tenant database: No
+      Install Execution Mode: optimized
+      Installation Path: /hana/shared
+      Local Host Name: wdflbmt7350
+      SAP HANA System ID: H4C
+      Instance Number: 96
+      Local Host Worker Group: default
+      System Usage: custom
+      Location of Data Volumes: /hana/shared/data/H4C
+      Location of Log Volumes: /hana/shared/log/H4C
+      Directory containing custom configurations: /data/training/setup/install/HDB_SERVER_LINUX_X86_64/configurations/custom
+      Certificate Host Names: wdflbmt7350 -> wdflbmt7350
+      System Administrator Home Directory: /usr/sap/H4C/home
+      System Administrator Login Shell: /bin/bash
+      System Administrator User ID: 1008
+      ID of User Group (sapsys): 79
+      Restart system after machine reboot?: Yes
+      Inter Service Communication Mode: standard
+      XS Advanced App Working Path: /hana/shared/H4C/xs/app_working
+      Organization Name For Space "SAP": HANACockpit
+      XS Advanced Admin User: COCKPIT_ADMIN
+      Customer Space Name: cockpit
+      Routing Mode: ports
+      XS Advanced Domain Name (see SAP Note 2245631): wdflbmt7350.wdf.sap.corp
+      Run Applications in SAP Space with Separate OS User (y/n): No
+      Run Applications in Customer Space with Separate OS User (y/n): No
+      XS Advanced Components: all
+      Do not start the selected XS Advanced components after installation: none
+   Software Components
+      SAP HANA Database
+         Install version 2.00.046.00.1581325702
+         Location: /data/training/setup/install/HDB_SERVER_LINUX_X86_64/server
+      SAP HANA Cockpit Stack
+         Install version 2.0.11.16.0
+         Location: /data/training/setup/install
+      SAP HANA XS Advanced Runtime
+         Install version 1.0.125.377
+         Location: /data/training/setup/install/XSA_RT_20_LINUX_X86_64/packages
+   XS Advanced Components
+      SAP HANA Cockpit
+         Install version 2.0011.16
+         Location: /data/training/setup/install/COCKPIT2_APP/sap-xsac-cockpit-2.11.16.zip
+      SAP HANA tools for accessing catalog content, data preview, SQL console, etc.
+         Install version 2.011.20141
+         Location: /data/training/setup/install/XSAC_HRTT_20/sap-xsac-hrtt-2.11.20141.zip
+      Develop and run portal services for customer apps on XSA
+         Install version 1.003.2
+         Location: /data/training/setup/install/SAP_PORTAL_SERVICES/sap-portal-services-assembly-1.14.3.zip
+      SAPUI5 FESV5 XSA 1 - SAPUI5 1.60
+         Install version 1.060.18
+         Location: /data/training/setup/install/SAP_UI5_1/sapui5-dist-xsa-1.60.18.zip
+      XSA Cockpit 1
+         Install version 1.001.15
+         Location: /data/training/setup/install/XSA_COCKPIT/cockpit-web-xsa-assembly-1.1.15.zip
+   Automatically Assigned Roles
+      Host: wdflbmt7350 Role: XS Advanced Runtime Worker (xs_worker)
+   Log File Locations
+      Log directory: /var/tmp/hdb_H4C_hdblcm_install_2022-08-07_07.29.39
+      Trace location: /var/tmp/hdblcm_2022-08-07_07.29.39_13073.trc
+
+Do you want to continue? (y/n): y
+
+Installing components...
+Installing SAP HANA Database...
+  Preparing package 'Saphostagent Setup'...
+  Preparing package 'Python Support'...
+  Preparing package 'Python Runtime'...
+  Preparing package 'Product Manifest'...
+  Preparing package 'Binaries'...
+  Preparing package 'Offline Cockpit'...
+  Preparing package 'Krb5 Runtime'...
+  Preparing package 'Installer'...
+  Preparing package 'Ini Files'...
+  Preparing package 'Documentation'...
+  Creating System...
+  Extracting software...
+  Installing package 'Saphostagent Setup'...
+  Installing package 'Python Support'...
+  Installing package 'Python Runtime'...
+  Installing package 'Product Manifest'...
+  Installing package 'Binaries'...
+  Installing package 'Offline Cockpit'...
+  Installing package 'Krb5 Runtime'...
+  Installing package 'Installer'...
+  Installing package 'Ini Files'...
+  Installing package 'Documentation'...
+  Creating instance...
+Installing Resident hdblcm...
+Installing SAP HANA XS Advanced Runtime...
+  Preparing package 'sapjvm 8'...
+  Preparing package 'Runtime'...
+  Preparing package 'Platform Router'...
+  Preparing package 'Node8'...
+  Preparing package 'Installer'...
+  Preparing package 'Installation Scripts'...
+  Preparing package 'Initial Content'...
+  Installing SAP HANA XS RUNTIME to /hana/shared/H4C/xs...
+  Installing package 'sapjvm 8'...
+  Installing package 'Runtime'...

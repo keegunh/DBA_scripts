@@ -1,0 +1,57 @@
+set schema SAP_HANA_DEMO
+
+--drop table my_table2
+create column table my_table2
+(
+a int,
+b int,
+c int,
+primary key(a,b)
+)
+partition by hash(a,b) partitions 4
+;
+
+insert into my_table2 values ( 1,2,3 );
+insert into my_table2 values ( 2,2,3 );
+
+
+-- all column load
+load  SAP_HANA_DEMO.MY_TABLE2 all
+(load "HA200_DEMO"."EPM.PO.Item_Part" delta)
+
+--.only a column load
+load  SAP_HANA_DEMO.MY_TABLE2 (a)
+
+-- all unload
+unload  SAP_HANA_DEMO.MY_TABLE2
+
+--a,c load
+load  SAP_HANA_DEMO.MY_TABLE2 (b,c)
+
+--error
+unload  SAP_HANA_DEMO.MY_TABLE2
+
+--table merge delta
+merge delta of SAP_HANA_DEMO.MY_TABLE2
+
+
+--. 8장 Solution 12
+alter table "HA200_DEMO"."EPM.PO.Item_Part" disable automerge;
+
+select * from m_cs_tables
+where schema_name = 'HA200_DEMO'
+and memory_size_in_delta > 100
+
+update "HA200_DEMO"."EPM.PO.Item_Part"
+set quantity=10
+where quantity=1;
+
+select count(*) from "HA200_DEMO"."EPM.PO.Item_Part"
+where quantity=1
+
+COUNT(*)
+5,921,480 of 23,525,880
+
+alter table "HA200_DEMO"."EPM.PO.Item_Part" enable automerge;
+
+merge delta of "HA200_DEMO"."EPM.PO.Item_Part"

@@ -1,0 +1,165 @@
+SELECT
+/* 
+
+[NAME]
+
+- HANA_Tables_TableStatistics_1.00.100+
+
+[DESCRIPTION]
+
+- Table modification overview
+
+[SOURCE]
+
+- SAP Note 1969700
+
+[DETAILS AND RESTRICTIONS]
+
+- M_TABLE_STATISTICS only available as of Rev. 1.00.100
+- Following parameter needs to be set to populate the SELECT related information (attention: risk of overhead):
+
+  indexserver.ini -> [sql] -> table_statistics_select_enabled = true
+
+- Counters are reset during restart of SAP HANA
+
+[VALID FOR]
+
+- Revisions:              >= 1.00.100
+- Statistics server type: any
+
+[SQL COMMAND VERSION]
+
+- 2015/09/23:  1.0 (initial version)
+- 2017/10/27:  1.1 (TIMEZONE included)
+
+[INVOLVED TABLES]
+
+- M_TABLE_STATISTICS
+
+[INPUT PARAMETERS]
+
+- TIMEZONE
+
+  Used timezone (both for input and output parameters)
+
+  'SERVER'       --> Display times in SAP HANA server time
+  'UTC'          --> Display times in UTC time
+
+- SCHEMA_NAME
+
+  Schema name or pattern
+
+  'SAPSR3'        --> Specific schema SAPSR3
+  'SAP%'          --> All schemata starting with 'SAP'
+  '%'             --> All schemata
+
+- TABLE_NAME           
+
+  Table name or pattern
+
+  'T000'          --> Specific table T000
+  'T%'            --> All tables starting with 'T'
+  '%'             --> All tables
+
+- ORDER_BY
+
+  Sort criteria (available values are provided in comment)
+
+  'SIZE'          --> Sorting by size 
+  'TABLE'         --> Sorting by table name
+
+- RESULT_ROWS
+
+  Number of records to be returned by the query
+
+  100             --> Return a maximum number of 100 records
+  -1              --> Return all records
+  
+[OUTPUT PARAMETERS]
+
+- SCHEMA_NAME:      Schema name
+- TABLE_NAME:       Table name
+- TOTAL:            Total number of DML operations
+- INSERTS:          Number of INSERT operations
+- UPDATES:          Number of UPDATE operations
+- DELETES:          Number of DELETE operations
+- REPLACES:         Number of REPLACE / UPSERT operations
+- LAST_MODIFY_TIME: Time of last DML operation
+
+[EXAMPLE OUTPUT]
+
+------------------------------------------------------------------------------------------------------------------
+|SCHEMA_NAME    |TABLE_NAME      |TOTAL      |INSERTS    |UPDATES    |DELETES    |REPLACES   |LAST_MODIFY_TIME   |
+------------------------------------------------------------------------------------------------------------------
+|SAPSR3         |/BIC/OHXHACOIS03| 1067855834| 1067855834|          0|          0|          0|2015/09/23 16:36:09|
+|SAPSR3         |/BIC/OHXHACOIS01|  412006256|  412006256|          0|          0|          0|2015/09/23 16:25:32|
+|SAPSR3         |/BIC/OHXHACOIS04|  199980312|  199980312|          0|          0|          0|2015/09/23 16:40:55|
+|SAPSR3         |B0SDTOPART      |  107648147|   54786234|          0|   52861913|          0|2015/09/23 16:57:53|
+|SAPSR3         |SRTM_DATA       |  103356619|   29124721|   45107177|   29124721|          0|2015/09/23 16:54:39|
+|SAPSR3         |BALDAT          |   75986369|          0|          0|   32453386|   43532983|2015/09/23 16:57:39|
+|SAPSR3         |SQLMZD          |   70167676|    3288640|          0|   18668188|   48210848|2015/09/23 15:58:05|
+|SAPSR3         |ZSRC_REPL_LOG_SF|   63184755|          0|          0|          0|   63184755|2015/09/23 15:49:24|
+|SAPSR3         |ZZV_CUST_HIER   |   60612973|   60612824|          0|        149|          0|2015/09/23 16:43:18|
+|SAPSR3         |SPERS_OBJ       |   59509290|          0|          0|     112139|   59397151|2015/09/23 16:57:56|
+------------------------------------------------------------------------------------------------------------------
+
+*/
+
+  SCHEMA_NAME,
+  TABLE_NAME,
+  LPAD(TOTAL, 12) TOTAL,
+  LPAD(INSERTS, 12) INSERTS,
+  LPAD(UPDATES, 12) UPDATES,
+  LPAD(DELETES, 12) DELETES,
+  LPAD(REPLACES, 12) REPLACES,
+  TO_VARCHAR(LAST_MODIFY_TIME, 'YYYY/MM/DD HH24:MI:SS') LAST_MODIFY_TIME
+FROM
+( SELECT
+    TS.SCHEMA_NAME,
+    TS.TABLE_NAME,
+    TS.INSERT_COUNT + TS.DELETE_COUNT + TS.UPDATE_COUNT + TS.REPLACE_COUNT TOTAL,
+    TS.INSERT_COUNT INSERTS,
+    TS.UPDATE_COUNT UPDATES,
+    TS.DELETE_COUNT DELETES,
+    TS.REPLACE_COUNT REPLACES,
+    BI.RESULT_ROWS,
+    CASE BI.TIMEZONE WHEN 'UTC' THEN ADD_SECONDS(TS.LAST_MODIFY_TIME, SECONDS_BETWEEN(CURRENT_TIMESTAMP, CURRENT_UTCTIMESTAMP)) ELSE TS.LAST_MODIFY_TIME END LAST_MODIFY_TIME,
+    ROW_NUMBER () OVER 
+    ( ORDER BY
+        MAP(BI.ORDER_BY, 'TABLE', TS.SCHEMA_NAME, ''),
+        MAP(BI.ORDER_BY, 'TABLE', TS.TABLE_NAME, ''),
+        MAP(BI.ORDER_BY, 
+          'TOTAL', TS.INSERT_COUNT + TS.DELETE_COUNT + TS.UPDATE_COUNT + TS.REPLACE_COUNT,
+          'INSERT', TS.INSERT_COUNT,
+          'UPDATE', TS.UPDATE_COUNT,
+          'DELETE', TS.DELETE_COUNT,
+          'REPLACE', TS.REPLACE_COUNT) DESC
+    ) ROW_NUM
+  FROM
+  ( SELECT                /* Modification section */
+      'SERVER' TIMEZONE,                              /* SERVER, UTC */
+      '%' SCHEMA_NAME,
+      '%' TABLE_NAME,
+      'TOTAL' ORDER_BY,        /* TABLE, TOTAL, INSERT, UPDATE, DELETE, REPLACE */
+      50 RESULT_ROWS
+    FROM
+      DUMMY
+  ) BI,
+    M_TABLE_STATISTICS TS
+  WHERE
+    TS.SCHEMA_NAME LIKE BI.SCHEMA_NAME AND
+    TS.TABLE_NAME LIKE BI.TABLE_NAME
+  ORDER BY
+    MAP(BI.ORDER_BY, 'TABLE', TS.SCHEMA_NAME, ''),
+    MAP(BI.ORDER_BY, 'TABLE', TS.TABLE_NAME, ''),
+    MAP(BI.ORDER_BY, 
+      'TOTAL', TS.INSERT_COUNT + TS.DELETE_COUNT + TS.UPDATE_COUNT + TS.REPLACE_COUNT,
+      'INSERT', TS.INSERT_COUNT,
+      'UPDATE', TS.UPDATE_COUNT,
+      'DELETE', TS.DELETE_COUNT,
+      'REPLACE', TS.REPLACE_COUNT) DESC
+)
+WHERE
+  ( RESULT_ROWS = -1 OR ROW_NUM <= RESULT_ROWS )
+    
+  

@@ -1,0 +1,8 @@
+
+
+
+--SAP HANA Cockpit 2.0 SP11
+  Update -> 2.12.14
+
+--Phase/Prepare Update SAP HANA 2.00.051 ( from GA SPS05 )
+https://help.sap.com/docs/SAP_HANA_PLATFORM/2c1988d620e04368aa4103bf26f17727/bbbcf591d94b4dbea745bf2846f9df37.html?version=1.0.12&locale=en-US

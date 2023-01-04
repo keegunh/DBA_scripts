@@ -1,0 +1,47 @@
+--.create role to user
+create role oprole
+grant monitoring to oprole
+create user opuser password Training1 no force password change
+grant oprole to opuser
+grant oprole to opuser1
+
+--.Modeling Schema 
+a.emp -> b with grant option -> c
+grant select on schema scott to opuser
+grant select on scott.emp to opuser
+grant select on schema training to _sys_repo with grant option
+--> select * from _sys_bic.student00/CEA1_00
+(Generated SQL: 
+SELECT "LAND1_description"
+FROM "_SYS_BIC"."student00/CE_PLAN_ACTUAL_00" 
+ORDER BY "LAND1_description" ASC
+
+SELECT
+	 distinct "LAND1_description",
+	 SUM("GrossRevenue") AS "GrossRevenue_SUM" 
+FROM "_SYS_BIC"."student00/CE_PLAN_ACTUAL_00" 
+GROUP BY "LAND1_description" 
+ORDER BY "LAND1_description" ASC)
+
+--> ca gui 
+--> ca sqlscript --> student00/XXX/ss.... 
+
+--. Failed login user select
+select * from invalid_connect_attempts
+
+--. object all privileges
+select * from effective_privileges
+where user_name = 'STUDENT04'
+
+--. Design Time Repository
+Information Model =
+
+Attribute View  => BI X, Key , Master..
+Analytic View   
+Calculation View ( Gui/CE ) = CA View = BI, OLAP Tool
+
+
+--> Analytic Privilege -> TMS Transport...
+_sys_bi.
+_sys_bic.
+_sys_repo.

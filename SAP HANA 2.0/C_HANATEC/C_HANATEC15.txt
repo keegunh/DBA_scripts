@@ -1,0 +1,65 @@
+1. You need to recover a tenant database backup from SAP HANA HANA system 1 into SAP HANA system 2. Which activities do you perform to recover the tenant?
+
+Note: There are 2 correct answers to this question
+1) Copy the transaction logs to the target database.
+
+2) Start the recovered tenant database.
+
+3) Create the tenant in the target database.
+
+4) Recover the tenant with the Initialize Log Area option.
+
+
+
+2. In the Aggregate Health Monitor application, you are viewing the overall status of all tenants assigned to your SAP HANA cockpit user. Which user retrieves this database status information?
+
+1) A technical user with limited permissions 
+ 
+2) A named user with monitor permissions 
+
+3) The cockpit admin user
+ 
+4) The system user
+
+
+3. How can you shorten the delta merge runtime of a table? 
+   Note: There are 2 correct answers to this question.
+
+1) Fully load the delta store into memory.
+
+2) Partition the table.
+
+3) Merge per column.
+
+4) Perform memory-only delta merges. 
+
+
+
+4. You need to delete a tenant database and preserve the backups 
+   in a SAP HANA 2.0 SPSO2 database system. 
+   Which actions do you perform?
+
+Note: There are 2 correct answers to this question.
+
+1)  Delete the tenant with the option to keep the backup directory in the SAP HANA cockpit 2.0.
+
+2)  Execute the SQL command: DROP DATABASE <database_name> KEEP BACKUPS.
+
+3)  Delete the tenant in the SAP HANA cockpit 2.0.
+
+4)  Execute the SQL command: DROP DATABASE <database_name>
+
+
+5. You define the parameters for the pass word policy of an SAP HANA tenant database. Where are these parameters stored?
+
+1)  nameserver.ini
+
+2)  indexserver.ini
+
+3)  multidb.ini
+
+4)  global.ini
+
+Result) 1
+
+

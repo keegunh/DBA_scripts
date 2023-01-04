@@ -1,0 +1,161 @@
+SELECT
+/* 
+
+[NAME]
+
+- HANA_Configuration_Triggers
+
+[DESCRIPTION]
+
+- Existing database triggers
+
+[SOURCE]
+
+- SAP Note 1969700
+
+[DETAILS AND RESTRICTIONS]
+
+
+[VALID FOR]
+
+- Revisions:              all
+- Statistics server type: all
+
+[SQL COMMAND VERSION]
+
+- 2015/01/03:  1.0 (initial version)
+- 2017/02/02:  1.1 (LINE_LENGTH_TARGET and line wrapping included)
+
+[INVOLVED TABLES]
+
+- TRIGGERS
+
+[INPUT PARAMETERS]
+
+- SCHEMA_NAME
+
+  Schema name or pattern
+
+  'SAPSR3'        --> Specific schema SAPSR3
+  'SAP%'          --> All schemata starting with 'SAP'
+  '%'             --> All schemata
+
+- TABLE_NAME           
+
+  Table name or pattern
+
+  'T000'          --> Specific table T000
+  'T%'            --> All tables starting with 'T'
+  '%'             --> All tables
+
+- TRIGGER_NAME
+
+  Trigger name
+
+  'MYTRIG'        --> Trigger MYTRIG
+  '/1LT/%'        --> Triggers starting with '/1LT/'
+  '%'             --> No restriction related to trigger name
+
+- TRIGGER_DEFINITION
+
+  Trigger definition
+
+  '%SRRELROLES%'  --> Triggers containing 'SRRELROLES' in their definitions
+  '%'             --> No restriction related to trigger definition
+
+- LINE_LENGTH_TARGET
+
+  Target for output line length
+
+  80      --> Approximate line length of 80 characters
+
+[OUTPUT PARAMETERS]
+
+- SCHEMA_NAME:     Schema name
+- TABLE_NAME:      Table name
+- TRIGGER_NAME:    Trigger name
+- CONTEXT:         Context when trigger fires
+- LEVEL:           Trigger level
+- DEFINITION:      Trigger definition
+
+[EXAMPLE OUTPUT]
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|SCHEMA_NAME|TABLE_NAME      |TRIGGER_NAME            |CONTEXT            |LEVEL|VALID|ENABLED|DEFINITION                                                        |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|EGIS       |SL_MBL_FC_STREAM|SL_MBL_FC_UPDATE        |AFTER INSERT UPDATE|ROW  |TRUE |TRUE   |CREATE TRIGGER "EGIS"."SL_MBL_FC_UPDATE" AFTER INSERT             |
+|           |                |                        |                   |     |     |       |OR UPDATE ON "EGIS"."SL_MBL_FC_STREAM" REFERENCING                |
+|           |                |                        |                   |     |     |       |NEW ROW NEWROW FOR EACH ROW  BEGIN    if ( :NEWROW.LOCFIX         |
+|           |                |                        |                   |     |     |       |= 'Y' or :NEWROW.LOCFIX = 'M' ) THEN                              |
+|           |                |                        |                   |     |     |       |    delete from "EGIS"."SL_MBL_FC" where "NAME" =                 |
+|           |                |                        |                   |     |     |       |:NEWROW.NAME     UPSERT "EGIS"."SL_MBL_FC"      SELECT            |
+|           |                |                        |                   |     |     |       |      "SHAPE",      "NAME",      "DEVICEDATETIME",                |
+|           |                |                        |                   |     |     |       |     "LOCPROVDATETIME",      "POSLON",                            |
+|           |                |                        |                   |     |     |       |"POSLAT",      "ACCURACY",      "SPEED",      "BEARING",          |
+|           |                |                        |                   |     |     |       |     "LOCFIX",      "SERVERDATETIME"                              |
+|           |                |                        |                   |     |     |       |FROM "EGIS"."SL_MBL_FC_STREAM" where "OBJECTID" =                 |
+|           |                |                        |                   |     |     |       |:NEWROW.OBJECTID     END IF    END                                |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+*/
+
+  MAP(O.LINE_NO, 1, T.SCHEMA_NAME, ' ') SCHEMA_NAME,
+  MAP(O.LINE_NO, 1, T.TABLE_NAME, ' ') TABLE_NAME,
+  MAP(O.LINE_NO, 1, T.TRIGGER_NAME, ' ') TRIGGER_NAME,
+  MAP(O.LINE_NO, 1, T.CONTEXT, ' ') CONTEXT,
+  MAP(O.LINE_NO, 1, T.LEVEL, ' ') LEVEL,
+  MAP(O.LINE_NO, 1, T.VALID, ' ') VALID,
+  MAP(O.LINE_NO, 1, T.ENABLED, ' ') ENABLED,
+  CASE O.LINE_NO
+    WHEN 1 THEN 
+      CASE WHEN T.DEFINITION_LENGTH <= BI.LINE_LENGTH_TARGET THEN T.DEFINITION ELSE
+      SUBSTR(T.DEFINITION, 
+        1, 
+        LINE_LENGTH_TARGET + LOCATE(SUBSTR(T.DEFINITION, LINE_NO * LINE_LENGTH_TARGET), CHAR(32)) - 1) END
+    WHEN CEIL(T.DEFINITION_LENGTH / LINE_LENGTH_TARGET) THEN
+      SUBSTR(T.DEFINITION, 
+        ( LINE_NO - 1) * LINE_LENGTH_TARGET + LOCATE(SUBSTR(T.DEFINITION, ( LINE_NO - 1) * LINE_LENGTH_TARGET), CHAR(32))) 
+    ELSE
+      SUBSTR(T.DEFINITION, 
+        ( LINE_NO - 1) * LINE_LENGTH_TARGET + LOCATE(SUBSTR(T.DEFINITION, ( LINE_NO - 1) * LINE_LENGTH_TARGET), CHAR(32)), 
+        LINE_LENGTH_TARGET + LOCATE(SUBSTR(T.DEFINITION, LINE_NO * LINE_LENGTH_TARGET), CHAR(32)) - LOCATE(SUBSTR(T.DEFINITION, ( LINE_NO - 1) * LINE_LENGTH_TARGET), CHAR(32))) 
+  END DEFINITION  
+FROM
+( SELECT                    /* Modification section */
+    '%' SCHEMA_NAME,
+    '%' TABLE_NAME,
+    '%' TRIGGER_NAME,
+    '%' TRIGGER_DEFINITION,
+    50 LINE_LENGTH_TARGET
+  FROM
+    DUMMY
+) BI,
+( SELECT
+    SUBJECT_TABLE_SCHEMA SCHEMA_NAME,
+    SUBJECT_TABLE_NAME TABLE_NAME,
+    TRIGGER_NAME,
+    TRIGGER_ACTION_TIME || CHAR(32) || TRIGGER_EVENT CONTEXT,
+    TRIGGERED_ACTION_LEVEL LEVEL,
+    IS_VALID VALID,
+    IS_ENABLED ENABLED,
+    REPLACE(REPLACE(REPLACE(DEFINITION,CHAR(10),CHAR(32)),CHAR(13),CHAR(32)),CHAR(9),CHAR(32)) DEFINITION,
+    LENGTH(TO_VARCHAR(DEFINITION)) DEFINITION_LENGTH
+  FROM 
+    TRIGGERS
+) T,
+( SELECT
+    ROW_NUMBER () OVER () LINE_NO
+  FROM
+    OBJECTS
+) O
+WHERE
+  T.SCHEMA_NAME LIKE BI.SCHEMA_NAME AND
+  T.TABLE_NAME LIKE BI.TABLE_NAME AND
+  T.TRIGGER_NAME LIKE BI.TRIGGER_NAME AND
+  T.DEFINITION LIKE BI.TRIGGER_DEFINITION and
+  O.LINE_NO <= CEIL(T.DEFINITION_LENGTH / BI.LINE_LENGTH_TARGET)
+ORDER BY
+  T.SCHEMA_NAME,
+  T.TABLE_NAME,
+  T.TRIGGER_NAME,
+  O.LINE_NO

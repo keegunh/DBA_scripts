@@ -1,0 +1,107 @@
+# collect traces if the CPU load is above 75% for more than 30s
+-cpu 1,3,10,75
+# collect traces if
+-cf "M_SERVICE_THREADS,WHERE,IS_ACTIVE='TRUE' and SERVICE_NAME='indexserver',1"
+# pause trace collection for 1 hour after we collected traces
+#-ar 3600
+# collect 3 kernel profiler traces
+-np 3
+# collect 3 rte dumps
+-nr 3
+# use recording mode 3
+-rm 3
+
+
+--hanasitter.py 생성>
+h46--> su  - root에서 작업
+wdflbmt7346:/data # vi hanasitter.py  -> copy & paste
+wdflbmt7346:/data # chown h46adm:sapsys ./hanasitter.py
+wdflbmt7346:/data # chmod 555 ./hanasitter.py
+wdflbmt7346:/data # cp -rp ./hanasitter.py /usr/sap/H46/HDB00/exe/python_support
+
+h47 --> su  - root에서 작업::
+wdflbmt7347:/data # vi hanasitter.py  -> copy & paste
+wdflbmt7347:/data # chown h47adm:sapsys ./hanasitter.py
+wdflbmt7347:/data # chmod 555 ./hanasitter.py
+wdflbmt7347:/data # cp -rp ./hanasitter.py /usr/sap/H47/HDB00/exe/python_support
+
+--H46
+su - h46adm
+hdbuserstore SET HANASITTER1KEY wdflbmt7346:30015 SYSTEM W3lcome123
+
+--H47
+su - h47adm
+hdbuserstore SET HANASITTER1KEY wdflbmt7347:30015 SYSTEM W3lcome123
+
+--ex> h47adm = <sid>adm에서 key생성
+su - <sid>adm
+cdpy
+h47adm@wdflbmt7347:/usr/sap/H47/HDB00/exe/python_support> 
+hdbuserstore SET HANASITTER1KEY wdflbmt7347:30015 SYSTEM W3lcome123
+h47adm@wdflbmt7347:/usr/sap/H47/HDB00/exe/python_support> hdbuserstore LIST
+DATA FILE       : /usr/sap/H47/home/.hdb/wdflbmt7347/SSFS_HDB.DAT
+KEY FILE        : /usr/sap/H47/home/.hdb/wdflbmt7347/SSFS_HDB.KEY
+
+h47adm@wdflbmt7347:/usr/sap/H47/HDB00/exe/python_support> whoami
+h47adm
+h47adm@wdflbmt7347:/usr/sap/H47/HDB00/exe/python_support> 
+hdbsql -U HANASITTER1KEY
+
+Welcome to the SAP HANA Database interactive terminal.
+
+Type:  \h for help with commands
+       \q to quit
+
+hdbsql H47=> \q
+h47adm@wdflbmt7347:/usr/sap/H47/HDB00/exe/python_support> cdpy
+h47adm@wdflbmt7347:/usr/sap/H47/HDB00/exe/python_support> 
+python hanasitter.py -k HANASITTER1KEY -nc 1
+
+HANASitter executed 2020-12-17 09:36:32 with
+hanasitter.py -k HANASITTER1KEY -nc 1
+as HANASITTER1KEY: KEY HANASITTER1KEY
+  ENV : wdflbmt7347:30015
+  USER: SYSTEM
+
+Host = wdflbmt7347, SID = H47, DB Instance = 00, MDC tenant = H47, Indexserver P                     ort = 30003
+Online, Primary and Not-Secondary Check: Interval = 3600 seconds
+Ping Check: Interval = 60 seconds, Timeout = 60 seconds
+Feature Checks: Interval 60 seconds, Timeout = 60 seconds
+Recording mode: 1
+Recording Type      , Number Recordings   ,   Intervals [seconds] ,   Durations                      [seconds]      ,    Wait [milliseconds]
+GStack              , 0                   ,   60                  ,
+Kernel Profiler     , 0                   ,   60                  ,   60                                            ,    0
+Call Stack          , 1                   ,   60                  ,
+RTE Dumps (normal)  , 0                   ,   60                  ,
+Recording Priority: RTE   Call Stacks   G-Stacks   Kernel Profiler
+After Recording: Exit
+ - - - - - Start HANASitter - - - - - -
+Action            , Timestamp              , Duration         , Successful   , R                     esult     , Comment
+Online Check      , 2020-12-17 09:36:32    ,     -            , True         , T                     rue       , Number running services: 7 out of 7
+Primary Check     , 2020-12-17 09:36:33    ,     -            , True         , T                     rue       ,
+Ping Check        , 2020-12-17 09:36:33    , 0:00:00.164051   ,   -          , T                     rue       , DB responded faster than 60 seconds
+^CHANASitter was stopped with ctrl-c
+h47adm@wdflbmt7347:/usr/sap/H47/HDB00/exe/python_support>
+
+--
+--RTE dump <sid>adm에서 실행하는 예>
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00> hdbcons
+SAP HANA DB Management Client Console (type '\?' to get help for client commands)
+Try to open connection to server process 'hdbindexserver' on system 'H46', instance '00'
+SAP HANA DB Management Server Console (type 'help' to get help for server commands)
+Executable: hdbindexserver (PID: 20533)
+[OK]
+--
+> runtimedump dump
+## Start command at: 2020-12-17 09:54:03.076
+[OK]
+## Finish command at: 2020-12-17 09:54:03.217 command took: 141.122 msec
+--
+>
+
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00> cdtrace
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00/wdflbmt7346/trace> cd DB_H46
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00/wdflbmt7346/trace/DB_H46> ll *rtedump*
+-rw-r--r-- 1 h46adm sapsys 3169320 Dec 17 09:54 indexserver_wdflbmt7346.30003.rtedump.20201217-095403.0020533.trc
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00/wdflbmt7346/trace/DB_H46>
+

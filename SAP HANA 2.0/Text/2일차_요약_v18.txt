@@ -1,0 +1,83 @@
+--CK2.0 구성방법
+https://help.sap.com/docs/SAP_HANA_COCKPIT/df02d156db744412ad1f9e887aba68ad/ca744b8a0ef44678be16e525ea9dde1a.html?locale=en-US
+
+--1. CK2.0  시작/종료/확인
+SID=H4C IN=96 /* Default */
+su - h4cadm
+HDB info -> HDB stop/start
+HDB info 
+xs-admin-login -> Welcome1 -> xs apps |grep web-admin
+
+--2. CK2.0 Manager 등록후 사용
+COCKPIT_ADMIN / Welcome1 
+->http://hostname:51029
+1. Resource 4ea을 등록한다.  Database@SID
+H46 -> SYSTEMDB@H46, H46@H46 
+H47 -> SYSTEMDB@H47, H46@H47 
+
+2. Group01->H46, Group02->H47
+3. ADMIN01 -> H46, ADMIN02->H47
+4.  CK2.0의 사용권한만 -> ADMIN01,02
+
+--3. CK2.0의 사용 ADMIN01로...
+http://hostname:51027
+DB인증 -> SYSTEM / Welcome1
+OS인증 -> <sid>adm / Welcome1
+SYSTEMDB@<SID> 접속사용한다..
+
+
+--CK2.0
+--> 현실은 물리서버나 VM을 주기가 어렵다..
+--> 대안: SM linux -> /hana/shared 100G
+--> QAS, DEV -> /hana/shared 512G~
+SID=SSD,  IN=00
+SID=H4C, IN=10
+
+RHEL8.x, SLES15.x
+CK2.0 vs SAP HANA Studio -> DB Copy : Data only
+CK2.0 backint  SSP -> SSQ   SSD
+CK2.0 메모리 트랙킹... 
+exp/imp expdp/impdp -> 1ea dump
+--> hdbsql -> 10ea 10ea file dir...
+
+
+CLI / CK2.0 vs Studio  UI 지원된다...
+unload SAPABAP1.emp
+
+load sapabap1.emp(a,b,c)
+unload sapabap1.emp;
+
+/hana/data -> h46adm:sapsys 
+
+/hana/data -> Read / Write -> IO성능 좋아야 ...
+/hana/log   -> Write = Redolog
+/backup (NAS) -> Write... IO 않좋아도 된다..
+
+
+order by
+group by
+union all/ union
+1G=1G = 2G
+
+NMS -> 1T 
+1T - 500G = 500G (OOM, Garbage...)
+--> oom... -> GC메모리
+
+
+
+
+-2.0 Cockpit User SAP HANA SYSTEM의 SYSTEMDB@H03, H03@H03 수집유저 등록
+--ex: SID=H46
+hdbsql -i 00 -u system -p Welcome1 -d SYSTEMDB
+create user cockpit_monitor password Welcome1 no force_first_password_change;
+grant catalog read to cockpit_monitor;
+grant select on schema _SYS_STATISTICS to cockpit_monitor;  /* postgresql 동일한 기능 */
+alter user cockpit_monitor disable password lifetime;  /* 186일 이상 사용해야 주는 기능 */
+\q
+
+hdbsql -i 00 -u system -p Welcome1 -d H47
+create user cockpit_monitor password Welcome1 no force_first_password_change;
+grant catalog read to cockpit_monitor;
+grant select on schema _SYS_STATISTICS to cockpit_monitor;
+alter user cockpit_monitor disable password lifetime; /* 182일 이상 사용해야 */
+\q

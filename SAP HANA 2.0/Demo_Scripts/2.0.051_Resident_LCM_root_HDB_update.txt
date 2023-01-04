@@ -1,0 +1,56 @@
+wdflbmt7347:/hana/shared/H47/hdblcm # ./hdblcm
+
+
+SAP HANA Lifecycle Management - SAP HANA Database 2.00.050.00.1592305219
+************************************************************************
+
+
+
+Choose an action
+
+  Index | Action                     | Description
+  -------------------------------------------------------------------------------------------
+  1     | add_host_roles             | Add Host Roles
+  2     | add_hosts                  | Add Hosts to the SAP HANA Database System
+  3     | check_installation         | Check SAP HANA Database Installation
+  4     | configure_internal_network | Configure Inter-Service Communication
+  5     | configure_sld              | Configure System Landscape Directory Registration
+  6     | extract_components         | Extract Components
+  7     | print_component_list       | Print Component List
+  8     | remove_host_roles          | Remove Host Roles
+  9     | rename_system              | Rename the SAP HANA Database System
+  10    | uninstall                  | Uninstall SAP HANA Database Components
+  11    | unregister_system          | Unregister the SAP HANA Database System
+  12    | update                     | Update the SAP HANA Database System
+  13    | update_component_list      | Update Component List
+  14    | update_components          | Install or Update Additional Components
+  15    | update_host                | Update the SAP HANA Database Instance Host integration
+  16    | exit                       | Exit (do nothing)
+
+Enter selected action index [16]: 6
+
+Enter Location of SAP HANA Database Component Archives: /data/training/setup/upgrade
+Enter Temporary Extract Directory [/data/training/setup/upgrade/extracted]:
+Overwrite Existing Files in the Extraction Directory [n]:
+Enter Location of 'SAPCAR' Executable [/hana/shared/H47/global/hdb/saphostagent_setup/SAPCAR]:
+
+Summary before execution:
+=========================
+
+SAP HANA Database
+   Extract Components Parameters
+      Location of SAP HANA Database Component Archives: /data/training/setup/upgrade
+      Temporary Extract Directory: /data/training/setup/upgrade/extracted
+      Location of 'SAPCAR' Executable: /hana/shared/H47/global/hdb/saphostagent_setup/SAPCAR
+   Log File Locations
+      Log directory: /var/tmp/hdb_H47_hdblcm_extract_components_2022-08-07_07.27.46
+      Trace location: /var/tmp/hdblcm_2022-08-07_07.27.46_21744.trc
+
+Do you want to continue? (y/n): y
+
+Extracting components...
+  Extracting SAR archive '/data/training/setup/upgrade/IMDB_CLIENT20_005_101-80002082.SAR'...
+  Extracting SAR archive '/data/training/setup/upgrade/IMDB_SERVER20_051_0-80002031.SAR'...
+SAP HANA Database Components successfully extracted
+Log file written to '/var/tmp/hdb_H47_hdblcm_extract_components_2022-08-07_07.27.46/hdblcm.log' on host 'wdflbmt7347'.
+wdflbmt7347:/hana/shared/H47/hdblcm #

@@ -1,0 +1,73 @@
+SELECT
+/* 
+
+[NAME]
+
+- HANA_StatisticsServer_Properties_1.00.74+_ESS
+
+[DESCRIPTION]
+
+- Embedded statistics server properties like migration status
+
+[SOURCE]
+
+- SAP Note 1969700
+
+[DETAILS AND RESTRICTIONS]
+
+[VALID FOR]
+
+- Revisions:              >= 1.00.74
+- Statistics server type: all
+
+[SQL COMMAND VERSION]
+
+- 2014/12/29:  1.0 (initial version)
+
+[INVOLVED TABLES]
+
+- STATISTICS_PROPERTIES
+
+[INPUT PARAMETERS]
+
+- STAT_PROP_KEY
+
+  Statistics server property key
+
+  '%install%'     --> Keys containing 'install'
+  '%'             --> No restriction of key names
+
+- STAT_PROP_VALUE
+
+  Statistics server property value
+
+  'Done%'         --> Values starting with 'Done'
+  '%'             --> No restriction of values
+  
+[OUTPUT PARAMETERS]
+
+- KEY:   Property key
+- VALUE: Property value
+
+[EXAMPLE OUTPUT]
+
+KEY                        |VALUE                                        
+
+internal.installation.state|Done (okay) since 2014-12-23 07:53:07.5050000
+
+
+*/
+
+  SP.KEY,
+  SP.VALUE
+FROM
+( SELECT                      /* Modification section */
+    '%' STAT_PROP_KEY,
+    '%' STAT_PROP_VALUE
+  FROM
+    DUMMY
+) BI,
+  _SYS_STATISTICS.STATISTICS_PROPERTIES SP
+WHERE
+  UPPER(SP.KEY) LIKE UPPER(BI.STAT_PROP_KEY) AND
+  UPPER(SP.VALUE) LIKE UPPER(BI.STAT_PROP_VALUE)

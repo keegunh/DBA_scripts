@@ -1,0 +1,41 @@
+Which certificates can you manage in SAP HANA cockpit 2.0?
+Note: there are 2 correct answers to this question.
+1)	Kerberos
+2)	X.509
+3)	PKCS #12
+4)	SAML
+Result) 2, 4
+
+Which system privilege do you need to change system parameters using SAP HANA cockpit 2.0?
+1)	OPTIMIZER ADMIN 
+2)	MONITOR ADMIN 
+3)	TRACE ADMIN
+4)	INIFILE ADMIN
+Result) 4
+
+
+You need to assign an authentication method for an SAP HANA database user. Which system privilege is required?
+1)	SSL ADMIN
+2)	LDAP ADMIN 
+3)	USER ADMIN
+4)	ROLE ADMIN
+Result) 3
+
+
+Which transport system do you use to transport SAP HANA content that is exclusively used by an SAP ABAP system?
+1)	SAP HANA table export/import
+2)	SAP HANA Transport Containers (HTC)
+3)	SAP HANA application lifecycle management (HALM) 
+4)	Enhanced Correction and Transport System (CTS+)
+Result) 2
+
+Which encryption services can you activate in SAP HANA?
+Note: There are 3 correct answers to this question.
+1)	Pages in-memory 
+2)	Log 
+3)	Data
+4)	Storage snapshot
+5)	Backup
+Result) 2 3, 5
+
+
