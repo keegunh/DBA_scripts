@@ -33,7 +33,34 @@ SELECT
 --       ) GATHER_STATS_DDL
   FROM DBA_IND_STATISTICS
  WHERE 1=1
-   AND OWNER IN ('PMPBADM', 'BLCP01ADM', 'BLCP02ADM', 'BLCP03ADM', 'BLCP04ADM', 'BLCP05ADM', 'BLCP06ADM', 'BLCP07ADM', 'BLCP08ADM', 'BLCP09ADM', 'BLCP10ADM')
+   AND OWNER NOT IN ('SYS'
+              , 'SYSTEM'
+              , 'OUTLN'
+              , 'XS$NULL'
+              , 'OJVMSYS'
+              , 'GGSYS'
+              , 'ANONYMOUS'
+              , 'DBSNMP'
+              , 'GSMADMIN_INTERNAL'
+              , 'XDB'
+              , 'WMSYS'
+              , 'CTXSYS'
+              , 'DBSFWUSER'
+              , 'APPQOSSYS'
+              , 'GSMUSER'
+              , 'SYSDG'
+              , 'SYSKM'
+              , 'ORACLE_OCM'
+              , 'GSMCATUSER'
+              , 'REMOTE_SCHEDULER_AGENT'
+              , 'SYS$UMF'
+              , 'SYSBACKUP'
+              , 'SYSRAC'
+              , 'DIP'
+              , 'AUDSYS'
+			  , 'DVSYS'
+			  , 'LBACSYS'
+			  , 'MDSYS')
    AND INDEX_NAME NOT LIKE 'SYS\_%' ESCAPE '\'
    AND LAST_ANALYZED IS NULL
    AND OBJECT_TYPE IN ('PARTITION', 'SUBPARTITION')
@@ -56,7 +83,34 @@ SELECT
        ) GATHER_STATS_DDL
   FROM DBA_IND_STATISTICS
  WHERE 1=1
-   AND OWNER IN ('PMPBADM', 'BLCP01ADM', 'BLCP02ADM', 'BLCP03ADM', 'BLCP04ADM', 'BLCP05ADM', 'BLCP06ADM', 'BLCP07ADM', 'BLCP08ADM', 'BLCP09ADM', 'BLCP10ADM')
+   AND OWNER NOT IN ('SYS'
+              , 'SYSTEM'
+              , 'OUTLN'
+              , 'XS$NULL'
+              , 'OJVMSYS'
+              , 'GGSYS'
+              , 'ANONYMOUS'
+              , 'DBSNMP'
+              , 'GSMADMIN_INTERNAL'
+              , 'XDB'
+              , 'WMSYS'
+              , 'CTXSYS'
+              , 'DBSFWUSER'
+              , 'APPQOSSYS'
+              , 'GSMUSER'
+              , 'SYSDG'
+              , 'SYSKM'
+              , 'ORACLE_OCM'
+              , 'GSMCATUSER'
+              , 'REMOTE_SCHEDULER_AGENT'
+              , 'SYS$UMF'
+              , 'SYSBACKUP'
+              , 'SYSRAC'
+              , 'DIP'
+              , 'AUDSYS'
+			  , 'DVSYS'
+			  , 'LBACSYS'
+			  , 'MDSYS')
    AND INDEX_NAME NOT LIKE 'SYS\_%' ESCAPE '\'
    AND LAST_ANALYZED IS NULL
    AND OBJECT_TYPE IN ('PARTITION', 'SUBPARTITION')

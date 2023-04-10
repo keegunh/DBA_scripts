@@ -1,4 +1,4 @@
-TTITLE "[DBName] Database|Oracle Rebuild Indexes"
+ㅕTTITLE "[DBName] Database|Oracle Rebuild Indexes"
 
 SET PAGESIZE 1000
 SET LINESIZE 250
@@ -51,17 +51,31 @@ SELECT
      , DBA_PART_INDEXES B
  WHERE A.OWNER = B.OWNER (+)
    AND A.INDEX_NAME = B.INDEX_NAME (+)
-   AND TABLE_OWNER IN ('PMPBADM'
-                     , 'BLCP01ADM'
-                     , 'BLCP02ADM'
-                     , 'BLCP03ADM'
-                     , 'BLCP04ADM'
-                     , 'BLCP05ADM'
-                     , 'BLCP06ADM'
-                     , 'BLCP07ADM'
-                     , 'BLCP08ADM'
-                     , 'BLCP09ADM'
-                     , 'BLCP10ADM')
+   AND TABLE_OWNER NOT IN ('SYS'
+                        , 'SYSTEM'
+                        , 'OUTLN'
+                        , 'XS$NULL'
+                        , 'OJVMSYS'
+                        , 'GGSYS'
+                        , 'ANONYMOUS'
+                        , 'DBSNMP'
+                        , 'GSMADMIN_INTERNAL'
+                        , 'XDB'
+                        , 'WMSYS'
+                        , 'CTXSYS'
+                        , 'DBSFWUSER'
+                        , 'APPQOSSYS'
+                        , 'GSMUSER'
+                        , 'SYSDG'
+                        , 'SYSKM'
+                        , 'ORACLE_OCM'
+                        , 'GSMCATUSER'
+                        , 'REMOTE_SCHEDULER_AGENT'
+                        , 'SYS$UMF'
+                        , 'SYSBACKUP'
+                        , 'SYSRAC'
+                        , 'DIP'
+                        , 'AUDSYS')
    AND A.INDEX_TYPE < > 'LOB'
    AND A.BLEVEL > 4
  ORDER BY A.TABLE_OWNER, A.TABLE_NAME, A.INDEX_NAME
@@ -92,17 +106,31 @@ SELECT
      , DBA_PART_INDEXES B
  WHERE A.OWNER = B.OWNER (+)
    AND A.INDEX_NAME = B.INDEX_NAME (+)
-   AND TABLE_OWNER IN ('PMPBADM'
-                     , 'BLCP01ADM'
-                     , 'BLCP02ADM'
-                     , 'BLCP03ADM'
-                     , 'BLCP04ADM'
-                     , 'BLCP05ADM'
-                     , 'BLCP06ADM'
-                     , 'BLCP07ADM'
-                     , 'BLCP08ADM'
-                     , 'BLCP09ADM'
-                     , 'BLCP10ADM')
+   AND TABLE_OWNER NOT IN ('SYS'
+                    , 'SYSTEM'
+                    , 'OUTLN'
+                    , 'XS$NULL'
+                    , 'OJVMSYS'
+                    , 'GGSYS'
+                    , 'ANONYMOUS'
+                    , 'DBSNMP'
+                    , 'GSMADMIN_INTERNAL'
+                    , 'XDB'
+                    , 'WMSYS'
+                    , 'CTXSYS'
+                    , 'DBSFWUSER'
+                    , 'APPQOSSYS'
+                    , 'GSMUSER'
+                    , 'SYSDG'
+                    , 'SYSKM'
+                    , 'ORACLE_OCM'
+                    , 'GSMCATUSER'
+                    , 'REMOTE_SCHEDULER_AGENT'
+                    , 'SYS$UMF'
+                    , 'SYSBACKUP'
+                    , 'SYSRAC'
+                    , 'DIP'
+                    , 'AUDSYS')
    AND A.INDEX_TYPE < > 'LOB'
    AND A.BLEVEL > 4
  ORDER BY A.TABLE_OWNER, A.TABLE_NAME, A.INDEX_NAME
@@ -131,17 +159,31 @@ SELECT
      , DBA_PART_INDEXES B
  WHERE A.OWNER = B.OWNER (+)
    AND A.INDEX_NAME = B.INDEX_NAME (+)
-   AND TABLE_OWNER IN ('PMPBADM'
-                     , 'BLCP01ADM'
-                     , 'BLCP02ADM'
-                     , 'BLCP03ADM'
-                     , 'BLCP04ADM'
-                     , 'BLCP05ADM'
-                     , 'BLCP06ADM'
-                     , 'BLCP07ADM'
-                     , 'BLCP08ADM'
-                     , 'BLCP09ADM'
-                     , 'BLCP10ADM')
+   AND TABLE_OWNER NOT IN ('SYS'
+                        , 'SYSTEM'
+                        , 'OUTLN'
+                        , 'XS$NULL'
+                        , 'OJVMSYS'
+                        , 'GGSYS'
+                        , 'ANONYMOUS'
+                        , 'DBSNMP'
+                        , 'GSMADMIN_INTERNAL'
+                        , 'XDB'
+                        , 'WMSYS'
+                        , 'CTXSYS'
+                        , 'DBSFWUSER'
+                        , 'APPQOSSYS'
+                        , 'GSMUSER'
+                        , 'SYSDG'
+                        , 'SYSKM'
+                        , 'ORACLE_OCM'
+                        , 'GSMCATUSER'
+                        , 'REMOTE_SCHEDULER_AGENT'
+                        , 'SYS$UMF'
+                        , 'SYSBACKUP'
+                        , 'SYSRAC'
+                        , 'DIP'
+                        , 'AUDSYS')
    AND A.INDEX_TYPE < > 'LOB'
    AND A.BLEVEL > 4
  ORDER BY A.TABLE_OWNER, A.TABLE_NAME, A.INDEX_NAME
