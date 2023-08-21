@@ -1,0 +1,11 @@
+SELECT S.OWNER
+     , S.SYNONYM_NAME
+     , S.TABLE_OWNER
+     , S.TABLE_NAME
+     , 'DROP SYNONYM ' || OWNER || '.' || SYNONYM_NAME || ';' AS DROP_DDL
+  FROM DBA_SYNONYMS S
+ WHERE NOT EXISTS (SELECT 1
+                     FROM DBA_OBJECTS O 
+                    WHERE S.TABLE_OWNER = O.OWNER
+                      AND S.TABLE_NAME = O.OBJECT_NAME)
+   AND S.TABLE_OWNER NOT IN ('SYS');
