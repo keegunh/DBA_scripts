@@ -1,0 +1,12 @@
+
+--Data Provisioning
+          SLT         DS         DxC
+이관방식  real time   Batch      http
+ABAP      O           x          x
+M:M       ..          O (ETL)    x (M:1(hana)
+이관단위  Table       Job Flow   App(FI/SCM..)
+--> 모르시면 BO Data Services..
+
+
+BW (oracle) to BWonHANA (BODS)
+

@@ -1,0 +1,41 @@
+
+-->荤傈 SAP HANA System dummy file积己
+su - <sid>adm
+cd /hana/log/<SID>
+dd if=/dev/zero of=dummy_1000m_1 bs=1M count=1000
+dd if=/dev/zero of=dummy_1000m_2 bs=1M count=1000
+dd if=/dev/zero of=dummy_1000m_3 bs=1M count=1000
+ls -al /hana/log/<SID>
+
+-->Log Full 厘局贸府 鉴辑
+HDB stop
+rm -i /hana/log/<SID>/dummy*
+HDB start
+hdbsql
+alter system reclaim log; #log shink..
+\q
+
+
+-->Result
+h94adm@wdflbmt7194:/hana/log/H94> dd if=/dev/zero of=dummy_1000m_1 bs=1m count=1000                                dd: invalid number: '1m'
+h94adm@wdflbmt7194:/hana/log/H94> dd if=/dev/zero of=dummy_1000m_1 bs=1M count=1000
+1000+0 records in
+1000+0 records out
+1048576000 bytes (1.0 GB, 1000 MiB) copied, 0.561936 s, 1.9 GB/s
+h94adm@wdflbmt7194:/hana/log/H94> dd if=/dev/zero of=dummy_1000m_2 bs=1M count=1000
+1000+0 records in
+1000+0 records out
+1048576000 bytes (1.0 GB, 1000 MiB) copied, 1.27177 s, 825 MB/s
+h94adm@wdflbmt7194:/hana/log/H94> dd if=/dev/zero of=dummy_1000m_3 bs=1M count=1000
+1000+0 records in
+1000+0 records out
+1048576000 bytes (1.0 GB, 1000 MiB) copied, 0.684583 s, 1.5 GB/s
+h94adm@wdflbmt7194:/hana/log/H94> ll
+total 3072000
+-rw-r----- 1 h94adm sapsys 1048576000 Jun 14 06:27 dummy_1000m_1
+-rw-r----- 1 h94adm sapsys 1048576000 Jun 14 06:27 dummy_1000m_2
+-rw-r----- 1 h94adm sapsys 1048576000 Jun 14 06:28 dummy_1000m_3
+drwxrwxr-x 5 h94adm sapsys         51 Jun 14 02:12 mnt00001
+h94adm@wdflbmt7194:/hana/log/H94> id
+uid=1000(h94adm) gid=4001(sapsys) groups=4001(sapsys),4042(h94shm)
+h94adm@wdflbmt7194:/hana/log/H94>

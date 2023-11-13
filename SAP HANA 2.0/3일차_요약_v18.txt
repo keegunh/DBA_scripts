@@ -1,0 +1,43 @@
+Installation LCM root
+
+Resident LCM --> 2개  OS계정에서 -> root/<sid>adm
+
+su - root ( rename/unregister/add host/remove host... )
+/hana/shared/<SID>/hdblcm > ./hdblcm
+
+su - <sid>adm
+/hana/shared/<SID>/hdblcm > ./hdblcm
+
+
+
+--CPU Busy 
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00>
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00> dd if=/dev/zero of=/dev/null &
+[1] 29218
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00> dd if=/dev/zero of=/dev/null &
+[2] 29220
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00> dd if=/dev/zero of=/dev/null &
+[3] 29227
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00> sar -u 1 1111
+Linux 5.3.18-150300.59.93-default (wdflbmt7346)         12/21/2022      _x86_64_        (4 CPU)
+
+06:03:29 AM     CPU     %user     %nice   %system   %iowait    %steal     %idle
+06:03:30 AM     all     21.05      0.00     54.64      0.00      0.00     24.31
+06:03:31 AM     all     23.17      0.00     53.40      0.00      0.00     23.43
+06:03:32 AM     all     23.75      0.00     52.25      0.00      0.00     24.00
+06:03:33 AM     all     22.31      0.00     53.38      0.00      0.00     24.31
+06:03:34 AM     all     38.04      0.00     43.32      0.00      0.00     18.64
+06:03:35 AM     all     21.05      0.00     54.89      0.00      0.00     24.06
+06:03:36 AM     all     23.88      0.00     53.23      0.00      0.00     22.89
+06:03:37 AM     all     23.06      0.00     53.63      0.00      0.00     23.31
+06:03:38 AM     all     23.06      0.00     52.88      0.00      0.00     24.06
+06:03:39 AM     all     25.69      0.00     50.38      0.00      0.00     23.93
+
+
+--AP to DB 접속테스트
+h46adm@wdflbmt7346:/usr/sap/H46/home> 
+hdbsql -i 00 -u system -p Welcome1 -d H47 -n wdflbmt7347:30015
+
+h47adm@wdflbmt7347:/usr/sap/H47/home> 
+hdbsql -i 00 -u system -p Welcome1 -d H46 -n wdflbmt7346:30015
+

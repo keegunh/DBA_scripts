@@ -29,7 +29,34 @@ SELECT
 --       ) GATHER_STATS_DDL
   FROM DBA_TAB_STATISTICS
  WHERE 1=1
-   AND OWNER IN ('PMPBADM', 'BLCP01ADM', 'BLCP02ADM', 'BLCP03ADM', 'BLCP04ADM', 'BLCP05ADM', 'BLCP06ADM', 'BLCP07ADM', 'BLCP08ADM', 'BLCP09ADM', 'BLCP10ADM')
+   AND OWNER NOT IN ('SYS'
+                  , 'SYSTEM'
+                  , 'OUTLN'
+                  , 'XS$NULL'
+                  , 'OJVMSYS'
+                  , 'GGSYS'
+                  , 'ANONYMOUS'
+                  , 'DBSNMP'
+                  , 'GSMADMIN_INTERNAL'
+                  , 'XDB'
+                  , 'WMSYS'
+                  , 'CTXSYS'
+                  , 'DBSFWUSER'
+                  , 'APPQOSSYS'
+                  , 'GSMUSER'
+                  , 'SYSDG'
+                  , 'SYSKM'
+                  , 'ORACLE_OCM'
+                  , 'GSMCATUSER'
+                  , 'REMOTE_SCHEDULER_AGENT'
+                  , 'SYS$UMF'
+                  , 'SYSBACKUP'
+                  , 'SYSRAC'
+                  , 'DIP'
+                  , 'AUDSYS'
+			      , 'DVSYS'
+			      , 'LBACSYS'
+			      , 'MDSYS')
    AND LAST_ANALYZED IS NULL
    AND OBJECT_TYPE IN ('PARTITION', 'SUBPARTITION')
  ORDER BY OWNER, TABLE_NAME, DECODE(OBJECT_TYPE, 'TABLE', 1, 'PARTITION', 2, 'SUBPARTITION', 3), PARTITION_NAME, SUBPARTITION_NAME;
@@ -50,7 +77,34 @@ SELECT
        ) GATHER_STATS_DDL
   FROM DBA_TAB_STATISTICS
  WHERE 1=1
-   AND OWNER IN ('PMPBADM', 'BLCP01ADM', 'BLCP02ADM', 'BLCP03ADM', 'BLCP04ADM', 'BLCP05ADM', 'BLCP06ADM', 'BLCP07ADM', 'BLCP08ADM', 'BLCP09ADM', 'BLCP10ADM')
+   AND OWNER NOT IN ('SYS'
+                  , 'SYSTEM'
+                  , 'OUTLN'
+                  , 'XS$NULL'
+                  , 'OJVMSYS'
+                  , 'GGSYS'
+                  , 'ANONYMOUS'
+                  , 'DBSNMP'
+                  , 'GSMADMIN_INTERNAL'
+                  , 'XDB'
+                  , 'WMSYS'
+                  , 'CTXSYS'
+                  , 'DBSFWUSER'
+                  , 'APPQOSSYS'
+                  , 'GSMUSER'
+                  , 'SYSDG'
+                  , 'SYSKM'
+                  , 'ORACLE_OCM'
+                  , 'GSMCATUSER'
+                  , 'REMOTE_SCHEDULER_AGENT'
+                  , 'SYS$UMF'
+                  , 'SYSBACKUP'
+                  , 'SYSRAC'
+                  , 'DIP'
+                  , 'AUDSYS'
+			      , 'DVSYS'
+			      , 'LBACSYS'
+			      , 'MDSYS')
    AND LAST_ANALYZED IS NULL
    AND OBJECT_TYPE IN ('PARTITION', 'SUBPARTITION')
  ORDER BY OWNER, TABLE_NAME, DECODE(OBJECT_TYPE, 'TABLE', 1, 'PARTITION', 2, 'SUBPARTITION', 3), PARTITION_NAME, SUBPARTITION_NAME;

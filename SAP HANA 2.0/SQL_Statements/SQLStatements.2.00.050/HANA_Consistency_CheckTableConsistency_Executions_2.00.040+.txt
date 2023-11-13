@@ -1,0 +1,228 @@
+SELECT
+
+/* 
+
+[NAME]
+
+- HANA_Consistency_CheckTable_Consistency_Executions_2.00.040+
+
+[DESCRIPTION]
+
+- Overview of consistency check runs (CHECK_TABLE_CONSISTENCY, CHECK_CATALOG)
+
+[SOURCE]
+
+- SAP Note 1969700
+
+[DETAILS AND RESTRICTIONS]
+
+- M_CONSISTENCY_CHECK_HISTORY available starting with SAP HANA 2.00.040
+- See SAP Notes 1977584 and 2116157 for SAP HANA consistency checks.
+
+[VALID FOR]
+
+- Revisions:              >= 2.00.040
+
+[SQL COMMAND VERSION]
+
+- 2019/02/18:  1.0 (initial version)
+
+[INVOLVED TABLES]
+
+- M_CONSISTENCY_CHECK_HISTORY
+
+[INPUT PARAMETERS]
+
+- DB_USER
+
+  Database user
+
+  'SYSTEM'        --> Database user 'SYSTEM'
+  '%'             --> No database user restriction
+
+- CHECK_PROCEDURE_NAME
+
+  Name of consistency check procedure
+
+  'CHECK_TABLE_CONSISTENCY' --> Restrict results to call of CHECK_TABLE_CONSISTENCY
+  '%'                       --> No procedure name restriction
+
+- CHECK_ACTION
+
+  Name of check action
+
+  'CHECK_LOBS'              --> Only display details to action CHECK_LOBS
+  '%'                       --> No restriction related to check action
+
+- SCHEMA_NAME
+
+  Schema name or pattern
+
+  'SAPSR3'        --> Specific schema SAPSR3
+  'SAP%'          --> All schemata starting with 'SAP'
+  '%'             --> All schemata
+
+- TABLE_NAME           
+
+  Table name or pattern
+
+  'T000'          --> Specific table T000
+  'T%'            --> All tables starting with 'T'
+  '%'             --> All tables
+
+- ERROR_CODE
+
+  Error code
+
+  5099            --> Only display entries with error code 5099
+  -1              --> No restriction related to error code
+
+- ERROR_MESSAGE
+
+  Error message
+
+  'metadata%'     --> Only return error messages starting with 'metadata'
+  '%'             --> No restriction related to error message
+
+- MIN_TOTAL_DURATION_H
+
+  Threshold for minimum total duration (h)
+
+  5               --> Only display lines with a minimum total duration of 5 hours
+  -1              --> No restriction related to total duration
+
+- MIN_AVG_DURATION_S
+
+  Threshold for minimum average duration (s)
+
+  7200            --> Only display lines with a minimum average duration of 7200 seconds
+  -1              --> No restriction related to average duration
+
+- MAX_CHECK_ACTION_LENGTH
+
+  Possibility to limit length of check action in output
+
+  40              --> Truncate CHECK_ACTION output column values to 40 characters
+  -1              --> No truncation of CHECK_ACTION output column values
+  
+- AGGREGATE_BY
+
+  Aggregation criteria (possible values can be found in comment)
+
+  'ACTION'        --> Aggregation by check action
+  'SCHEMA, TABLE' --> Aggregation by schema and table
+  'NONE'          --> No aggregation
+
+- ORDER_BY
+
+  Sort criteria (available values are provided in comment)
+
+  'DURATION'      --> Sorting by total duration
+  'COUNT'         --> Sorting by number of checks
+
+[OUTPUT PARAMETERS]
+
+- DB_USER:              Database user calling check procedure
+- CHECK_PROCEDURE_NAME: Name of check procedure
+- CHECK_ACTION:         Check action (see SAP Note 1977584 for possible actions)
+- SCHEMA_NAME:          Schema name of checked table (in case of table specific check)
+- TABLE_NAME:           Name of check table (in case of table specific check)
+- EXECUTIONS:           Number of executions
+- LAST_START_TIME:      Last start time of check procedure
+- AVG_TIME_S:           Average runtime (s)
+- TOT_TIME_H:           Total runtime (h)
+- ERROR_DETAILS:        Error details ("0" in case of successful completion)
+
+[EXAMPLE OUTPUT]
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|DB_USER        |CHECK_PROCEDURE_NAME   |CHECK_ACTION                            |SCHEMA_NAME|TABLE_NAME|EXECUTIONS|LAST_START_TIME    |AVG_TIME_S|TOT_TIME_H|ERROR_DETAILS|
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|HDB_SCRIPT     |CHECK_TABLE_CONSISTENCY|CHECK_DATA_LENGTH                       |           |          |         1|2019/02/01 12:55:21| 165556.58|     45.98|0            |
+|HDB_SCRIPT     |CHECK_TABLE_CONSISTENCY|CHECK_UNIQUE_CONSTRAINTS                |           |          |         1|2019/01/31 19:35:23|  24542.72|      6.81|0            |
+|HDB_SCRIPT     |CHECK_TABLE_CONSISTENCY|CHECK_MAIN_DICTIONARY                   |           |          |         2|2019/02/01 09:36:24|  11420.82|      6.34|0            |
+|HDB_SCRIPT     |CHECK_TABLE_CONSISTENCY|CHECK_REPLICATION_DATA_FULL             |           |          |         2|2019/02/01 07:22:20|   7082.94|      3.93|0            |
+|_SYS_STATISTICS|CHECK_TABLE_CONSISTENCY|CHECK_DELTA_LOG,CHECK_VARIABLE_PART_SANI|           |          |        16|2019/02/18 04:09:41|    776.47|      3.45|0            |
+|HDB_SCRIPT     |CHECK_TABLE_CONSISTENCY|CHECK_VALUE_INDEXES                     |           |          |         1|2019/01/30 23:12:40|   7216.34|      2.00|0            |
+|HDB_SCRIPT     |CHECK_TABLE_CONSISTENCY|CHECK_MAIN_INVERTED_INDEX               |           |          |         1|2019/01/31 18:11:44|   4030.45|      1.11|0            |
+|HDB_SCRIPT     |CHECK_TABLE_CONSISTENCY|CHECK_LOBS                              |           |          |         1|2019/01/30 15:55:12|   2203.25|      0.61|0            |
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+*/
+
+  DB_USER,
+  CHECK_PROCEDURE_NAME,
+  CHECK_ACTION,
+  SCHEMA_NAME,
+  TABLE_NAME,
+  LPAD(EXECUTIONS, 10) EXECUTIONS,
+  TO_VARCHAR(LAST_START_TIME, 'YYYY/MM/DD HH24:MI:SS') LAST_START_TIME,
+  LPAD(TO_DECIMAL(MAP(EXECUTIONS, 0, 0, EXECUTION_TIME_S / EXECUTIONS), 10, 2), 10) AVG_TIME_S,
+  LPAD(TO_DECIMAL(EXECUTION_TIME_S / 3600, 10, 2), 10) TOT_TIME_H,
+  MAP(ERROR_MESSAGE, '', ERROR_CODE, ERROR_CODE || ':' || CHAR(32) || ERROR_MESSAGE) ERROR_DETAILS
+FROM
+( SELECT
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'DB_USER')   != 0 THEN CH.USER_NAME               ELSE MAP(BI.DB_USER,              '%', 'any', BI.DB_USER)                END DB_USER,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'PROCEDURE') != 0 THEN CH.CHECK_PROCEDURE_NAME    ELSE MAP(BI.CHECK_PROCEDURE_NAME, '%', 'any', BI.CHECK_PROCEDURE_NAME)   END CHECK_PROCEDURE_NAME,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'ACTION')    != 0 THEN 
+      MAP(BI.MAX_CHECK_ACTION_LENGTH, -1, CH.CHECK_ACTION, SUBSTR(CH.CHECK_ACTION, 1, BI.MAX_CHECK_ACTION_LENGTH)) ELSE MAP(BI.CHECK_ACTION,         '%', 'any', BI.CHECK_ACTION)           END CHECK_ACTION,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'SCHEMA')    != 0 THEN CH.SCHEMA_NAME             ELSE MAP(BI.SCHEMA_NAME,          '%', 'any', BI.SCHEMA_NAME)            END SCHEMA_NAME,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'TABLE')     != 0 THEN CH.OBJECT_NAME             ELSE MAP(BI.TABLE_NAME,           '%', 'any', BI.TABLE_NAME)             END TABLE_NAME,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'ERROR')     != 0 THEN TO_VARCHAR(CH.ERROR_CODE)  ELSE MAP(BI.ERROR_CODE,            -1, 'any', TO_VARCHAR(BI.ERROR_CODE)) END ERROR_CODE,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'ERROR')     != 0 THEN CH.ERROR_MESSAGE           ELSE MAP(BI.ERROR_MESSAGE,        '%', 'any', BI.ERROR_MESSAGE)          END ERROR_MESSAGE,
+    MAX(LAST_START_TIME) LAST_START_TIME,
+    SUM(CHECK_EXECUTION_COUNT) EXECUTIONS,
+    SUM(AVG_DURATION / 1000 * CHECK_EXECUTION_COUNT) EXECUTION_TIME_S,
+    SUM(AVG_SCHEDULED_TABLE_COUNT * CHECK_EXECUTION_COUNT) SCHEDULED_TABLES,
+    SUM(EXECUTED_TABLE_COUNT) EXECUTED_TABLES,
+    SUM(ERROR_TABLE_COUNT) ERRORS,
+    BI.MIN_TOTAL_DURATION_H,
+    BI.MIN_AVG_DURATION_S,
+    BI.ORDER_BY
+  FROM
+  ( SELECT               /* Modification section */
+      '%' DB_USER,
+      '%' CHECK_PROCEDURE_NAME,
+      '%' CHECK_ACTION,
+      '%' SCHEMA_NAME,
+      '%' TABLE_NAME,
+      -1  ERROR_CODE,
+      '%' ERROR_MESSAGE,
+      ' ' ONLY_ERRORS,
+      -1  MIN_TOTAL_DURATION_H,
+      -1  MIN_AVG_DURATION_S,
+      40  MAX_CHECK_ACTION_LENGTH,
+      'NONE' AGGREGATE_BY,                /* DB_USER, PROCEDURE, ACTION, SCHEMA, TABLE, ERROR */
+      'DURATION' ORDER_BY                 /* DURATION, COUNT, NAME */
+    FROM
+      DUMMY
+  ) BI,
+    M_CONSISTENCY_CHECK_HISTORY CH
+  WHERE
+    CH.USER_NAME LIKE BI.DB_USER AND
+    CH.CHECK_PROCEDURE_NAME LIKE BI.CHECK_PROCEDURE_NAME AND
+    CH.CHECK_ACTION LIKE BI.CHECK_ACTION AND
+    CH.SCHEMA_NAME LIKE BI.SCHEMA_NAME AND
+    CH.OBJECT_NAME LIKE BI.TABLE_NAME AND
+    ( BI.ERROR_CODE = -1 OR CH.ERROR_CODE = BI.ERROR_CODE ) AND
+    CH.ERROR_MESSAGE LIKE BI.ERROR_MESSAGE AND
+    ( BI.ONLY_ERRORS = ' ' OR CH.ERROR_CODE != 0 )
+  GROUP BY
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'DB_USER')   != 0 THEN CH.USER_NAME               ELSE MAP(BI.DB_USER,              '%', 'any', BI.DB_USER)                END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'PROCEDURE') != 0 THEN CH.CHECK_PROCEDURE_NAME    ELSE MAP(BI.CHECK_PROCEDURE_NAME, '%', 'any', BI.CHECK_PROCEDURE_NAME)   END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'ACTION')    != 0 THEN 
+      MAP(BI.MAX_CHECK_ACTION_LENGTH, -1, CH.CHECK_ACTION, SUBSTR(CH.CHECK_ACTION, 1, BI.MAX_CHECK_ACTION_LENGTH)) ELSE MAP(BI.CHECK_ACTION,         '%', 'any', BI.CHECK_ACTION)           END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'SCHEMA')    != 0 THEN CH.SCHEMA_NAME             ELSE MAP(BI.SCHEMA_NAME,          '%', 'any', BI.SCHEMA_NAME)            END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'TABLE')     != 0 THEN CH.OBJECT_NAME             ELSE MAP(BI.TABLE_NAME,           '%', 'any', BI.TABLE_NAME)             END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'ERROR')     != 0 THEN TO_VARCHAR(CH.ERROR_CODE)  ELSE MAP(BI.ERROR_CODE,            -1, 'any', TO_VARCHAR(BI.ERROR_CODE)) END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'ERROR')     != 0 THEN CH.ERROR_MESSAGE           ELSE MAP(BI.ERROR_MESSAGE,        '%', 'any', BI.ERROR_MESSAGE)          END,
+    BI.MIN_TOTAL_DURATION_H,
+    BI.MIN_AVG_DURATION_S,
+    BI.ORDER_BY
+)
+WHERE
+  ( MIN_TOTAL_DURATION_H = -1 OR EXECUTION_TIME_S / 3600 >= MIN_TOTAL_DURATION_H ) AND
+  ( MIN_AVG_DURATION_S = -1 OR EXECUTION_TIME_S / EXECUTIONS >= MIN_AVG_DURATION_S )
+ORDER BY
+  MAP(ORDER_BY, 'DURATION', EXECUTION_TIME_S, 'COUNT', EXECUTIONS) DESC,
+  MAP(ORDER_BY, 'NAME', CHECK_PROCEDURE_NAME || CHECK_ACTION || SCHEMA_NAME || TABLE_NAME)

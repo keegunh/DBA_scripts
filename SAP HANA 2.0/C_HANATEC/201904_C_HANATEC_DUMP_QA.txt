@@ -1,0 +1,188 @@
+덤프를 풀다가 궁금한 부분이 있어 질문 드립니다.
+아래 답이 맞는지 확인 부탁 드려요~
+
+Which backup scenarios can you perform in multitenant database containers? 
+There are 2 correct answers to this question. 
+Response: 
+a. Log backups for your own tenant database from your tenant database
+b. Backups of all the tenant databases from the system database
+c. Backup of your own tenant database
+d. Storage snapshot backups per tenant database
+
+b,c
+( 
+b: systemdb에서 꼭 전체 테넌트디브를
+받을 필요는 없습니다. 해당 테넌트의 system암호만 알면 해당 테넌트만 받으면 됩니다. 
+d : storage snapshop 는 전체
+data volume 의 복제입니다. 따라서
+특정 테넌트 디비별 백업은 아니죠)
+
+For which communication channel do you need to set up encryption manually? 
+Response: 
+a. Between databases in a multiple-container system
+b. Between SAP HANA systems in system replication scenarios
+c. Between the SAP HANA server and clients
+d. Between hosts in a scale-out system
+
+c
+( hdbuserstore로 접속 정보를 암호화하는 
+수작업이 필요하고 나머지는 하나 시스템이
+기본으로 암호화 합니다. openssl. )
+
+Which of the following can you do in the SAP HANA studio and also in the DBA Cockpit? 
+There are 3 correct answers to this question. 
+Response: 
+a. Implement backup scheduling.
+b. Monitor an SQLDBC trace.
+c. Execute system recovery.
+d. Display the statuses of database resources.
+e. View the tables in the _SYS_STATISTICS schema.
+
+b,d,e
+e는 DBA Cockpit에서 어떻게 볼 수 있죠?
+( dba cockpit 을 다루는 HA200교재에서
+sql console 기능이 있어 스튜디오와 똑같이 SQL명령어를 수행할 수 있습니다. 
+백업 스케줄링은 수튜디오에서는 안되면
+카트픽은 백업 캘린더로 지정됩니다 )
+
+You have an SAP Hana environment with four scale out services of 512 GB RAM each (hosts A, B, C and D). You would like to allocate exactly 300GB to install SAP business warehouse on the SAP Hana database. 
+How can you set the parameters for the Global_allocation_limit to achieve this configuration? 
+There are 2 correct answers to this question 
+Response: 
+a. 300 GB for the entire system
+b. 75 GB for the entire system
+c. 100 GB for the entire system and 200 GB individually for host
+d. 50 GB for the entire system and 150 GB individually for host B
+
+b,d
+( 모두 Worker인 4노드 구성에서
+라이센스는 300G로 노드당 RAM이
+512G서버에 배분해야 하는 문제입니다. 
+물리 메모리 총 2T에서 러이센스 허용 메모리 총 300G안에서 사용되는 구성으로
+해야 합니다. 
+a->300G*4ea=1200G
+b->75G*4ea=300G
+c->100G(abcd) or 노드별200G*4ea
+=system이 우선이면 100G로 설정됩니다. 
+d-> 150G(acd 합)+150G(b)=300G
+정답 b는 확실하며 
+entire system의 의미가 중요합니다. 
+각각의 의미라면 b와d가 맞습니다. 
+
+이 문제는 설명 좀 부탁드립니다.
+
+Due to a hardware failure , you are using a different host to recover the crashed sap hana database. 
+Which of the following configuration files must you use for the recovery? 
+There are 2 correct answers to this question. 
+Response: 
+a. nameseiver.ini
+b. indexserver.ini
+c. xsengine.ini
+d. sapprofile.ini
+
+a,c ->bc?
+c가 좀 이상하네요.
+
+Which data provisioning tools are commonly used to build agile data marts in SAP Hana? 
+There are 2 correct answers to this question 
+Response: 
+a. SAP landscape transformation replication server (SLT)
+b. SAP business objects Data Services
+c. SAP replication server
+d. SAP direct Extractor connection (DXC)
+
+b,d
+agile data mart 나 DXC가 생소합니다.
+
+Which backup scenarios are allowed in multitenant database containers? 
+There are 2 correct answers to this question. 
+Response: 
+a. The backup of the tenant's databases can be initiated ONLY by the system database
+b. A database can initiate its own backup unless this is prohibited by the system configuration
+c. A tenant database can initiate its own backup and the backup of the other tenant databases
+d. The system database can initiate its own backup and the backup of tenant databases
+
+b,d
+
+You are implementing a Tailored Data Center Integration (TDI) multi-host SAP HANA system with failover capabilities. 
+What are the requirements for the disk storage? 
+There are 2 correct answers to this question. 
+Response: 
+a. The master node is fully clustered
+b. The slave node is set to backup standby
+c. The standby host has file access
+d. The failed worker host gets fenced during failover
+
+c,d
+
+When you use The Resseting the DMO procedure as a failback scenario, which of the changes made during the Reset? 
+There are 3 correct answers to this question. 
+Response: 
+a. The DBACOCKPIT user on the SAP HANA database
+b. The deleted SAP BusinessObjects Business Intelligence data on the non-SAP database
+c. The SAP ABAP kernel on the application server
+d. The shadow schema on the non-SAP database
+e. The updated BRTOOLS on the non-SAP database
+
+b,c,d -->a, c, e
+
+For the most part, CDS works in SAP HANA XS advanced deployment infrastructure (HDI) just like it does in the SAP HANA XS classic Repository. Which of the following annotations are not supported in SAP HANA XS advanced HDI? 
+There are 3 correct answers to this question. 
+Response: 
+a. @Schema
+b. @SearchIndex
+c. @WithStructuredPrivilegePost
+d. @GenerateTableType
+e. @nokeyStructured
+
+a,b,d
+이건 어디에 나올까요?
+
+You are implementing system replication for an SAP HANA system 
+How is the secondary SAP HANA database synchronized with the primary SAP HANA database? 
+There are 2 correct answers to this question 
+Response: 
+a. An initial snapshot and the redo log are transferred from the primary database to the secondary database
+b. Every commit is written to a shared sub directory between the primary database and secondary database
+c. Each service on the secondary database establishes a connection with its primary database
+d. Each transaction committed on the primary database is also committed on the secondary database
+
+a,c
+d는 왜 아닐까요?
+
+Which of the following installation requirments are coorect? 
+There are 2 correct answers to this question. 
+Response: 
+a. The instance number for the SAP NetWeaver AS ABAP system and the SAP HANA database must be the same
+b. The memory resources for the SAP NetWeaver AS ASAP system and the SAP HANA database must be added
+c. The System ID (SID) for the SAP NetWeaver AS ABAP system and the SAP HANA database must be different.
+d. The disk resources for the SAP NetWeaver AS ASAP system and the SAP HANA database must be the same
+
+b,c
+SID, Instance No 모두 달라야 하죠?
+
+How is the memory allocation limit calculated by default for an SAP Hana database? 
+Please choose the correct answer. 
+Response: 
+a. 1 GB of the first 64 GB of available physical memory on the host plus 90% of each additional GB
+b. 90% of the first 64 GB of available physical memory on the host plus 97% of each additional GB
+c. 90% of the first 512 GB of available physical memory on the host plus 97% of each additional GB
+d. 4 GB of the first 128 GB of available physical memory on the host plus 97% of each additional GB
+
+b
+이건 어디에 나올까요?
+
+You have to load data in real time from external systems into SAP HANA. Which Data Provisioning tools can you use? 
+There are 3 correct answers to this question. 
+Response: 
+a. SAP Data Services (SDS)
+b. SAP Replication Server (SRS)
+c. SAP LT Replication Server (SLT)
+d. Smart Data Integration (SDI)
+e. Smart Data Access (SDA)
+
+b,c,d
+왜 a 가 아니라 d 일까요?
+a는 ETL툴입니다. real time은 트리거나
+log shipping방식만됩니다. 
+감사합니다.

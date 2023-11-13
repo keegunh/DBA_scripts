@@ -1,0 +1,153 @@
+SELECT
+
+/* 
+
+[NAME]
+
+- HANA_ABAP_InstalledComponents
+
+[DESCRIPTION]
+
+- Overview of installed ABAP components
+
+[SOURCE]
+
+- SAP Note 1969700
+
+[DETAILS AND RESTRICTIONS]
+
+- Table AVERS only available in SAP ABAP environments
+- You have to be connected to the SAP<sid> schema otherwise the following error is issued:
+
+  [259]: invalid table name: Could not find table/view AVERS in schema
+
+- If access to ABAP objects is possible but you cannot log on as ABAP user, you can switch the default schema before executing the command:
+
+  SET SCHEMA SAP<sid>
+
+[VALID FOR]
+
+- Revisions:              all
+- Client application:     ABAP
+
+[SQL COMMAND VERSION]
+
+- 2020/07/19:  1.0 (initial version)
+
+[INVOLVED TABLES]
+
+- AVERS
+
+[INPUT PARAMETERS]
+
+      '%' VERSION,
+      '%' R3VERSION,
+      '%' DESCRIPTION,
+      'X' SKIP_PREVIOUS_VERSIONS
+
+
+- COMPONENT
+
+  Installed component
+
+  'SAP_BASIS'     --> Show details for installed component SAP_BASIS
+  'PI%'           --> Show details for installed components starting with "PI"
+  '%'             --> No restriction related to installed component
+
+- VERSION
+
+  Component version
+
+  '750'           --> Show components with version 750
+  '%'             --> No restriction related installed R/3 version
+
+- R3VERSION
+
+  Component R/3 version
+
+  '750'           --> Show components with R/3 version 750
+  '%'             --> No restriction related installed version
+
+- DESCRIPTION
+
+  Component description
+
+  'Basis Plug-In' --> Show components with description "Basis Plug-In"
+  'DMIS%'         --> Show components with descriptions starting with "DMIS"
+  '%'             --> No restriction related to component description
+
+- SKIP_PREVIOUS_VERSIONS
+
+  'X'             --> Only show most recent version of a component
+  ' '             --> Also show previously installed versions of a component
+  
+[OUTPUT PARAMETERS]
+
+- COMPONENT:   Component name
+- VERSION:     Component version
+- R3VERSION:   Component R/3 version
+- DESCRIPTION: Component description
+- START_TIME:  Component installation time
+- END_TIME:    Component end installation time / last check time
+
+[EXAMPLE OUTPUT]
+
+------------------------------------------------------------------------------------------------------------------
+|COMPONENT |VERSION   |R3VERSION|DESCRIPTION                             |START_TIME         |END_TIME           |
+------------------------------------------------------------------------------------------------------------------
+|LCAPPS    |2005_700  |750      |LC Applications (LCAPPS) 2005_700       |2013/07/09 16:42:00|2019/10/19 09:19:33|
+|MDG_FND   |731       |740      |MDG Foundation 732                      |2011/09/08 19:37:30|2015/04/25 07:57:02|
+|MDG_FND   |747       |740      |MDG Foundation 732                      |2015/04/20 09:14:27|2015/04/25 07:57:03|
+|MDG_FND   |749       |750      |MDG Foundation                          |2018/04/10 15:06:42|2019/10/19 09:19:33|
+|SAP_BASIS |731       |740      |SAP Basis Component                     |2011/09/08 19:37:30|2015/04/25 07:57:02|
+|SAP_BASIS |740       |740      |SAP Basis Component                     |2015/04/20 09:14:27|2015/04/25 07:57:03|
+|SAP_BASIS |750       |750      |SAP Basis Component                     |2018/04/10 15:06:42|2019/10/19 09:19:33|
+|SAP_BS_FND|731       |740      |SAP Business Suite Foundation           |2011/09/08 19:37:30|2015/04/25 07:57:02|
+|SAP_BS_FND|747       |740      |SAP Business Suite Foundation           |2015/04/20 09:14:27|2015/04/25 07:57:03|
+|SAP_BS_FND|748       |750      |SAP Business Suite Foundation           |2018/04/10 15:06:42|2019/10/19 09:19:33|
+|SAP_BW    |731       |740      |SAP Business Warehouse                  |2011/09/08 19:37:30|2015/04/25 07:57:02|
+|SAP_BW    |740       |740      |SAP Business Warehouse                  |2015/04/20 09:14:27|2015/04/25 07:57:03|
+|SAP_BW    |750       |750      |SAP Business Warehouse                  |2018/04/10 15:06:42|2019/10/19 09:19:33|
+------------------------------------------------------------------------------------------------------------------
+
+*/
+
+  COMPONENT,
+  VERSION,
+  R3VERSION,
+  DESCRIPTION,
+  START_TIME,
+  END_TIME
+FROM
+( SELECT
+    ROW_NUMBER () OVER (PARTITION BY A.ADDONID ORDER BY A.STARTDATE || A.STARTTIME DESC) LINE_NO,
+    A.ADDONID COMPONENT,
+    A.ADDONRL VERSION,
+    A.R3RELEASE R3VERSION,
+    A.PCOMMENT DESCRIPTION,
+    TO_VARCHAR(TO_TIMESTAMP(A.STARTDATE || A.STARTTIME, 'YYYYMMDDHH24MISS'), 'YYYY/MM/DD HH24:MI:SS') START_TIME,
+    TO_VARCHAR(TO_TIMESTAMP(A.ENDDATE || A.ENDTIME, 'YYYYMMDDHH24MISS'), 'YYYY/MM/DD HH24:MI:SS') END_TIME,
+    BI.SKIP_PREVIOUS_VERSIONS
+  FROM
+  ( SELECT                    /* Modification section */
+      '%' COMPONENT,
+      '%' VERSION,
+      '%' R3VERSION,
+      '%' DESCRIPTION,
+      'X' SKIP_PREVIOUS_VERSIONS
+    FROM
+      DUMMY
+  ) BI,
+    AVERS A
+  WHERE
+    A.ADDONID LIKE BI.COMPONENT AND
+    A.ADDONRL LIKE BI.VERSION AND
+    A.R3RELEASE LIKE BI.R3VERSION AND
+    A.PCOMMENT LIKE BI.DESCRIPTION
+)
+WHERE
+  ( SKIP_PREVIOUS_VERSIONS = ' ' OR ( LINE_NO = 1 AND COMPONENT IN ( SELECT COMPONENT FROM CVERS ) ) )
+ORDER BY
+  COMPONENT,
+  VERSION,
+  R3VERSION

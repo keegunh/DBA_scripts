@@ -1,0 +1,70 @@
+
+select * from tables
+
+--/tmp/export/<SID> Table Export
+select 'EXPORT '||'"'|| schema_name||'"'||'.'||'"'||table_name||'"'||
+       ' AS '||case when table_type='ROW' then 'CSV' else 'BINARY' end||
+       ' INTO '||'''/backup/H00'''||';'
+from tables
+where schema_name = 'SAP_HANA_DEMO'
+order by table_name
+
+----/tmp/export/<SID>/YYYYMMDD Table Export
+select 'EXPORT '||'"'|| schema_name||'"'||'.'||'"'||table_name||'"'||
+       ' AS '||case when table_type='ROW' then 'CSV' else 'BINARY' end||
+       ' INTO '||'''/bakcup/H00/'||to_char(current_date,'YYYYMMDD')||''''||';'
+from tables
+where schema_name = 'SAP_HANA_DEMO'
+--where schema_name = 'X'
+order by table_name
+
+--hana studio
+EXPORT "SAP_HANA_DEMO"."sap.hana.democontent.epm.data::EPM.ValidityT"  AS BINARY INTO '/backup/H00'
+
+--hdbsql -U default -I t.sql
+--t.sql로 아래 결과를 putty -> <sid>adm-> cdwork --> vi t.sql
+EXPORT "SAP_HANA_DEMO"."sap.hana.democontent.epm.data::EPM.ValidityT" AS BINARY INTO '/tmp/H33'
+
+
+
+--. hdbsql table exp
+
+--> sql csv/column
+--/tmp/export/<SID> Table Export
+select 'EXPORT '||'"'|| schema_name||'"'||'.'||'"'||table_name||'"'||
+       ' AS '||case when table_type='ROW' then 'CSV' else 'BINARY' end||
+       ' INTO '||'''/backup/H00'''
+from tables
+where schema_name = 'SAP_HANA_DEMO'
+and table_name = 'T70'
+order by table_name
+
+--> hdbsql execute
+hanasysa:/backup/H03/export/SAP_HANA_DEMO/T7/T70> cat /usr/sap/H03/HDB03/hanasysa/work/t.sql
+hanasysa:/usr/sap/H03/HDB03/hanasysa/work> cat t.sql
+EXPORT "SAP_HANA_DEMO"."T70" AS CSV
+INTO '/backup/H03';
+
+
+hanasysa:/usr/sap/H03/HDB03/hanasysa/work> 
+hdbsql -i 03 -u system -p manager -m -I t.sql -o t1.log -c ';'
+
+
+
+hanasysa:/usr/sap/H03/HDB03/hanasysa/work> 
+hdbsql -i 03 -u system -p manager -I t.sql -o t.log -m
+
+hanasysa:/backup/H03/export/SAP_HANA_DEMO/T7/T70> ll
+total 24
+-rw-r----- 1 h03adm sapsys 165 Jun 15 10:03 control
+-rw-r----- 1 h03adm sapsys   5 Jun 15 10:03 create.info
+-rw-r----- 1 h03adm sapsys  79 Jun 15 10:03 create.sql
+-rw-r----- 1 h03adm sapsys   7 Jun 15 10:03 data
+-rw-r----- 1 h03adm sapsys  43 Jun 15 10:03 data.info
+-rw-r----- 1 h03adm sapsys 430 Jun 15 10:03 export_system.info
+hanasysa:/backup/H03/export/SAP_HANA_DEMO/T7/T70> strings data
+"xxxx"
+hanasysa:/backup/H03/export/SAP_HANA_DEMO/T7/T70>
+
+
+

@@ -1,0 +1,32 @@
+
+
+
+--[Archived][1.0 SPS 07] SAP HANA Database Backup and Recovery, Concepts - SAP HANA Academy
+https://www.youtube.com/watch?v=LEy_mqvqWwU&t=406s
+
+RMAN backup => Data Backup
+Redo log files = log segments(1G...) = /hana/log
+Archive log files = offline Redo log => log backup
+
+
+--cli UTC 복구가능시간 체크... date -u 
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00/backup/log/DB_H46> hdbbackupdiag -f -d /usr/sap/H46/HDB00/backup/log/DB_H46 -u "2022-12-23 02:00:00"
+found backup catalog 1671774765306 from file /usr/sap/H46/HDB00/backup/log/DB_H46/log_backup_0_0_0_0.1671774765306
+using backup catalog 1671774765306 from file /usr/sap/H46/HDB00/backup/log/DB_H46/log_backup_0_0_0_0.1671774765306
+ERROR: [111013] No valid data backup has been found
+h46adm@wdflbmt7346:/usr/sap/H46/HDB00/backup/log/DB_H46> hdbbackupdiag -f -d /usr/sap/H46/HDB00/backup/log/DB_H46 -u "2022-12-23 04:00:00"
+found backup catalog 1671774765306 from file /usr/sap/H46/HDB00/backup/log/DB_H46/log_backup_0_0_0_0.1671774765306
+using backup catalog 1671774765306 from file /usr/sap/H46/HDB00/backup/log/DB_H46/log_backup_0_0_0_0.1671774765306
+2022_12_23_02_29_27_databackup_0_1
+2022_12_23_02_29_27_databackup_2_1
+2022_12_23_02_29_27_databackup_3_1
+log_backup_2_0_2267648_2273152.1671762982632
+
+
+
+--. 시험보실때.. 문제주시면서..... 
+최수영 sooyc@nate.com 
+010-8729-2923
+
+
+

@@ -1,0 +1,183 @@
+SELECT
+/* 
+
+[NAME]
+
+- HANA_BW_InconsistentDSOTables_Fallback
+
+[DESCRIPTION]
+
+- Check for related DSO tables (new data, active data) with inconsistent configuration
+
+[SOURCE]
+
+- SAP Note 1969700
+
+[DETAILS AND RESTRICTIONS]
+
+- Tables are reported if partitioning layout differs between DSO new data and DSO active data table
+- Tables (and partitions) are reported if partitioning layout is identical, but tables (and partitions)
+  reside on different hosts
+- Fallback: No check of DSO change log tables included to avoid necessity to access SAP tables (RSDODSO, RSTSODS)
+- Output is a rough guidance, but may not be 100 % correct in all cases, consider also using RSDU_TABLE_CONSISTENCY
+
+[VALID FOR]
+
+- Revisions:              all
+- Statistics server type: all
+
+[SQL COMMAND VERSION]
+
+- 2014/03/12:  1.0 (initial version)
+
+[INVOLVED TABLES]
+
+- M_CS_TABLES
+- TABLES
+
+[INPUT PARAMETERS]
+
+- SCHEMA_NAME
+
+  Schema name or pattern
+
+  'SAPSR3'   --> Specific schema SAPSR3
+  'SAP%'     --> All schemata starting with SAP
+  '%'        --> All schemata
+
+- TABLE_NAME:           
+
+  Table name or pattern
+
+  'T000'     --> Specific table T000
+  'T%'       --> All tables starting with T
+  '%'        --> All tables
+
+- CHECK_PARTITIONING_CONSISTENCY
+
+  Activation / deactivation of check for partitioning consistency between DSO new data and DSO active data table
+
+  'X'        --> Check is executed
+  ' '        --> Check is not done
+
+- CHECK_HOST_CONSISTENCY
+
+  Activation / deactivation of check for host consistency between DSO new data and DSO active data table
+
+  'X'        --> Check is activated
+  ' '        --> Check is deactivated
+
+- CHECK_MULTIPLE_PARTITIONS_ON_SAME_HOST
+
+  Activation / deactivation of check to check if multiple partitions of table are located on same host
+
+  'X'        --> Check is executed
+  ' '        --> Check is not done
+
+[OUTPUT PARAMETERS]
+
+- SCHEMA_NAME:      Schema name
+- NEW_TABLE_NAME:   Name of DSO new data table
+- NEW_PART_ID:      Partition ID of DSO new data table
+- NEW_PART_SPEC     Partition specification of DSO new data table
+- NEW_TABLE_HOST:   Host of DSO new data table
+- NEW_TABLE_NAME:   Name of DSO active data table 
+- NEW_PART_ID:      Partition ID of DSO active data table
+- NEW_PART_SPEC:    Partition specification of DSO active data table
+- NEW_TABLE_HOST:   Host of DSO active data table
+- COMMENT:          Description of the inconsistency
+
+[EXAMPLE OUTPUT]
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|SCHEMA_NAME|NEW_TABLE_NAME  |NEW_PART_ID|NEW_PART_SPEC                                  |NEW_HOST|ACT_TABLE_NAME  |ACT_PART_ID|ACT_PART_SPEC                                  |ACT_HOST|COMMENT     |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|SAPBES     |/BIC/AZOCEUO5940|          0|HASH 1 DOC_NUMBER,MATERIAL,FISCVARNT,ITEM_CATEG|erslha35|/BIC/AZOCEUO5900|          0|HASH 1 DOC_NUMBER,MATERIAL,FISCVARNT,ITEM_CATEG|erslha34|Host differs|
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+*/ 
+  DISTINCT
+  N.SCHEMA_NAME,
+  N.TABLE_NAME NEW_TABLE_NAME,
+  CASE WHEN C.CHECK_DESC IN ( 'PARTITIONING_DIFFERENCE', 'MULTIPLE_PARTITIONS_ON_SAME_HOST' ) AND MIN(N.PART_ID) OVER () != MAX(N.PART_ID) OVER () THEN 'various' ELSE LPAD(N.PART_ID, 11) END NEW_PART_ID,
+  N.PART_SPEC NEW_PART_SPEC,
+  CASE WHEN C.CHECK_DESC IN ( 'PARTITIONING_DIFFERENCE', 'MULTIPLE_PARTITIONS_ON_SAME_HOST' ) AND MIN(N.HOST) OVER () != MAX(N.HOST) OVER () THEN 'various' ELSE N.HOST END NEW_HOST,
+  A.TABLE_NAME ACT_TABLE_NAME,
+  CASE WHEN C.CHECK_DESC IN ( 'PARTITIONING_DIFFERENCE', 'MULTIPLE_PARTITIONS_ON_SAME_HOST' ) AND MIN(A.PART_ID) OVER () != MAX(A.PART_ID) OVER () THEN 'various' ELSE LPAD(A.PART_ID, 11) END ACT_PART_ID,
+  A.PART_SPEC ACT_PART_SPEC,
+  CASE WHEN C.CHECK_DESC IN ( 'PARTITIONING_DIFFERENCE', 'MULTIPLE_PARTITIONS_ON_SAME_HOST' ) AND MIN(A.HOST) OVER () != MAX(A.HOST) OVER () THEN 'various' ELSE A.HOST END ACT_HOST,
+  CASE
+    WHEN C.CHECK_DESC = 'PARTITIONING_DIFFERENCE' THEN
+      'Partition specification differs'
+    WHEN C.CHECK_DESC = 'HOST_DIFFERENCE' THEN
+      'Host differs'
+    WHEN C.CHECK_DESC = 'MULTIPLE_PARTITIONS_ON_SAME_HOST' THEN
+      'Multiple partitions on same host'
+  END COMMENT
+FROM
+  ( SELECT                             /* Modification section */
+      '%' SCHEMA_NAME,
+      '%' TABLE_NAME,
+      'X' CHECK_PARTITIONING_CONSISTENCY,
+      'X' CHECK_HOST_CONSISTENCY,
+      'X' CHECK_MULTIPLE_PARTITIONS_ON_SAME_HOST
+    FROM
+      DUMMY
+  ) BI,
+  ( SELECT   1 CHECK_NO, 'HOST_DIFFERENCE' CHECK_DESC       FROM DUMMY UNION ALL
+    ( SELECT 2,          'PARTITIONING_DIFFERENCE'          FROM DUMMY ) UNION ALL
+    ( SELECT 3,          'MULTIPLE_PARTITIONS_ON_SAME_HOST' FROM DUMMY )
+  ) C,
+  ( SELECT
+      CT.HOST,
+      CT.SCHEMA_NAME,
+      CT.TABLE_NAME,
+      CT.PART_ID,
+      ( SELECT
+          SUBSTR(MAP(LOCATE(T.PARTITION_SPEC, ';'), 0, T.PARTITION_SPEC, RTRIM(SUBSTR(T.PARTITION_SPEC, 1, LOCATE(T.PARTITION_SPEC, ';')), ';')), 1, 60)
+        FROM
+          TABLES T
+        WHERE
+          T.SCHEMA_NAME = CT.SCHEMA_NAME AND
+          T.TABLE_NAME = CT.TABLE_NAME
+      ) PART_SPEC,
+      SUBSTR(CT.TABLE_NAME, 1, LENGTH(CT.TABLE_NAME) - 2) || '_0' TABLE_PATTERN,
+      COUNT(*) OVER (PARTITION BY CT.HOST, CT.SCHEMA_NAME, CT.TABLE_NAME) MAX_PART_ON_HOST
+    FROM
+      M_CS_TABLES CT
+    WHERE
+      TABLE_NAME LIKE '/B%/A%40'
+  ) N,
+  ( SELECT
+      CT.HOST,
+      CT.SCHEMA_NAME,
+      CT.TABLE_NAME,
+      CT.PART_ID,
+      ( SELECT
+          SUBSTR(MAP(LOCATE(T.PARTITION_SPEC, ';'), 0, T.PARTITION_SPEC, RTRIM(SUBSTR(T.PARTITION_SPEC, 1, LOCATE(T.PARTITION_SPEC, ';')), ';')), 1, 60)
+        FROM
+          TABLES T
+        WHERE
+          T.SCHEMA_NAME = CT.SCHEMA_NAME AND
+          T.TABLE_NAME = CT.TABLE_NAME
+      ) PART_SPEC,
+      SUBSTR(CT.TABLE_NAME, 1, LENGTH(CT.TABLE_NAME) - 2) || '_0' TABLE_PATTERN,
+      COUNT(*) OVER (PARTITION BY CT.HOST, CT.SCHEMA_NAME, CT.TABLE_NAME) MAX_PART_ON_HOST
+    FROM
+      M_CS_TABLES CT
+    WHERE
+      TABLE_NAME LIKE '/B%/A%00'
+  ) A
+WHERE
+  N.SCHEMA_NAME LIKE BI.SCHEMA_NAME AND
+  N.TABLE_NAME LIKE BI.TABLE_NAME AND
+  A.SCHEMA_NAME = N.SCHEMA_NAME AND
+  A.TABLE_PATTERN = N.TABLE_PATTERN AND
+  ( BI.CHECK_PARTITIONING_CONSISTENCY = 'X' AND C.CHECK_DESC = 'PARTITIONING_DIFFERENCE' AND N.PART_SPEC != A.PART_SPEC OR
+    BI.CHECK_HOST_CONSISTENCY = 'X' AND C.CHECK_DESC = 'HOST_DIFFERENCE' AND N.PART_ID = A.PART_ID AND N.PART_SPEC = A.PART_SPEC AND N.HOST != A.HOST OR
+    BI.CHECK_MULTIPLE_PARTITIONS_ON_SAME_HOST = 'X' AND C.CHECK_DESC = 'MULTIPLE_PARTITIONS_ON_SAME_HOST' AND N.PART_SPEC = A.PART_SPEC AND ( N.MAX_PART_ON_HOST > 1 OR A.MAX_PART_ON_HOST > 1 )
+  )
+ORDER BY
+  N.SCHEMA_NAME,
+  N.TABLE_NAME
+  

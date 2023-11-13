@@ -1,0 +1,10 @@
+CREATE TABLE "HA200_DEMO"."EPM.PO.Item_Part" LIKE 
+"HA200_DEMO"."sap.hana.democontent.epm.data::PO.Item" with data;
+
+
+DMO 기능
+1. SUM/SWPM --> unicode / upgrade(ap) / DB migration
+
+DMO url
+https://<host>:1129/lmsl/migtool/<SID>/doc/sluigui
+

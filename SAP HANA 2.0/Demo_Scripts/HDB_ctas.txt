@@ -1,0 +1,33 @@
+
+--. Oracle CTAS
+---------------------
+create table train01.CUSTOMER 
+tablespace PSAPUSERXXXx
+as
+select * from training.CUSTOMER
+where rownum <= 1000
+
+
+--. SAP HANA CTAS
+---------------------
+create table train01.CUSTOMER like
+training.CUSTOMER with data;
+--> training.CUSTOMER Table Scan하여 train01.CUSTOMER
+   테이블생성후 데이타까지 insert
+or
+
+create table train01.CUSTOMER like
+training.CUSTOMER with nodata;
+--> train01.CUSTOMER 테이블만 생성
+or
+
+create table train01.CUSTOMER as 
+( select top 10000 * from training.CUSTOMER );
+--> 10000건만 생성
+or
+
+create column table train01.CUSTOMER as 
+( select top 10000 * from training.CUSTOMER
+  where customer_id = '3000' );
+--> 10000건중 customer_id가 '3000'인 것만 생성
+

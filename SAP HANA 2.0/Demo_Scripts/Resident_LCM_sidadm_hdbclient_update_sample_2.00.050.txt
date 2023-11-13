@@ -1,0 +1,142 @@
+h47adm@wdflbmt7347:/data/training/setup/upgrade/extracted/SAP_HANA_CLIENT> ./hdbinst
+SAP HANA Database Client installation kit detected.
+
+SAP HANA Lifecycle Management - Client Installation 2.5.101.1594319304
+**********************************************************************
+
+
+Select a SAP HANA Database Client installation:
+
+No  | Installation Path                    | Version            | Mode
+-----------------------------------------------------------------------
+[1] | /usr/sap/H47/home/sap/hdbclient      | 2.5.101.1594319304 | 64bit
+    |                                      |                    |
+ 2  | Install new SAP HANA Database Client | 2.5.101.1594319304 | 64bit
+
+Enter number [1]: 2
+
+Enter Installation Path: /hana/shared/H47/hdbclient  -> 직접입력
+Checking installation...
+Preparing package 'Product Manifest'...
+Preparing package 'SQLDBC'...
+Preparing package 'REPOTOOLS'...
+Preparing package 'Python DB API'...
+Preparing package 'Python Machine Learning API'...
+Preparing package 'ODBC'...
+Preparing package 'R Machine Learning API'...
+Preparing package 'JDBC'...
+Preparing package 'HALM Client'...
+Preparing package 'DBCAPI'...
+Preparing package 'node.js Client'...
+Preparing package 'golang Client'...
+Preparing package 'Ruby Client'...
+Preparing package 'CommonCryptoLib'...
+Preparing package 'Code Examples'...
+Preparing package '.NET Core'...
+Preparing package 'Environment Script'...
+Preparing package 'Client Installer'...
+Preparing package 'Calculation View API'...
+Installing SAP HANA Database Client to /hana/shared/H47/hdbclient...
+Installing package 'Product Manifest'...
+Installing package 'SQLDBC'...
+Installing package 'REPOTOOLS'...
+Installing package 'Python DB API'...
+Installing package 'Python Machine Learning API'...
+Installing package 'ODBC'...
+Installing package 'R Machine Learning API'...
+Installing package 'JDBC'...
+Installing package 'HALM Client'...
+Installing package 'DBCAPI'...
+Installing package 'node.js Client'...
+Installing package 'golang Client'...
+Installing package 'Ruby Client'...
+Installing package 'CommonCryptoLib'...
+Installing package 'Code Examples'...
+Installing package '.NET Core'...
+Installing package 'Environment Script'...
+Installing package 'Client Installer'...
+Installing package 'Calculation View API'...
+Installation done
+Log file written to '/var/tmp/hdb_client_2022-08-09_08.24.30_21249/hdbinst_client.log' on host 'wdflbmt7347'.
+h47adm@wdflbmt7347:/data/training/setup/upgrade/extracted/SAP_HANA_CLIENT> cd /hana/shared/H47/hdblcm
+h47adm@wdflbmt7347:/hana/shared/H47/hdblcm> ll
+total 108
+-rw-r--r-- 1 h47adm sapsys 45070 Aug  5  2020 SIGNATURE.SMF
+drwxr-xr-x 2 root   root      55 Aug  9 07:31 adapters.d
+drwxr-xr-x 2 root   root      56 Aug  9 07:31 descriptors.d
+-rw-r--r-- 1 root   root    3266 Jul 29  2020 filelist.resident
+-rwxr-xr-x 1 root   root   14360 Jul 29  2020 hdblcm
+-rwxr-xr-x 1 root   root   14360 Jul 29  2020 hdblcmgui
+-rwxr-xr-x 1 root   root   14360 Jul 29  2020 hdblcmweb
+drwxr-xr-x 7 root   root    4096 Aug  9 07:31 instruntime
+drwxr-xr-x 2 root   root    4096 Aug  9 07:31 operations.d
+drwxr-xr-x 7 h47adm sapsys   109 Aug  9 08:21 resources
+h47adm@wdflbmt7347:/hana/shared/H47/hdblcm> cd ..
+h47adm@wdflbmt7347:/hana/shared/H47> ll
+total 4
+drwxr-x---  4 h47adm sapsys  172 Aug  8 03:24 HDB00
+dr-xr-x---  3 h47adm sapsys   25 Aug  8 03:23 exe
+drwxr-x---  5 h47adm sapsys   51 Aug  8 03:26 global
+drwxr-xr-x 12 h47adm sapsys 4096 Aug  9 08:25 hdbclient
+drwxr-xr-x  7 root   root    195 Aug  9 07:31 hdblcm
+drwxr-xr-x  2 h47adm sapsys  138 Aug  8 03:30 lm_structure
+drwxr-xr-x  2 h47adm sapsys   54 Aug  8 04:58 profile
+drwxr-xr-x  2 root   root      6 Aug  8 03:30 sapdbctrl-config
+h47adm@wdflbmt7347:/hana/shared/H47> cd hdblicent
+-sh: cd: hdblicent: No such file or directory
+h47adm@wdflbmt7347:/hana/shared/H47> ls -al
+total 4
+drwxr-xr-x 10 h47adm sapsys  134 Aug  9 08:25 .
+drwxr-xr-x  3 root   root     17 Aug  8 04:58 ..
+drwxr-x---  4 h47adm sapsys  172 Aug  8 03:24 HDB00
+dr-xr-x---  3 h47adm sapsys   25 Aug  8 03:23 exe
+drwxr-x---  5 h47adm sapsys   51 Aug  8 03:26 global
+drwxr-xr-x 12 h47adm sapsys 4096 Aug  9 08:25 hdbclient
+drwxr-xr-x  7 root   root    195 Aug  9 07:31 hdblcm
+drwxr-xr-x  2 h47adm sapsys  138 Aug  8 03:30 lm_structure
+drwxr-xr-x  2 h47adm sapsys   54 Aug  8 04:58 profile
+drwxr-xr-x  2 root   root      6 Aug  8 03:30 sapdbctrl-config
+h47adm@wdflbmt7347:/hana/shared/H47> cd hdbclient
+h47adm@wdflbmt7347:/hana/shared/H47/hdbclient> ls -al
+total 696008
+drwxr-xr-x 12 h47adm sapsys      4096 Aug  9 08:25 .
+drwxr-xr-x 10 h47adm sapsys       134 Aug  9 08:25 ..
+dr-xr-xr-x  2 h47adm sapsys       200 Aug  9 08:25 calcviewapi
+dr-xr-xr-x  3 h47adm sapsys        41 Aug  9 08:25 dotnetcore
+drwxr-xr-x  5 h47adm sapsys        68 Aug  9 08:25 examples
+dr-xr-xr-x  3 h47adm sapsys        17 Aug  9 08:25 golang
+-r--r--r--  1 h47adm sapsys    601249 Jul  9  2020 hana.ml.r_2.5.20062600.tar.gz
+-r--r--r--  1 h47adm sapsys    382853 Jul  9  2020 hana_ml-2.5.20062600.tar.gz
+-rwxr-xr-x  1 h47adm sapsys      1187 Jul  9  2020 hdbalm
+-rwxr-xr-x  1 h47adm sapsys    235575 Jul  9  2020 hdbalm.py
+-r--r--r--  1 h47adm sapsys  44793686 Jul  9  2020 hdbcli-2.5.101.tar.gz
+-rw-r-----  1 h47adm sapsys       429 Aug  9 08:25 hdbclient.lst
+-rwxr-xr-x  1 h47adm sapsys      2644 Aug  9 08:25 hdbclienv.sh
+-r-xr-xr-x  1 h47adm sapsys  59567624 Jul  9  2020 hdbkeystore
+-r-xr-xr-x  1 h47adm sapsys  60666288 Jul  9  2020 hdbodbc_cons
+-r-xr-xr-x  1 h47adm sapsys  74000784 Jul  9  2020 hdbsql
+-r-xr-xr-x  1 h47adm sapsys  60663272 Jul  9  2020 hdbsqldbc_cons
+-r-xr-xr-x  1 h47adm sapsys  71570656 Jul  9  2020 hdbuserstore
+drwxr-xr-x  3 h47adm sapsys        92 Aug  9 08:25 install
+-r-xr-xr-x  1 h47adm sapsys  71337736 Jul  9  2020 libSQLDBCHDB.so
+-r-xr-xr-x  1 h47adm sapsys  71077424 Jul  9  2020 libdbcapiHDB.so
+-r-xr-xr-x  1 h47adm sapsys  74403520 Jul  9  2020 libodbcHDB.so
+-r-xr-xr-x  1 h47adm sapsys   5471396 Jul  9  2020 libsapcrypto.so
+-r--r--r--  1 h47adm sapsys      1158 Jul  9  2020 manifest
+-r--r--r--  1 h47adm sapsys   1219123 Jul  9  2020 ngdbc.jar
+dr-xr-xr-x  6 h47adm sapsys       119 Aug  9 08:25 node
+-r-xr-xr-x  1 h47adm sapsys     21416 Jul  9  2020 odbcreg
+-r-xr-xr-x  1 h47adm sapsys 116606816 Jul  9  2020 regi
+drwxr-xr-x  3 h47adm sapsys        57 Aug  9 08:25 rtt
+-rwxr-xr-x  1 h47adm sapsys       112 Jul  9  2020 rtt.sh
+dr-xr-xr-x  4 h47adm sapsys        44 Aug  9 08:25 ruby
+-r-xr-xr-x  1 h47adm sapsys     38320 Jul  9  2020 sapgenpse
+drwxr-xr-x  2 h47adm sapsys        39 Aug  9 08:25 scripts
+dr-xr-xr-x  3 h47adm sapsys        18 Aug  9 08:25 sdk
+h47adm@wdflbmt7347:/hana/shared/H47/hdbclient> ./hdbsql -v
+HDBSQL version 2.5.101.1594319304, the SAP HANA Database interactive terminal.
+Copyright 2000-2020 by SAP SE.
+h47adm@wdflbmt7347:/hana/shared/H47/hdbclient> hdbsql -v
+HDBSQL version 2.5.99.1593205970, the SAP HANA Database interactive terminal.
+Copyright 2000-2020 by SAP SE.
+h47adm@wdflbmt7347:/hana/shared/H47/hdbclient>

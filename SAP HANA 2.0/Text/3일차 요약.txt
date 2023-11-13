@@ -1,0 +1,49 @@
+Installation LCM root ->  SAP HANA System Update 050->051
+Resident LCM root ->  SAP HANA System HDB Client Update ->
+
+
+51027
+51029
+
+
+7350 -> h4cadm / Welcome1
+xs-admin-login -> Welcome1 -> 
+xs apps |grep web  --> ck, ck manager
+/etc/hosts -> SAP HANA System IP/Hostname
+
+http://hostname:51027
+ 
+-ck2.0을 사용하기 위한 포트개방
+7350 to 7194,7495
+●SAP HANA SQL port (3xx13, 3xx15, 3xx41…)
+● sapstartsrv (5xx13, 5xx14)
+● SDS (3xx26)
+● saphostagent (1129
+
+--SAP HANA Cockpit 2.0
+--> SYSTEMDB --> hdbnameserver (os ps)
+--> H4C 96  -> force first password change = false
+--> password -> invalid connection 6->100~
+                       system lock => false 
+     indexserver.ini (H46,H47) 
+     nameserver.ini(SYSTEMDB)
+
+--> SYSTEM DB유저가 lock/deactivate되었을 떄..
+cdco -> global.ini -> password section 추가한다..
+
+
+-ck2.0 manager
+--> Resource 등록 -> H46 2ea -> SYSTEMDB@H46
+                                            H46@H46
+--> Resource Group01-> SYSTEMDB@H46, H46@H46
+                  Group02 ->SYSTEMDB@H47, H47@H47
+
+--> Cockpit user -> COCKPIT_ADMIN권한접속에서 
+ADMIN01 -> Group01
+ADMIN02 -> Group02
+
+-->URL ADMIN01/Init1234 -> Welcome1
+
+--> T01@H46
+
+

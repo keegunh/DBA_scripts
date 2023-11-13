@@ -1,0 +1,101 @@
+SAP HANA 2.0 SPS5 -> 2.00.050 -> SAP HANA System Install
+
+Certi => OS : RHEL8.x or SLES15 SPx
+TDI 설치위한 준비사항>
+SID = H46 /* 영숫자 대문자로만 구성됨 */
+        PRD-> QAS -> DEV 
+        YSP -> YSQ -> YSD 
+IN  = 00~99 /* 96: CK2.0, 00:운영 1 OS -> 1 HDB */
+Hostname = _/특수문자 안됨 -> FQDN  or /etc/hosts
+SAPMNT = SAP HANA Installation = /hana/shared
+->scale up 1T 까지 같은 사이즈 ( ex: RAM 1T -> /hana/shared 1T )
+->scale out -> 교재... 3+1 
+SYSTEM / 암호를 정해야... Welcome1 
+-> SUM/SWPM ->  AP에서 HDB Client/ HDB SYSTEM ->
+8자이상 특수문자 대문자... 
+alter user SYSTEM password Sa#$!K#$$
+SUM ...
+DV  =>  /hana/data  -> 
+/hana/data/<SID>: APP: RAM*3   TDI: *2 ( 휴지쯔,, 레노버/델/HP....)
+LV   => /hana/log    -> /hana/log/<SID>  : Max 512G
+sapadm  -> hostagent Welcome1 ?
+<sid>adm -> h47adm / Welcome1 -> 
+SAPABAP1 -> S/4 HANA 메인유저/메인스키마...
+
+--Disk Partitioning
+/  10G~
+swap -> 16G~
+/hana/shared  1T~
+/hana/data  RAM*3
+/hana/log    Max 512 or RAM*0.5 =>SR 확장할 수 있어야..
+
+--.개발기 QAS/DEV
+/ 
+swap
+/data  1T  
+mkdir -p /hana/shared
+mkdir -p /hana/data
+mkdir -p /hana/log
+ln -s /data /hana/shared -> cd /hana/shared
+ln -s /data /hana/data  -> cd /hana/data
+ln -s /log /hana/log  -> cd /hana/data
+
+LCM = Installation LCM -> hdblcm or hdblcmgui 
+--> <sid>adm 접속--> 
+      Resident LCM  -> Component Add/Update
+      <sid>adm or root(uninstall/System update )
+
+open.sap.com
+--> suser ->  일반이메일...
+
+help.sap.com/hana_appliance
+--> SAP HANA Admin Guide
+--> SAP HANA TroubleShooting .. Guide
+--> SAP HANA Cockpit 2.0 Install 
+--> SAP HANA System Replication Guide 2.00.050
+
+create user hdbadmin password xxxxx;
+grant user admin to hdbadmin;
+exit
+hdbsql -i 00 -u hdbadmin -p xxxx -d SYSTEMDB
+alter user system deactivate user now;
+exit;
+hdbsql -i 00 -u hdbadmin -p xxxx -d SYSTEMDB
+alter user system activate user now;
+exit;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

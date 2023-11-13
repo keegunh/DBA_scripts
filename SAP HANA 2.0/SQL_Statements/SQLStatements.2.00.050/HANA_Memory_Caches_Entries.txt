@@ -1,0 +1,204 @@
+SELECT
+/* 
+
+[NAME]
+
+- HANA_Memory_Caches_Entries
+
+[DESCRIPTION]
+
+- SAP HANA cache entries
+
+[SOURCE]
+
+- SAP Note 1969700
+
+[DETAILS AND RESTRICTIONS]
+
+
+[VALID FOR]
+
+- Revisions:              all
+- Statistics server type: all
+
+[SQL COMMAND VERSION]
+
+- 2017/05/17:  1.0 (initial version)
+
+[INVOLVED TABLES]
+
+- M_CACHE_ENTRIES
+
+[INPUT PARAMETERS]
+
+- HOST
+
+  Host name
+
+  'saphana01'     --> Specic host saphana01
+  'saphana%'      --> All hosts starting with saphana
+  '%'             --> All hosts
+
+- PORT
+
+  Port number
+
+  '30007'         --> Port 30007
+  '%03'           --> All ports ending with '03'
+  '%'             --> No restriction to ports
+
+- SERVICE_NAME
+
+  Service name
+
+  'indexserver'   --> Specific service indexserver
+  '%server'       --> All services ending with 'server'
+  '%'             --> All services  
+
+- CACHE_NAME
+
+  Name of cache
+
+  'MdxEntityCache' --> Only display information related to MdxEntityCache
+  'CS%'            --> Display information for all caches starting with 'CS'
+  '%'              --> No restriction related to cache name
+
+- COMPONENT
+
+  Cache component
+
+  'OLAP'          --> Only shows cache entries with component OLAP
+  '%'             --> No limitation related to cache component
+
+- USER_NAME
+
+  Cache user name
+
+  'SAP123'        --> Only show caches entries of user SAP123
+  '%'             --> No limitation related to user name
+
+- ENTRY_NAME
+
+  Cache entry name
+
+  '%PURCHASE%'     --> Only display cache entries with a name containing 'PURCHASE'
+  '%'              --> No limitation related to cache entry name
+
+- MIN_MEMORY_SIZE_MB
+
+  Minimum memory size threshold (MB)
+
+  10              --> Only display cache entries with a size of at least 10 MB
+  -1              --> No limitation related to minimum cache entry size
+
+- AGGREGATE_BY
+
+  Aggregation criteria (possible values can be found in comment)
+
+  'SERVICE'       --> Aggregation by service
+  'HOST, PORT'    --> Aggregation by host and port
+  'NONE'          --> No aggregation
+
+- ORDER_BY
+
+  Sort criteria (available values are provided in comment)
+
+  'SIZE'          --> Sorting by size 
+  'CACHE'         --> Sorting by cache name
+  'HOST'          --> Sorting by host
+  
+[OUTPUT PARAMETERS]
+
+- HOST:          Host name
+- PORT:          Port
+- SERVICE_NAME:  Service name
+- CACHE_NAME:    Cache name
+- ENTRY_NAME:    Name of cache entry
+- ENTRIES:       Number of cache entries
+- COMPONENT:     Cache component
+- USER_NAME:     User name
+- MEM_MB         Used cache memory (MB)
+
+[EXAMPLE OUTPUT]
+
+---------------------------------------------------------------------------------------------------------------------
+|HOST    |PORT |SERVICE_NAME|CACHE_NAME            |ENTRY_NAME            |ENTRIES   |COMPONENT|USER_NAME|MEM_MB    |
+---------------------------------------------------------------------------------------------------------------------
+|saphana5|30004|scriptserver|AdapterOperationsCache|Data Cleanse          |        90|OpAdapter|         |      0.07|
+|saphana4|30004|scriptserver|AdapterOperationsCache|Data Cleanse          |        90|OpAdapter|         |      0.07|
+|saphana5|30004|scriptserver|AdapterOperationsCache|Global Address Cleanse|        30|OpAdapter|         |      0.02|
+|saphana4|30004|scriptserver|AdapterOperationsCache|Global Address Cleanse|        30|OpAdapter|         |      0.02|
+|saphana5|30004|scriptserver|AdapterOperationsCache|Type Identification   |        20|OpAdapter|         |      0.01|
+|saphana4|30004|scriptserver|AdapterOperationsCache|Type Identification   |        20|OpAdapter|         |      0.01|
+|saphana5|30004|scriptserver|AdapterOperationsCache|Match                 |        20|OpAdapter|         |      0.00|
+|saphana4|30004|scriptserver|AdapterOperationsCache|Match                 |        20|OpAdapter|         |      0.00|
+---------------------------------------------------------------------------------------------------------------------
+
+*/
+
+  HOST,
+  LPAD(PORT, 5) PORT,
+  SERVICE_NAME,
+  CACHE_NAME,
+  ENTRY_NAME,
+  LPAD(ENTRIES, 10) ENTRIES,
+  COMPONENT,
+  USER_NAME,
+  LPAD(TO_DECIMAL(MEM_MB, 10, 2), 10) MEM_MB
+FROM
+( SELECT
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'HOST')      != 0 THEN S.HOST              ELSE MAP(BI.HOST, '%', 'any', BI.HOST)                 END HOST,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'PORT')      != 0 THEN TO_VARCHAR(S.PORT)  ELSE MAP(BI.PORT, '%', 'any', BI.PORT)                 END PORT,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'SERVICE')   != 0 THEN S.SERVICE_NAME      ELSE MAP(BI.SERVICE_NAME, '%', 'any', BI.SERVICE_NAME) END SERVICE_NAME,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'CACHE')     != 0 THEN C.CACHE_ID          ELSE MAP(BI.CACHE_NAME, '%', 'any', BI.CACHE_NAME)     END CACHE_NAME,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'COMPONENT') != 0 THEN C.COMPONENT         ELSE MAP(BI.COMPONENT, '%', 'any', BI.COMPONENT)       END COMPONENT,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'USER')      != 0 THEN C.USER_NAME         ELSE MAP(BI.USER_NAME, '%', 'any', BI.USER_NAME)       END USER_NAME,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'ENTRY')     != 0 THEN C.ENTRY_DESCRIPTION ELSE MAP(BI.ENTRY_NAME, '%', 'any', BI.ENTRY_NAME)     END ENTRY_NAME,
+    COUNT(*) ENTRIES,
+    SUM(C.MEMORY_SIZE / 1024 / 1024) MEM_MB,
+    SUM(C.READ_COUNT) READS,
+    BI.ORDER_BY
+  FROM
+  ( SELECT                     /* Modification section */
+      '%' HOST,
+      '%' PORT,
+      '%' SERVICE_NAME,
+      '%' CACHE_NAME,
+      '%' COMPONENT,
+      '%' USER_NAME,
+      '%' ENTRY_NAME,
+      -1 MIN_MEMORY_SIZE_MB,
+      'SIZE' ORDER_BY,        /* SIZE, HOST, CACHE, ENTRY */
+      'CACHE' AGGREGATE_BY     /* HOST, PORT, SERVICE, CACHE, COMPONENT, USER, ENTRY or comma separated combination, NONE for no aggregation */
+    FROM
+      DUMMY
+  ) BI,
+    M_SERVICES S,
+    M_CACHE_ENTRIES C
+  WHERE
+    S.HOST LIKE BI.HOST AND
+    TO_VARCHAR(S.PORT) LIKE BI.PORT AND
+    C.HOST = S.HOST AND
+    C.PORT = S.PORT AND
+    UPPER(C.CACHE_ID) LIKE UPPER(BI.CACHE_NAME) AND
+    IFNULL(C.COMPONENT, '') LIKE BI.COMPONENT AND
+    IFNULL(C.USER_NAME, '') LIKE BI.USER_NAME AND
+    C.ENTRY_DESCRIPTION LIKE BI.ENTRY_NAME AND
+    ( BI.MIN_MEMORY_SIZE_MB = -1 OR C.MEMORY_SIZE / 1024 / 1024 >= BI.MIN_MEMORY_SIZE_MB )
+  GROUP BY
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'HOST')      != 0 THEN S.HOST              ELSE MAP(BI.HOST, '%', 'any', BI.HOST)                 END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'PORT')      != 0 THEN TO_VARCHAR(S.PORT)  ELSE MAP(BI.PORT, '%', 'any', BI.PORT)                 END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'SERVICE')   != 0 THEN S.SERVICE_NAME      ELSE MAP(BI.SERVICE_NAME, '%', 'any', BI.SERVICE_NAME) END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'CACHE')     != 0 THEN C.CACHE_ID          ELSE MAP(BI.CACHE_NAME, '%', 'any', BI.CACHE_NAME)     END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'COMPONENT') != 0 THEN C.COMPONENT         ELSE MAP(BI.COMPONENT, '%', 'any', BI.COMPONENT)       END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'USER')      != 0 THEN C.USER_NAME         ELSE MAP(BI.USER_NAME, '%', 'any', BI.USER_NAME)       END,
+    CASE WHEN BI.AGGREGATE_BY = 'NONE' OR INSTR(BI.AGGREGATE_BY, 'ENTRY')     != 0 THEN C.ENTRY_DESCRIPTION ELSE MAP(BI.ENTRY_NAME, '%', 'any', BI.ENTRY_NAME)     END,
+    BI.ORDER_BY
+)
+ORDER BY
+  MAP(ORDER_BY, 'HOST', HOST, ''),
+  MAP(ORDER_BY, 'HOST', PORT, ''),
+  MAP(ORDER_BY, 'HOST', SERVICE_NAME, ''),
+  MAP(ORDER_BY, 'SIZE', MEM_MB, 1) DESC,
+  MAP(ORDER_BY, 'CACHE', CACHE_NAME, ''),
+  ENTRY_NAME

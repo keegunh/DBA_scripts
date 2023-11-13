@@ -1,0 +1,185 @@
+SELECT
+
+/* 
+
+[NAME]
+
+- HANA_Tables_SpecialTables
+
+[DESCRIPTION]
+
+- Display special tables:
+
+  - SUM switch tables (*~~OLD, SAP Note 2198923)
+  - QCM tables (temporary SAP conversion tables starting with QCM)
+  - BPC tables (physical trex indexes starting with $BPC$HC$, SAP Note 1835219)
+  - Physical ABAP pool and cluster tables
+  - Temporary BW tables
+  - BW aggregates (/B%/F1%, /B%/E1%)
+  - BW shadow tables (ZBICZ*, SAP Note 2155151)
+  - Text analysis tables ($TA_<fulltext_index_name>), created in context of TEXT ANALYSIS ON option when creating fulltext index (SAP Note 2800008)
+  - Text mining tables ($TM_<fulltext_index_name>), created in context of TEXT MINING ON option when creating fulltext index (SAP Note 2800008)
+  - Online mode replica tables (_SYS_OMR_<source_table>#<id>), created in context of table reorganizations based on table replication
+  - Table replication (_SYS_REP_*)
+  - Enterprise search (ESH:*)
+
+[SOURCE]
+
+- SAP Note 1969700
+
+[DETAILS AND RESTRICTIONS]
+
+
+[VALID FOR]
+
+- Revisions:              all
+- Statistics server type: all
+
+[SQL COMMAND VERSION]
+
+- 2014/08/25:  1.0 (initial version)
+- 2016/04/20:  1.1 (physical ABAP pool and cluster tables and MIN_RECORD_COUNT included)
+- 2016/12/11:  1.2 (temporary BW tables included)
+- 2017/10/27:  1.3 (TIMEZONE included)
+- 2019/01/02:  1.4 (AGG_BW added)
+- 2019/02/05:  1.5 ($TA_ tables added)
+- 2019/05/10:  1.6 (_SYS_OMR_ tables added)
+- 2019/12/02:  1.7 ($TM_ tables added)
+- 2020/01/13:  1.8 (ESH: tables added, ORDER_BY and TABLE_NAME filter added)
+- 2020/02/20:  1.9 (BW shadow tables ZBICZ* added)
+- 2020/03/30:  2.0 (SUM switch tables *~~OLD added)
+
+[INVOLVED TABLES]
+
+- M_TABLES
+- M_TABLE_PERSISTENCE_STATISTICS
+- M_CS_TABLES
+
+[INPUT PARAMETERS]
+
+- TIMEZONE
+
+  Used timezone (both for input and output parameters)
+
+  'SERVER'       --> Display times in SAP HANA server time
+  'UTC'          --> Display times in UTC time
+
+- SCHEMA_NAME
+
+  Schema name or pattern
+
+  'SAPSR3'        --> Specific schema SAPSR3
+  'SAP%'          --> All schemata starting with 'SAP'
+  '%'             --> All schemata
+
+- TABLE_NAME           
+
+  Table name or pattern
+
+  'T000'          --> Specific table T000
+  'T%'            --> All tables starting with 'T'
+  '%'             --> All tables
+
+- APP_TABLE_TYPE
+
+  Type of special application table
+
+  'QCM'           --> QCM tables (SAP Note 9385)
+  'BPC'           --> BPC$HC$ and BPC$TMP tables (SAP Note 2445363)
+  'POOL_CLUSTER'  --> ABAP pool and cluster tables (SAP Note 1892354)
+  'TEMP_BW'       --> Temporary BW tables
+  'AGG_BW'        --> BW aggregates
+  'OMR'           --> Online mode replica tables (online table reorganization based on table replication)
+  'TABREP'        --> Table replicas (including _SYS_OMR* and _SYS_REP* objects)
+  '%'             --> No application table type restriction
+
+- MIN_RECORD_COUNT
+
+  Threshold for minimum number of records
+
+  1000000         --> Only consider tables with at least 1000000 records
+  -1              --> No limitation related to record count
+
+- ORDER_BY
+
+  Sort criteria (available values are provided in comment)
+
+  'SIZE'          --> Sorting by size 
+  'NAME'          --> Sorting by schema / table name
+
+[OUTPUT PARAMETERS]
+
+- SCHEMA_NAME:   Schema name
+- TABLE_NAME:    Table name
+- LAST_DDL_TIME: Last creation / modification date of table
+- NUM_ROWS:      Number of rows in table
+- DISK_SIZE_MB:  Table size on disk (MB)
+
+[EXAMPLE OUTPUT]
+
+-------------------------------------------------------------------------
+|SCHEMA_NAME|TABLE_NAME     |LAST_DDL_TIME      |NUM_ROWS  |DISK_SIZE_MB|
+-------------------------------------------------------------------------
+|SAPSR3     |QCM/BIC/AGLOKNM|2014/06/05 09:31:40|    316891|        5.84|
+|SAPSR3     |QCM/BIC/AGLOMAT|2014/03/20 06:59:04|   4227334|      467.48|
+-------------------------------------------------------------------------
+
+*/
+
+  T.SCHEMA_NAME,
+  T.TABLE_NAME,
+  CASE
+    WHEN MAX(CT.MODIFY_TIME) IS NOT NULL THEN TO_VARCHAR(MAX(CASE BI.TIMEZONE WHEN 'UTC' THEN ADD_SECONDS(CT.MODIFY_TIME, SECONDS_BETWEEN(CURRENT_TIMESTAMP, CURRENT_UTCTIMESTAMP)) ELSE CT.MODIFY_TIME END), 'YYYY/MM/DD HH24:MI:SS')
+    WHEN MAX(CT.CREATE_TIME) IS NOT NULL THEN TO_VARCHAR(MAX(CASE BI.TIMEZONE WHEN 'UTC' THEN ADD_SECONDS(CT.CREATE_TIME, SECONDS_BETWEEN(CURRENT_TIMESTAMP, CURRENT_UTCTIMESTAMP)) ELSE CT.CREATE_TIME END), 'YYYY/MM/DD HH24:MI:SS')
+    ELSE 'n/a'
+  END LAST_DDL_TIME,
+  LPAD(T.RECORD_COUNT, 10) NUM_ROWS,
+  LPAD(TO_DECIMAL(TP.DISK_SIZE / 1024 / 1024, 10, 2), 12) DISK_SIZE_MB
+FROM
+( SELECT                  /* Modification section */
+    'SERVER' TIMEZONE,                              /* SERVER, UTC */
+    '%' SCHEMA_NAME,
+    '%' TABLE_NAME,
+    'SHADOW_BW' APP_TABLE_TYPE,    /* AGG_BW, BPC, POOL_CLUSTER, QCM, SHADOW_BW, SUM_SWITCH, TABREP, TEMP_BW, TEXT_ANALYSIS, TEXT_MINING, ESH, % */
+    -1 MIN_RECORD_COUNT,
+    'SIZE' ORDER_BY          /* SIZE, RECORDS, NAME */
+  FROM
+    DUMMY
+) BI,
+  TABLES T2 INNER JOIN
+  M_TABLES T ON
+    T.SCHEMA_NAME = T2.SCHEMA_NAME AND
+    T.TABLE_NAME = T2.TABLE_NAME INNER JOIN
+  M_TABLE_PERSISTENCE_STATISTICS TP ON
+    T.SCHEMA_NAME = TP.SCHEMA_NAME AND
+    T.TABLE_NAME = TP.TABLE_NAME LEFT OUTER JOIN
+  M_CS_TABLES CT ON
+    T.SCHEMA_NAME = CT.SCHEMA_NAME AND
+    T.TABLE_NAME = CT.TABLE_NAME
+WHERE
+  T.SCHEMA_NAME LIKE BI.SCHEMA_NAME AND
+  T.TABLE_NAME LIKE BI.TABLE_NAME AND
+  ( BI.APP_TABLE_TYPE IN ('%', 'QCM') AND T.TABLE_NAME LIKE 'QCM%' OR
+    BI.APP_TABLE_TYPE IN ('%', 'BPC') AND ( T.TABLE_NAME LIKE '$BPC$HC$%' OR T.TABLE_NAME LIKE '$BPC$TMP%' ) AND T2.IS_TEMPORARY = 'FALSE' OR
+    BI.APP_TABLE_TYPE IN ('%', 'POOL_CLUSTER') AND T.TABLE_NAME IN ( 'CDCLS', 'DOKCLU', 'EDI40', 'KAPOL', 'KOCLU', 'RFBLG' ) OR
+    BI.APP_TABLE_TYPE IN ('%', 'TEMP_BW') AND T.TABLE_NAME LIKE '/BI0/0%' OR
+    BI.APP_TABLE_TYPE IN ('%', 'AGG_BW') AND ( T.TABLE_NAME LIKE '/B%/E1%' OR T.TABLE_NAME LIKE '/B%/F1%' ) AND T.TABLE_NAME NOT LIKE '/BA1/%' OR
+    BI.APP_TABLE_TYPE IN ('%', 'TEXT%', 'TEXT_ANALYSIS') AND SUBSTR(T.TABLE_NAME, 1, 4) = '$TA_' OR
+    BI.APP_TABLE_TYPE IN ('%', 'TEXT%', 'TEXT_MINING') AND SUBSTR(T.TABLE_NAME, 1, 4) = '$TM_' OR
+    BI.APP_TABLE_TYPE IN ('%', 'OMR') AND SUBSTR(T.TABLE_NAME, 1, 9) = '_SYS_OMR_' OR
+    BI.APP_TABLE_TYPE IN ('%', 'TABREP') AND ( SUBSTR(T.TABLE_NAME, 1, 9) = '_SYS_OMR_' OR SUBSTR(T.TABLE_NAME, 1, 9) = '_SYS_REP_' ) OR
+    BI.APP_TABLE_TYPE IN ('%', 'ESH') AND SUBSTR(T.TABLE_NAME, 1, 4) = 'ESH:' OR
+    BI.APP_TABLE_TYPE IN ('%', 'SHADOW_BW') AND SUBSTR(T.TABLE_NAME, 1, 5) = 'ZBICZ' OR
+    BI.APP_TABLE_TYPE IN ('%', 'SUM_SWITCH') AND T.TABLE_NAME LIKE '%~~OLD'
+  ) AND
+  ( BI.MIN_RECORD_COUNT = -1 OR T.RECORD_COUNT >= BI.MIN_RECORD_COUNT )
+GROUP BY
+  T.SCHEMA_NAME,
+  T.TABLE_NAME,
+  T.RECORD_COUNT,
+  TP.DISK_SIZE,
+  BI.ORDER_BY
+ORDER BY
+  MAP(BI.ORDER_BY, 'SIZE', TP.DISK_SIZE, 'RECORDS', T.RECORD_COUNT) DESC,
+  T.SCHEMA_NAME,
+  T.TABLE_NAME
