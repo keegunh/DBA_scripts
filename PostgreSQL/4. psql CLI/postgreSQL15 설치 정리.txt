@@ -1,0 +1,45 @@
+변경파일:
+/var/lib/pgsql/15/data/pg_hba.conf
+/var/lib/pgsql/15/data/postgresql.conf
+
+
+
+RedHat 환경 PostgreSQL 15 설치
+1. Yum Repo에 PostgreSQL 추가
+	sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+2. PostgreSQL 15버전 설치
+	sudo yum install -y postgresql15-server
+
+3. DB 초기화 및 자동 시작 활성화
+	sudo /usr/pgsql-15/bin/postgresql-15-setup initdb
+	sudo systemctl enable postgresql-15
+	sudo systemctl start postgresql-15
+
+4-1. 원격 DB접속 활성화1 - 전체 IP로부터 접근 허용
+	sudo -u postgres psql
+	ALTER USER postgres PASSWORD 'myPassword';
+	sudo vi /var/lib/pgsql/15/data/postgresql.conf
+		CONNECTIONS AND AUTHENTICATION 섹션 밑에 아래와 같이 listen_address 파라미터 '*'로 변경. 기존에는 'localhost'에서는 듣도록 설정되어 있음.
+		#listen_addresses = 'localhost' 
+		listen_addresses = '*' 
+	sudo systemctl restart postgresql-15
+		변경사항 적용을 위해서 DB 재시작
+
+4-2. 원격 DB접속 활성화2 - 전체 Database와 Users에 대한 원격 접근 허용
+	sudo vi /var/lib/pgsql/15/data/pg_hba.conf 
+		pg_hba.conf 파일 하단에 아래 줄 추가
+		host    all          all            0.0.0.0/0  md5
+	sudo systemctl restart postgresql-15
+		변경사항 적용을 위해서 DB 재시작
+
+5. DB 원격 접속
+	PGPASSWORD=postgres psql -hlocalhost -p5432 -Upostgres
+
+참고사이트 : https://devopscube.com/install-postgresql-redhat-linux/
+
+
+참고: AWS ec2에서 root 권한 획득하려면 sudo su 수행.
+그러면 su - postgres 로 계정 변경 가능
+
+$PGDATA에 테이블스페이스 생성하면 안 됨. 경고 뜸.
