@@ -51,4 +51,9 @@ psql 명령어
 
 10. 현재 접속정보 출력
 	\conninfo
+
+11. 패스워드 변경
+	\password [USERNAME]
 	
+12. 프로그램 종류
+	\q
