@@ -1,3 +1,6 @@
+-- pg_buffercache extension 미설치 시 root에서 yum install postgresql14-contrib -y 수행 후 psql에서 아래 명령어 수행
+-- CREATE EXTENSION pg_buffercache;
+
 SELECT nspname
      , relname
      , size
@@ -19,5 +22,5 @@ SELECT nspname
            AND b.reldatabase IN (0, (SELECT oid
                                        FROM pg_database
                                       WHERE datname = current_database()))
-         GROUP BY n.nspname, c.relname, size)
+         GROUP BY n.nspname, c.relname, size) as bc
  ORDER BY 3 DESC;

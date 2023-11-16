@@ -1,3 +1,6 @@
+-- pg_buffercache extension 미설치 시 root에서 yum install postgresql14-contrib -y 수행 후 psql에서 아래 명령어 수행
+-- CREATE EXTENSION pg_buffercache;
+
 SELECT dba
      , datname
 	 , size
@@ -11,5 +14,5 @@ SELECT dba
           FROM pg_buffercache
              , pg_database
          WHERE reldatabase=pg_database.oid
-         GROUP BY 1, 2, 3)
+         GROUP BY 1, 2, 3) AS bc
  ORDER BY 1, 2, 3;

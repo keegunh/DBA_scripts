@@ -19,8 +19,6 @@ SELECT relname
      , CASE WHEN relpersistence='t' THEN 'Temporary'
             ELSE 'Unknown'
        END AS relpersistence
-     , relhasoids
-     , relhaspkey
      , relhasrules
      , relhassubclass
      , relfrozenxid

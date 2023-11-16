@@ -14,8 +14,6 @@ SELECT relname
      , relkind
      , relnatts
      , relchecks
-     , relhasoids
-     , relhaspkey
      , relhasrules
      , relhassubclass
      , relfrozenxid

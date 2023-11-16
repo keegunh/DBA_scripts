@@ -3,7 +3,6 @@ SELECT rolname
 	 , rolinherit
 	 , rolcreaterole
 	 , rolcreatedb
-	 , rolcatupdate
 	 , rolcanlogin
 	 , rolconnlimit
 	 , rolreplication

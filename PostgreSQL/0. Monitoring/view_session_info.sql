@@ -34,7 +34,9 @@ SELECT datname
      , date_trunc('second', query_start) as query_start
      , client_hostname
      , client_addr
-     , waiting
+     -- , wait_event_type
+	 , wait_event
+	 , state
      , date_trunc('second', xact_start) as xact_start
      , date_trunc('second', backend_start) as backend_start
      , application_name

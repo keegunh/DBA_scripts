@@ -15,8 +15,6 @@ SELECT relname
      , CASE WHEN relpersistence='t' THEN 'Temporary'
             ELSE 'Unknown'
        END AS relpersistence
-     , relhasoids
-     , relhaspkey
      , relhasrules
      , relhassubclass
      , relfrozenxid
@@ -28,30 +26,3 @@ SELECT relname
  WHERE relkind = 'S'
    AND relnamespace = pg_namespace.oid
  ORDER BY relname;
-
-SELECT 'sys' AS schema
-     , sequence_name
-     , last_value
-     , start_value
-     , increment_by
-     , max_value
-     , min_value
-     , cache_value
-     , log_cnt
-     , is_cycled
-     , is_called
-  FROM "sys"."plsql_profiler_runid"
- UNION
-SELECT 'sys' AS schema
-     , sequence_name
-     , last_value
-     , start_value
-     , increment_by
-     , max_value
-     , min_value
-     , cache_value
-     , log_cnt
-     , is_cycled
-     , is_called
-  FROM "sys"."snapshot_num_seq"
- ORDER BY sequence_name;
