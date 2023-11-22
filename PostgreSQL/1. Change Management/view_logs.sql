@@ -1,8 +1,8 @@
 SELECT * 
-  FROM (SELECT pg_ls_dir('pg_log')) AS tmp (filename)
+  FROM (SELECT pg_ls_dir('log')) AS tmp (filename)
          WHERE filename LIKE '%csv'
            AND EXISTS (SELECT 1
-                         FROM pg_stat_file('pg_log/'||filename)
+                         FROM pg_stat_file('log/'||filename)
                         WHERE not isdir)
 				ORDER BY 1 DESC
 				LIMIT 1; -- to get the latest filename
