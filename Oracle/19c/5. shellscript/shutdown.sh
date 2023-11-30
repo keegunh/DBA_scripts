@@ -5,10 +5,10 @@
 
 ORACLE_SID=TESTDB
 echo "ORACLE_SID set to: $ORACLE_SID:"
+lsnrctl stop LIS_TESTDB
 sqlplus / as sysdba << EOF
 shutdown immediate;
 EOF
-lsnrctl stop LIS_TESTDB
 
 ## 리스너 및 인스턴스 정지 확인
 ps -ef | grep lsnr
