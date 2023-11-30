@@ -5,10 +5,10 @@
 
 ORACLE_SID=TESTDB
 echo "ORACLE_SID set to: $ORACLE_SID:"
+lsnrctl start LIS_TESTDB
 sqlplus / as sysdba << EOF
 startup;
 EOF
-lsnrctl start LIS_TESTDB
 
 ## 리스너 및 인스턴스 기동 확인
 ps -ef | grep lsnr
