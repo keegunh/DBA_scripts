@@ -3,7 +3,7 @@
 # sql> GRANT READ, WRITE ON DIRECTORY DATA_PUMP_DIR TO PUBLIC;
 # sql> SELECT * FROM DBA_DIRECTORIES;
 
-cat << EOF > /oracle/HKG_scripts/sh/backup_POP.sh
+cat << EOF > /oracle/HKG_scripts/sh/backup_XX.sh
 #!/usr/bin/ksh
 
 ####################################
@@ -15,10 +15,10 @@ export PATH=$PATH:$ORACLE_HOME/bin:$ORACLE_HOME/OPatch:$ORACLE_HOME/jdk/bin:$ORA
 export JAVA_COMPILER=NONE
 export LC_ALL=American_America.AL32UTF8
 export NLS_LANG=American_America.AL32UTF8
-export ORACLE_SID=PPSD
+export ORACLE_SID=DBID
 
 #sid=$ORACLE_SID
-sid='PPSD'
+sid='DBID'
 today=$(date '+%Y%m%d')
 datapumpdir='/work001/DATAPUMP'
 
@@ -40,7 +40,7 @@ job_name=$filename
 dumpfile=$filename.dmp
 logfile=$filename.log
 directory=DATA_PUMP_DIR
-schemas=POP_ADM
+schemas=XX_ADM
 #tables=<personalInfoTables>
 EOPARF
 echo "CREATED .par FILE: $filename.par"
@@ -68,17 +68,17 @@ echo "DELETE COMPLETE"
 cd -
 
 EOF
-. /oracle/HKG_scripts/sh/backup_POP.sh
+. /oracle/HKG_scripts/sh/backup_XX.sh
 
 
 
 crontab -l
 crontab -e
-00 00 * * * /usr/bin/sh /oracle/HKG_scripts/sh/backup_POP.sh >> /oracle/HKG_scripts/sh/backup_POP_log.txt
+00 00 * * * /usr/bin/sh /oracle/HKG_scripts/sh/backup_XX.sh >> /oracle/HKG_scripts/sh/backup_XX_log.txt
 
-ll /work001/DATAPUMP | grep PPSD
-rm /work001/DATAPUMP/*PPSD*
+ll /work001/DATAPUMP | grep DBID
+rm /work001/DATAPUMP/*DBID*
 
 
 
-tail -f /oracle/HKG_scripts/sh/backup_POP_log.txt
+tail -f /oracle/HKG_scripts/sh/backup_XX_log.txt

@@ -34,10 +34,10 @@ SET FEEDBACK OFF;
 SET TIMING ON;
 SET ECHO OFF;
 
-@1_Insert.sql            -- exec PMPBMIG.PR_MIG_FETCH(4);
-@2_Create_Index.sql      -- exec PMPBMIG.PR_MIG_INDEX_FETCH(4);
-@3_Create_Pk.sql         -- exec PMPBMIG.PR_MIG_PK_FETCH(4);
-@4_Alter_Table_Index.sql -- exec PMPBMIG.PR_MIG_ALTER_TABLE_INDEX(4);
+@1_Insert.sql            -- exec MIG_USER.PR_MIG_FETCH(4);
+@2_Create_Index.sql      -- exec MIG_USER.PR_MIG_INDEX_FETCH(4);
+@3_Create_Pk.sql         -- exec MIG_USER.PR_MIG_PK_FETCH(4);
+@4_Alter_Table_Index.sql -- exec MIG_USER.PR_MIG_ALTER_TABLE_INDEX(4);
 @5_Create_Stat.sql       -- 각 테이블의 dbms_stats.gather_table_stats 문이 하드코딩되어 있음
 -----------------------------------
 

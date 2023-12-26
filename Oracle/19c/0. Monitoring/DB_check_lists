@@ -6,15 +6,15 @@ I. DAILY
 	1. 모든 인스턴스의 정상적인 기동 확인
 		a. 서버 접속 후 srvctl 사용
 			- srvctl status database -db TNUPB
-				TNUPB1 인스턴스가 tnupbdbm01v 노드에서 실행 중임
-				TNUPB2 인스턴스가 tnupbdbm02v 노드에서 실행 중임
+				XXDB1 인스턴스가 xxdbm01v 노드에서 실행 중임
+				XXDB2 인스턴스가 xxdbm02v 노드에서 실행 중임
 		b. DB 접속 후 쿼리 실행 (GV$INSTANCE) 
 			- _sqlplus_view_instances.sql 
 	2. Listener 정상 기동 확인
 		a. 서버 접속 후 srvctl 사용
 			- srvctl status listener 
 				LISTENER 리스너가 사용으로 설정되었습니다.
-				LISTENER 리스너가 노드에서 실행 중임: tnupbdbm02v,tnupbdbm01v
+				LISTENER 리스너가 노드에서 실행 중임: xxdbm02v,xxdbm01v
 		b. 서버 접속 후 lsnrctl 사용
 			- lsnrctl status
 				LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 22-DEC-2021 14:14:45
@@ -43,10 +43,10 @@ I. DAILY
 				(DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1525)))
 				(DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=127.0.0.1)(PORT=1525)))
 				Services Summary...
-				Service "DNUPB" has 1 instance(s).
-				Instance "DNUPB", status READY, has 1 handler(s) for this service...
-				Service "DNUPBXDB" has 1 instance(s).
-				Instance "DNUPB", status READY, has 1 handler(s) for this service...
+				Service "XXDB" has 1 instance(s).
+				Instance "XXDB", status READY, has 1 handler(s) for this service...
+				Service "XXDBXDB" has 1 instance(s).
+				Instance "XXDB", status READY, has 1 handler(s) for this service...
 				The command completed successfully
 		c. listener log 확인
 			- alias ttns='tail -fn 70 $ORACLE_BASE/diag/tnslsnr/${HOSTNAME}/listener/alert/log.xml'
@@ -113,7 +113,3 @@ III. Monthly
 	4. 과도하게 증가되는 오브젝트 점검
 	5. DBMS 서버 튜닝 항목 점검
 	6. Monthly Range Partition이 존재하는 경우 차월 Partition이 존재하는지 점검
-	
-	
-	
-- GV$SYSSTAT < - 이건 언제 쓰지 ?????????

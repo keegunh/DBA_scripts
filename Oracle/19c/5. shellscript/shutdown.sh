@@ -11,5 +11,5 @@ shutdown immediate;
 EOF
 
 ## 리스너 및 인스턴스 정지 확인
-ps -ef | grep lsnr
+ps -ef | grep tns
 ps -ef | grep pmon

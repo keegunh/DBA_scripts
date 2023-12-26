@@ -1,10 +1,10 @@
 /*
 * 용도       : PNP정산시스템 고도화 프로젝트
-* 생성자     : 문성진 부장님
+* 생성자     : 문성진 부장
 * 저장일     : 2022-01-25
 */
 
-CREATE OR REPLACE PROCEDURE PMPBMIG.PR_MIG_CREATE_PK
+CREATE OR REPLACE PROCEDURE MIG_USER.PR_MIG_CREATE_PK
 (
     V_TABLE_NAME     IN VARCHAR2,
     V_CREATE_PK_SQL  IN VARCHAR2

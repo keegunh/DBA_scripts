@@ -1,4 +1,3 @@
-cat << 'EOF' > ts.sql
 TTITLE "[DBName] Database|Oracle Tablespace Storage Info";
 
 SET PAGESIZE 500
@@ -83,5 +82,3 @@ SELECT A.TABLESPACE_NAME TS_NAME
  ORDER BY 1;
  
 TTITLE OFF
- 
-EOF

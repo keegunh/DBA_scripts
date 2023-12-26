@@ -26,19 +26,6 @@ TTITLE OFF
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 -- 1. 테이블 통계 업데이트 후 
 SELECT OWNER
      , TABLE_NAME
