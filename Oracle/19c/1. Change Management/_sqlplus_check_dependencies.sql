@@ -29,7 +29,7 @@ SELECT A.OBJECT_TYPE
      , DBA_DEPENDENCIES B
  WHERE A.OWNER = B.OWNER (+)
    AND A.OBJECT_NAME = B.NAME (+)
-   AND A.OWNER = 'PMPBADM'
+   AND A.OWNER = ''
    AND A.OBJECT_TYPE IN ( 'FUNCTION'
                         , 'PACKAGE'
                         , 'PACKAGE_BODY'

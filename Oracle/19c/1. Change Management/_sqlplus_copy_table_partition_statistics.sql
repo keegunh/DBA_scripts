@@ -20,17 +20,7 @@ COL COPY_STATS_DDL FORMAT A250
 WITH TEMP_TAB_STATS AS (
    SELECT *
      FROM DBA_TAB_STATISTICS
-    WHERE OWNER IN ('PMPBADM'
-                , 'BLCP01ADM'
-                , 'BLCP02ADM'
-                , 'BLCP03ADM'
-                , 'BLCP04ADM'
-                , 'BLCP05ADM'
-                , 'BLCP06ADM'
-                , 'BLCP07ADM'
-                , 'BLCP08ADM'
-                , 'BLCP09ADM'
-                , 'BLCP10ADM')
+    WHERE OWNER IN ('')
       AND OBJECT_TYPE = 'PARTITION'
 --      AND OBJECT_TYPE = 'SUBPARTITION'
 )

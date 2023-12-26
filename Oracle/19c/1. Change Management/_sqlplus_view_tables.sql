@@ -39,19 +39,7 @@ SELECT A.OWNER
              , NAME
              , LISTAGG(COLUMN_NAME, ',') WITHIN GROUP (ORDER BY COLUMN_POSITION) AS PART_KEY
           FROM DBA_PART_KEY_COLUMNS
-         WHERE OWNER IN (
-                        'PMPBADM'
-                      , 'BLCP01ADM'
-                      , 'BLCP02ADM'
-                      , 'BLCP03ADM'
-                      , 'BLCP04ADM'
-                      , 'BLCP05ADM'
-                      , 'BLCP06ADM'
-                      , 'BLCP07ADM'
-                      , 'BLCP08ADM'
-                      , 'BLCP09ADM'
-                      , 'BLCP10ADM'
-                      )
+         WHERE OWNER IN ('')
            AND OBJECT_TYPE = 'TABLE'
          GROUP BY OWNER, NAME) E
  WHERE A.OWNER = B.OWNER (+)
@@ -62,19 +50,7 @@ SELECT A.OWNER
    AND A.TABLE_NAME = D.TABLE_NAME (+)
    AND A.OWNER = E.OWNER (+)
    AND A.TABLE_NAME = E.NAME (+)
-   AND A.OWNER IN (
-                  'PMPBADM'
-                , 'BLCP01ADM'
-                , 'BLCP02ADM'
-                , 'BLCP03ADM'
-                , 'BLCP04ADM'
-                , 'BLCP05ADM'
-                , 'BLCP06ADM'
-                , 'BLCP07ADM'
-                , 'BLCP08ADM'
-                , 'BLCP09ADM'
-                , 'BLCP10ADM'
-                )
+   AND A.OWNER IN ('')
  GROUP BY A.OWNER, A.TABLE_NAME, A.TABLESPACE_NAME, B.DEF_TABLESPACE_NAME, C.COMMENTS, B.PARTITIONING_TYPE, E.PART_KEY, B.SUBPARTITIONING_TYPE, A.STATUS, A.PCT_FREE, B.DEF_PCT_FREE, A.CHAIN_CNT
  ORDER BY A.OWNER,A.TABLE_NAME
 ;

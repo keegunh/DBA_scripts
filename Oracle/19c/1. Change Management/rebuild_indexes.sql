@@ -25,17 +25,7 @@ SELECT
      , DBA_PART_INDEXES B
  WHERE A.OWNER = B.OWNER (+)
    AND A.INDEX_NAME = B.INDEX_NAME (+)
-   AND TABLE_OWNER IN ('PMPBADM'
-                     , 'BLCP01ADM'
-                     , 'BLCP02ADM'
-                     , 'BLCP03ADM'
-                     , 'BLCP04ADM'
-                     , 'BLCP05ADM'
-                     , 'BLCP06ADM'
-                     , 'BLCP07ADM'
-                     , 'BLCP08ADM'
-                     , 'BLCP09ADM'
-                     , 'BLCP10ADM')
+   AND TABLE_OWNER IN ('')
    AND A.INDEX_TYPE < > 'LOB'
    AND A.BLEVEL > 3
  ORDER BY A.TABLE_OWNER, A.TABLE_NAME, A.INDEX_NAME
