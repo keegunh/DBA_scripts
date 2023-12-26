@@ -37,3 +37,6 @@ parallel=4
 tables=A.A,A.B,B.B
 EOF
 impdp USER/"PW" parfile=IMP_DBID.par
+
+## 예시 4
+nohup impdp USER/"PW" parfile=IMP_DBID.par &
