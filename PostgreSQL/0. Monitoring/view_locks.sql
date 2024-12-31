@@ -50,3 +50,12 @@ SELECT locktype
     ON pg_namespace.oid=pg_class.relnamespace
  WHERE mode='ExclusiveLock'
    AND locktype NOT IN ('virtualxid', 'transactionid');
+   
+-- Viewing locks with table names and queries
+select 
+    relname as relation_name, 
+    query, 
+    pg_locks.* 
+from pg_locks
+join pg_class on pg_locks.relation = pg_class.oid
+join pg_stat_activity on pg_locks.pid = pg_stat_activity.pid;
