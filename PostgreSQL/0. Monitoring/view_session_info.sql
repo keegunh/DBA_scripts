@@ -86,6 +86,7 @@ SELECT pg_cancel_backend(pid)
    AND pid <> pg_backend_pid();
    
 -- find high cpu usage and which query is causing it.
+-- You can also use pg_activity_utility to monitor the cpu usage.
 SELECT 
   (total_time / 1000 / 3600) as total_hours,
   (total_time / 1000) as total_seconds,
