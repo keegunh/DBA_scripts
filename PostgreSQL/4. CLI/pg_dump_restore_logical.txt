@@ -1,0 +1,22 @@
+# This is a logical backup method
+
+# BACKUP A DB
+pg_dump --username=postgres -d [DBNAME] > 'D:\user_tablespace\backup.txt'
+
+# RESTORE A DB
+# must first create the DB with the [DBNAME] within the cluster
+psql --username=postgres -d [DBNAME] < 'D:\user_tablespace\backup.txt'
+
+
+# TAKING BACKUP IN A CUSTOM FORMAT (option -F)
+pg_dump -U postgres -Fc > nano.dump
+
+# RESTORING 1 TABLE FROM A DUMP FILE
+pg_restore -t [TABLENAME] -d [DBNAME] -U [USERNAME] < [BACKUPNAME]
+pg_restore -t employee -d nano -U postgres < nano.dump
+
+
+# Take a backup and compress it to save storage
+pg_dumpall --username=postgres > D:\clusterall.txt
+pg_dumpall --username=postgres | gzip > D:\clusterall.bkp.gz
+pg_dumpall --username=postgres | split -b 1g - /opt/user/backups/clusterall_bkp

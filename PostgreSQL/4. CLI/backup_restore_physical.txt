@@ -1,0 +1,8 @@
+The database server must be shut down in order to get a usable backup.
+The database server must be shutdown  before restoring the data.
+Partial restore or Single table restore not possible.
+This approach is suitable only for complete backup or complete restoration of the entire database cluster.
+“Consistent snapshot" of the data directory is considered a better approach than file system level backup.
+
+# PHYSICAL BACKUP
+Syntax : tar –cvzf backup.tar /usr/local/pgsql/data
