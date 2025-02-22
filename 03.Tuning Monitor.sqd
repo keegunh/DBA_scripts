@@ -1,0 +1,3675 @@
+[HEADER]
+VERSION=5.0.3
+TOOL=
+CHAR=ASCII
+DATE=2022-05-08 06:52
+[WORKSPACE]
+COUNT=15
+NAME=PLAN MONITOR
+STMT=75
+  -- =================================================================
+  -- 1)  V$SQL_PLAN_MONITOR 
+  -- =================================================================
+  select  
+  A.PLAN_LINE_ID,
+       B.LAST_REFRESH_TIME LAST_REFRESH_TIME,
+       B.STATUS STATUS,
+       B.ELAPSED_SEC,
+       '['|| LPAD( STARTS, 6, ' ') || ']'||A.PLAN || '  [rows=' || OUTPUT_ROWS || ',prr=' || PHYSICAL_READ_REQUESTS || ',pwr=' || PHYSICAL_WRITE_REQUESTS || ' ,wam=' || ceil( WORKAREA_MEM/1024/1024 ) || ' ,wmt=' || ceil( WORKAREA_MAX_TEMPSEG/1024/1024 ) ||',tim=' || PLAN_TIME || ']' AS PLAN
+  FROM (SELECT sql_id,
+               ID PLAN_LINE_ID,
+               LPAD(' ', 2*(depth))||OPERATION||DECODE(OTHER_TAG, NULL, '', '*')|| DECODE(OPTIONS, NULL, '', ' ('||OPTIONS||')')||DECODE(OBJECT_NAME, NULL, '', ' OF '''||OBJECT_NAME||'''') PLAN
+          FROM v$sql_plan
+         where CHILD_NUMBER = 0
+         ORDER BY ID, POSITION) A,
+       (select *
+          from (select STATUS,
+
+--FIRST_REFRESH_TIME,
+                       LAST_REFRESH_TIME,
+                       sql_id,
+                       row_number() over ( partition by PLAN_LINE_ID
+                         order by LAST_REFRESH_TIME desc ) rn,
+                       SUM( STARTS ) STARTS,
+                       round((LAST_REFRESH_TIME - SQL_EXEC_START) *(24*60*60), 0) ELAPSED_SEC,
+                       PLAN_LINE_ID,
+                       sum(PLAN_TIME) PLAN_TIME,
+                       sum(OUTPUT_ROWS) OUTPUT_ROWS,
+                       sum(PHYSICAL_READ_REQUESTS) PHYSICAL_READ_REQUESTS,
+                       sum(PHYSICAL_READ_BYTES) PHYSICAL_READ_BYTES,
+                       sum(PHYSICAL_WRITE_REQUESTS) PHYSICAL_WRITE_REQUESTS,
+                       sum(PHYSICAL_WRITE_BYTES) PHYSICAL_WRITE_BYTES,
+                       sum(WORKAREA_MEM) WORKAREA_MEM,
+                       sum(WORKAREA_MAX_MEM) WORKAREA_MAX_MEM,
+                       sum(WORKAREA_MAX_TEMPSEG) WORKAREA_MAX_TEMPSEG
+                  FROM V$SQL_PLAN_MONITOR a
+                 where A.sql_id = '3fdx4bvzzp38t'
+                 and status not like '%ERROR%'
+                 group by STATUS, sql_id, LAST_REFRESH_TIME, SQL_EXEC_START, PLAN_LINE_ID )
+         where rn = 1 ) B
+ WHERE  A.SQL_ID = B.SQL_ID
+   AND A.PLAN_LINE_ID = B.PLAN_LINE_ID
+ ORDER BY STATUS, PLAN_LINE_ID;
+
+-- =============================================================================================
+-- 2) v$sql_plan_statistics_all 
+-- ============================================================================================  
+SELECT /*+ opt_param('parallel_execution_enabled', 'false') */ /* EXEC_FROM_DBMS_XPLAN */
+       id,
+       depth ,
+       position ,
+       parent_id,
+       '['|| LPAD( STARTS, 6, ' ') || ']'||A.PLAN || decode( PARTITION_START, null, null, ' ( part: '||PARTITION_START||','|| PARTITION_STOP|| ')' ) 
+       || '  [ '
+       || ' ,cr=' || trim( to_char( CR_BUFFER_GETS, '999,999,999,999,999,999,999'))
+       || ' ,cu=' ||  trim( to_char( CU_BUFFER_GETS, '999,999,999,999,999,999,999'))
+       || ' ,pr=' ||  trim( to_char( DISK_READS, '999,999,999,999,999,999,999'))
+       || ' ,pw=' ||  trim( to_char( DISK_WRITES, '999,999,999,999,999,999,999'))
+       || ' ,exec=' || EXECUTIONS 
+       || ' ,rows=' || trim( to_char( OUTPUT_ROWS, '999,999,999,999,999,999,999'))
+       || ' ,time = ' || trim( to_char( round(ELAPSED_TIME/1000,2), '999,999,999')) ||'ms  ]' AS sql_plan_statistics_all  
+       , decode( ACCESS_PREDICATES, null, '', ' [a] '|| ACCESS_PREDICATES ) ||   decode( FILTER_PREDICATES, null, '', ' [f] '|| FILTER_PREDICATES ) "Access"
+FROM   (
+        SELECT
+  
+       LPAD(' ', 2*(depth))||OPERATION|| DECODE(OPTIONS, NULL, '', ' ('||OPTIONS||')')||DECODE(OBJECT_NAME, NULL, '', ' OF '''||OBJECT_NAME||'''') PLAN ,
+      vp.*
+        FROM   v$sql_plan_statistics_all vp
+        WHERE  vp.sql_id = '3fdx4bvzzp38t'
+            --AND    vp.child_number= 1
+           order by id, position
+       ) a       
+ ; 
+       
+     
+VAR=0
+NAME=OPT_PARAM
+STMT=117
+-- =======================================
+-- SQL Hint
+-- =======================================
+SELECT * FROM V$SQL_HINT WHERE NAME LIKE '%PRED%';
+
+--ALTER SESSION SET OPTIMIZER_MODE = ALL_ROWS;
+--ALTER SESSION SET OPTIMIZER_DYNAMIC_SAMPLING = 0;
+--ALTER SESSION SET DB_FILE_MULTIBLOCK_READ_COUNT   = 128;
+--ALTER SESSION SET "_serial_direct_read" = True;
+--ALTER SESSION SET "_optimizer_gather_stats_on_load" = false;
+--ALTER SESSION SET "_parallel_broadcast_enabled" = false;
+
+--ALTER SESSION ENABLE PARALLEL DML;
+--
+-- /*+ opt_param('_optimizer_cost_based_transformation','off') */
+--grant execute on SYS.DBMS_SQLTUNE to SQLTUN ; 
+--
+--grant create any sql profile  to sqltun ;
+--grant drop any sql profile to sqltun ;
+--grant alter any sql profile to sqltun ;
+--
+-- Alter session
+--   set "_optimizer_compute_index_stats" =false;
+--alter session set optimizer_mode = 'FIRST_ROWS_10' ;
+--Alter session set "_optimizer_compute_index_stats"=false;
+--alter session set statistics_level = 'ALL';
+--alter session set current_schema = BILBAT ;
+--
+--alter session set "_index_join_enabled"=true;
+--alter session set "_optimizer_gather_stats_on_load"=false ; 
+--alter system set "_optimizer_gather_stats_on_load"=false ;
+/*+  no_gather_optimizer_statistics */
+
+-- alter session set current_schema= NEXS ;
+--alter session set events '10046 trace name context forever,level 12' ; 
+-- opt_param( '_OPTIMIZER_JOIN_FACTORIZATION', 'false' ) 
+-- opt_param( '_hash_join_enabled', 'false' )
+-- opt_param( '_gby_hash_aggregation_enabled', 'true' )
+-- opt_param( '_optimizer_sortmerge_join_enabled', 'false' )
+-- opt_param( '_optimizer_push_pred_cost_based', 'true' ) 
+-- opt_param( '_optimizer_cartesian_enabled', 'false' ) 
+-- opt_param( '_like_with_bind_as_equality', 'true' ) 
+-- opt_param( '_optimizer_skip_scan_enabled', 'false' )
+-- opt_param( '_no_or_expansion', 'true' ) 
+-- opt_param( '_or_expand_nvl_predicate', 'false' ) 
+-- opt_param( '_gby_hash_aggregation_enabled', 'true' )
+-- opt_param( '_optimizer_rownum_bind_default', '10' ) 
+-- opt_param( '_optimizer_rownum_pred_based_fkr', 'true' ) 
+-- opt_param( '_optimizer_max_permutations', 100 ) 
+
+-- opt_param( '_remove_aggr_subquery', 'false' ) 
+-- opt_param( '_bloom_pruning_enabled', 'false' ) 
+-- opt_param( '_optimizer_join_factorization', 'false' ) 
+-- opt_param( '_optimizer_unnest_scalar_sq', 'false' )  
+-- opt_param( '_optimizer_skip_scan_enabled', 'false' )  
+-- alter session force parallel query parallel 8 ;
+-- alter session force parallel dml parallel 8 ;
+-- alter session enable parallel dml ;
+-- alter session disable parallel dml ;
+--opt_param( '_optimizer_max_permutations', 100 )
+ 
+alter session set "_optimizer_cost_based_transformation"='off' ;
+alter session set "_rowsource_execution_statistics"=true ;
+alter session set "_sqlmon_max_planlines"=1000 ;; 
+alter session set  "_optimizer_max_permutations" =100 ;  
+ alter session set optimizer_use_invisible_indexes = true; 
+ 
+alter session set "_index_join_enabled"=true;
+alter session set "_optimizer_gather_stats_on_load"=false ; 
+alter system set "_optimizer_gather_stats_on_load"=false ;
+
+alter session set "_rowsource_execution_statistics"=true ;
+alter session set "_sqlmon_max_planlines"=1000 ;;
+
+ALTER SESSION SET STATISTICS_LEVEL = 'ALL';  -- SQL_ID  , child number 0 SQL_ID  , child number 0 SQL_ID  98gn9ardx1vbu, child number 0
+
+exec DBMS_APPLICATION_INFO.SET_MODULE( 'KYH_TEST', 'start' ) ;
+
+SELECT /*+ NO_MERGE */ 
+       DBMS_SQLTUNE.REPORT_SQL_MONITOR(SQL_ID=> NULL, SESSION_ID=>8451, REPORT_LEVEL => 'ALL', TYPE=>'TEXT' ) TXT 
+FROM   DUAL
+; 
+  
+SELECT /*+ NO_MERGE */ 
+       DBMS_SQLTUNE.REPORT_SQL_MONITOR(SQL_ID=> '0hrtfbxbfrf61', REPORT_LEVEL => 'ALL', TYPE=>'TEXT' ) TXT 
+FROM   DUAL
+;      
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'allstats last -rows +predicate'));     
+-- SQL_ID   SQL_ID  9jccmj9n7vmm9, child number 0 SQL_ID  dz2yx198ucvw5, child number 0
+ select * from v$sql_optimizer_env where sql_id = '77kzmbgzvq9xb' and name like '%optimizer_max%' ;
+ select * from v$parameter where name like '%undo%' ;
+ -- SQL_ID  , child number 0 SQL_ID  5uzc16rwxf5ph, child number 0 SQL_ID  0vvgy16c45gku, child number 0  SQL_ID  7mbfyhgp1stvt, child number 0 SQL_ID  , child number 0
+ -- SQL_ID  cc9yzqxu8ps9n, child number 0 SQL_ID  7mbfyhgp1stvt, child number 0 SQL_ID  8qg43tjbhbqf7, child number 0 SQL_ID  , child number 0 SQL_ID  , child number 0
+ EXEC dbms_stats.gather_table_stats(ownname =>'AMISDBA', tabname =>'NRNCCUNVT', degree=> 4, cascade => TRUE);  
+ 
+ 
+-- analyze index validate structure 
+
+alalyze index owner.index_name validate structure ; 
+
+select blocks, if_blocks, btree_space, pct_used, del_if_rows, a.* from index_stats ;
+
+
+-- sql_object_list
+create table sql_object_list as
+select sql_id, listagg( aa.object_name, '|' ) within group( order by object_name ) object_list
+from ( select distinct substr( statement_id, instr( statement_id, '-', -1 ) + 1 ) sql_id, obejct_name from sql_monitoring_plan where options like '%FULL%' and operation = 'TABLE ACCESS'
+UNION ALL
+select distinct substr( statement_id, instr( statement_id, '-', -1) +1 ) sql_id, object_name
+from sql_monitoring_plan where operation like 'LOAD TABLE%'
+union all
+select distinct substr( statement_id, instr( statement_id, '-', -1 ) +1) sql_id, object_name
+from sql_monitoring_plan where operation like 'INDEX%' ) aa
+group by sql_id ;
+
+
+   
+VAR=0
+NAME=dba_hist_sqlstat
+STMT=86
+ 
+                select u.username , sq.sql_id,
+                       sn.snap_id,
+                       sq.INSTANCE_NUMBER,
+                       sn.end_interval_time,  
+                       sq.module,  
+                       sq.plan_hash_value,
+          --    ( select get_sqlplan_hist( sq.plan_hash_value, sq.sql_id ) from dual ) sql_plan,  
+          --  ( select pkg_kyhtuning.get_sqlbind4( sq.sql_id, sq.snap_id  ) from dual ) sql_bind,
+          -- decode( trunc( END_INTERVAL_TIME ), trunc( sysdate  ),  ( select get_sqlbind4( sq.sql_id, sq.snap_id  ) from dual ), 'a'  ) sql_bind,
+                       round( ( sq.elapsed_time_delta /1000000 ) / nullif( sq.executions_delta, 0), 5 ) exec_elap,
+                       round( ( sq.cpu_time_delta /1000000 ) / nullif( sq.executions_delta, 0), 5 ) exec_cpu,
+                       ceil( sq.BUFFER_GETS_DELTA / nullif( sq.executions_delta, 0) ) exec_bufgets,
+                       ceil( sq.PHYSICAL_READ_REQUESTS_DELTA / nullif( sq.executions_delta, 0) ) exec_disk_i,
+                       ceil( sq.ROWS_PROCESSED_DELTA  / nullif( sq.executions_delta, 0) )  exec_rows_delt,
+                       sq.executions_delta exec,
+                       round( sq.elapsed_time_delta/1000000, 3 ) elap,
+                       round( sq.cpu_time_delta/1000000, 3 ) cput,
+                       sq.BUFFER_GETS_DELTA buf_gets,
+                       sq.PHYSICAL_READ_REQUESTS_DELTA disk_i,
+                        sq.ROWS_PROCESSED_DELTA      rows_delt,
+                       sq.sql_profile,
+                       sq.sql_id
+                from   dba_hist_sqlstat sq,
+                       dba_hist_snapshot sn ,
+                       dba_users u
+                where   sq.instance_number = sn.instance_number
+                and    sq.PARSING_SCHEMA_ID = u.user_id(+)  
+                and    sq.snap_id = sn.snap_id
+      --      and    sn.snap_id BETWEEN 150591 and 150661   
+              -- and    sq.module = 'DBMS_SCHEDULER : NEXS_8003_2'
+                and    sq.sql_id in ( 
+null 
+--,'3fwvmb07wf1c4' 
+--, '5ma6zkqp1mcwu' 
+--, 'bhaax0wkgk9ya' 
+--  , 'bky6dr1t5myd8'   
+,'1cnum00c0ths3' 
+)   
+ order by     sn.END_INTERVAL_TIME   ;       
+                 select last_active_time, executions, sql_fulltext from v$sql where sql_id = '2md2bss5qnsw9'  ;  
+--1-AMISBAT-a9qvb9zr3rcaj
+---0686d92h8a532
+--0r5nbcjg30hf2
+--2ry1mz6h7mwm7
+--81fx7y1ubg1g7 
+--1-AMISMAN-23hp42gsv4p4c  
+     select * from dba_hist_sqltext where sql_id = 'bky6dr1t5myd8';
+   SELECT  get_sqlplan_hist( '1375253107', '8c0krb3uu2g74' ) FROM DUAL ;
+     
+     
+     select * from v$sql where sql_id = '0jupj76zbqt2w' ; 
+      
+                 desc dba_hist_sqlstat ;  
+                 select * from dba_hist_snapshot 
+                 order by snap_id desc;
+                   -- DBMS_SCHEDULER : NPLUS_8003_5
+ select * from SQL_FOR_MONITORING where sql_id = 'cnjsvcr947zr8' ;    
+ 
+  
+ select * from tb_log_proc order by dts_reg desc ;
+   
+  
+  SELECT * FROM dba_hist_sqltext WHERE SQL_ID in ( 
+  'a89xafrxkz74j',
+'8yjpdf6pvjn4r')   ; 
+   
+ SELECT SQL_FULLTEXT FROM gv$sql where sql_id = '6bkkv09wvb0tx' ; 
+select module, sql_id, PLAN_HASH_VALUE, CHILD_NUMBER, hash_value
+       , 'execute dbms_shared_pool.purge(''' || ADDRESS || ',' || hash_value || ''',''C''); ' purge_cursor
+  from v$sql s
+ where 1=1
+   and sql_id = '66m52k0rk78w5' ;  
+   
+   
+   
+     select sql_text from dba_hist_sqltext where sql_id = '5swbps9u0jj60' ;  
+      
+      
+      execute dbms_shared_pool.purge('07000100AB5E2B38,790864773','C');  -- PF_903kfw7at7ctj_a8ptyq9xw0w0j    
+      
+      select EXAMID , SERIESID , IMAGEID , MEDIANO , COMPRESSION , FSID , SIZEINSTS , SIZEINLTS , LTSPATH1 , LTSPATH2 , LTSRATIO , IMAGELOCATION."ROWID"  from IMAGELOCATION where  examid = :1  and trim(ltspath1)||trim(ltspath2) = :2  
+ 45911552
+img2013
+/img2013/45/91/15/52/35562786/
+CT.35562786.1.1
+VAR=0
+NAME=Active_sess
+STMT=91
+ -- ayu7cknh087m2 ( 락대기 체크 ), 073hdxr44f0k2( tx lock 걸리는 sql - 업무 한계임. ) 0rsvukpd5jc4r 5h7yqmf9cfdfr dtj8sg9vjn021 11ds75pwtybqc 8c0krb3uu2g74 b1m05hxvaj6q8
+ -- 77343thnx6z3a( 배치 delete )  2md2bss5qnsw9 5swbps9u0jj60 5n6n7h071afka 82arj1zx4tnqw 5n6n7h071afka d18w3ja5203xz bjywvmfagggz7 5n6n7h071afka dnwbhphvs1g4a 5h7yqmf9cfdfr
+-- 6bkkv09wvb0tx 1   5987   50445 sec 12899   BUGMAN   AMIS3.0\C1     sql_id -->  * CMD -->   *** event --> PGA memory operation *** blocking --> ,,NOT IN WAIT UB  UR  CR  CRC  SDT 
+SELECT   b.sql_id,
+( select OBJECT_NAME from dba_objects where OBJECT_ID = ROW_WAIT_OBJ# ) wait_OBJECT_NAME ,  
+substr( to_char( b.INST_ID ) , 1, 3 ) || '   ' || to_char( b.SID ) || '   ' || to_char( b.SERIAL# ) || ' sec '||
+substr( to_char(  b.last_call_et  ), 1, 6) || '   ' ||
+   SUBSTR(b.USERNAME, 1, 10) || '   ' ||SUBSTR(b.MACHINE, 1, 30) ||'   ' || substr(b.MODULE, 1, 20) 
+   || '  sql_id -->' || b.sql_id        
+   || '  * CMD --> ' || DECODE( COMMAND, 1,'create table'
+,2 ,'INSERT' ,3 ,'SELECT'   
+,6 ,'UPDATE' 
+,7 ,'DELETE' 
+,9 ,'create index'  
+,11 ,'ALTER INDEX' 
+,26 ,'LOCK table' 
+,42 ,'ALTER_SESSION (NOT ddl)'  
+,44 ,'COMMIT' 
+,45 ,'rollback' 
+,46 ,'savepoint' 
+,47 ,'PL/SQL BLOCK' 
+,48 ,'set transaction' 
+,50 ,'explain' 
+,62 ,'analyze table' 
+,90 ,'set constraints' 
+,170 ,'call' 
+,189 ,'MERGE', NULL )
+   || '  *** event --> ' ||  event  || ' *** blocking --> '  
+   || BLOCKING_INSTANCE || ','||BLOCKING_SESSION || ','|| BLOCKING_SESSION_STATUS ||   
+' UB '||t.used_ublk||/* UNDO Block 수 */
+' UR '||t.used_urec|| /* UNDO Record 수 */
+' CR '||t.CR_GET||
+' CRC '||t.CR_CHANGE||
+' SDT '||to_char( t.START_DATE, 'hh24:mi:ss' )   monitoring 
+-- , B.STATUS
+FROM GV$SESSION b , gv$transaction t
+WHERE 1=1
+and username not in ( 'SYS',
+      'SYSMAN',
+      'DBSNMP',  
+      'STRMADMIN', 
+       'AQUSER' ) 
+        and b.status IN ( 'ACTIVE' , 'KILLED' )
+  AND B.taddr = t.addr(+) 
+and B.inst_id = t.inst_id(+)
+ --  and b.sql_id = 'a8qnwu14hch0d' 
+  order by   b.last_call_et  desc;
+  
+  select * from blocking_session ; --PHDSMPMED  PK_ZZANDPIAL 5zbvd9saqdytv
+   
+   select sql_id, sum(1)
+FROM GV$SESSION b 
+WHERE 1=1
+  and b.inst_id = 1
+and username not in ( 'SYS',
+      'SYSMAN',
+      'DBSNMP',
+      'STRMADMIN', 
+       'AQUSER', 'TUNDBA' )
+  and b.status = 'ACTIVE'  
+  and SQL_ID  is not null
+  group by sql_id
+  having sum(1) > 1
+  order by 2 desc ;
+  
+  select sql_id, sql_fulltext from  gv$sql where sql_id = '0jupj76zbqt2w' ;   
+  
+  select * from blocking_session ;  
+  
+   -- 192.168.201.113, 192.168.201.110
+   
+   select * from v$session where sql_id = '6bkkv09wvb0tx' ;
+    
+  
+  SELECT 'alter system kill session ''' || TO_CHAR(SID) || ',' || TO_CHAR(SERIAL#) || ',@' || TO_CHAR(INST_ID) || ''';'  KILL_CMD 
+  FROM gV$session WHERE SQL_ID in ( '0hrtfbxbfrf61' ) ;
+ 
+desc v$open_cursor ; 
+          alter system kill session '9418,34770,@1';
+         select * from v$open_cursor where SID in ( 5987 )    and LAST_SQL_ACTIVE_TIME is not null order by LAST_SQL_ACTIVE_TIME desc ;  
+                  select * from dba_jobs ;      
+          
+          SELECT a.* ,
+       B.SID                  AS SID,
+       B.SERIAL#              AS SERIAL#
+FROM  V$PROCESS A,
+      V$SESSION B
+WHERE A.ADDR         = B.PADDR
+and   b.sid in ( 5987) ;  
+
+alter system kill session '4361,1486,@1';  
+VAR=0
+NAME=SQL_monitor
+STMT=64
+-- ====================================================================================
+-- v$sql_monitor 
+-- ======================================================================================
+ 
+ 
+ SELECT ROUND(elapsed_time    /1000000)     AS "Elapsed (s)",
+     ROUND(cpu_time             /1000000,3)   AS "CPU (s)",
+     ROUND(queuing_time         /1000000,3)   AS "Queuing (s)",
+     ROUND(application_wait_time/1000000,3)   AS "Appli wait (s)",
+     ROUND(concurrency_wait_time/1000000,3)   AS "Concurrency wait (s)",
+     ROUND(cluster_wait_time    /1000000,3)   AS "Cluster wait (s)",
+     ROUND(user_io_wait_time    /1000000,3)   AS "User io wait (s)",
+     ROUND(physical_read_bytes  /(1024*1024)) AS "Phys reads (MB)",
+     ROUND(physical_write_bytes /(1024*1024)) AS "Phys writes (MB)",
+     buffer_gets                              AS "Buffer gets",
+     ROUND(plsql_exec_time/1000000,3)         AS "Plsql exec (s)",
+     ROUND(java_exec_time /1000000,3)         AS "Java exec (s)"
+     FROM v$sql_monitor
+     WHERE sql_id = 'cvk421rcbqf9w' ;
+
+-- ====================================================================================
+--  v$active_session_history a
+-- ======================================================================================
+
+SELECT NVL(wait_class,'CPU') AS wait_class, NVL(event,'CPU') AS event, COUNT(*)
+     FROM v$active_session_history a
+     WHERE sql_id = 'cvk421rcbqf9w'
+     --AND sql_exec_id = 16777270
+     AND sql_exec_start >= TO_DATE('2022-03-28 13:30:00','yyyy-mm-dd hh24:mi:ss')
+     AND sql_exec_start <= TO_DATE('2022-03-28 13:40:00','yyyy-mm-dd hh24:mi:ss')
+     GROUP BY wait_class, event;
+
+-- ====================================================================================
+--   PLAN Information a
+-- ======================================================================================
+
+SELECT
+     RPAD('(' || p.plan_line_ID || ' ' || NVL(p.plan_parent_id,'0') || ')',8) || '|' ||
+     RPAD(LPAD (' ', 2*p.plan_DEPTH) || p.plan_operation || ' ' || p.plan_options,60,'.') ||
+     NVL2(p.plan_object_owner||p.plan_object_name, '(' || p.plan_object_owner|| '.' || p.plan_object_name || ') ', '') ||
+     NVL2(p.plan_COST,'Cost:' || p.plan_COST,'') || ' ' ||
+     NVL2(p.plan_bytes||p.plan_CARDINALITY,'(' || p.plan_bytes || ' bytes, ' || p.plan_CARDINALITY || ' rows)','') || ' ' ||
+     NVL2(p.plan_partition_start || p.plan_partition_stop,' PStart:' ||  p.plan_partition_start || ' PStop:' || p.plan_partition_stop,'') ||
+     NVL2(p.plan_time, p.plan_time || '(s)','') AS PLAN
+     FROM v$sql_plan_monitor p
+     WHERE sql_id = '81c1xvnmsyr64'
+     AND sql_exec_id = 16777270
+     AND sql_exec_start=TO_DATE('11-jan-2012 05:59:27','dd-mon-yyyy hh24:mi:ss')
+     ORDER BY p.plan_line_id, p.plan_parent_id;
+  
+ -- ====================================================================================
+--   PLAN Information a
+-- ====================================================================================== 
+SELECT NVL(wait_class,'CPU') AS wait_class, NVL(event,'CPU') AS event, sql_plan_line_id, COUNT(*)
+     FROM v$active_session_history a
+     WHERE sql_id = '81c1xvnmsyr64'
+     AND sql_exec_id = 16777270
+     AND sql_exec_start=TO_DATE('11-jan-2012 05:59:27','dd-mon-yyyy hh24:mi:ss')
+     GROUP BY wait_class,event,sql_plan_line_id;
+ 
+ SELECT dbms_sqltune.report_sql_monitor(sql_id=>'81c1xvnmsyr64',sql_exec_id=>16777270,sql_exec_start=> TO_DATE('11-jan-2012 05:59:27','dd-mon-yyyy hh24:mi:ss'),report_level=>'ALL') AS report FROM dual;
+ SELECT dbms_sqltune.report_sql_monitor_list(sql_id=>'gkuwnmv2j637x',report_level=>'ALL') AS report FROM dual; 
+  
+   
+VAR=0
+NAME=diag_alert_ext
+STMT=134
+SELECT TO_CHAR(ORIGINATING_TIMESTAMP,'YYYY-MM-DD HH24:MI:SS') DA_TE,
+    --INDX, 
+	--INST_ID,
+	NULLIF(TO_CHAR(ORIGINATING_TIMESTAMP,'HH24:MI:SS'),
+	LAG(TO_CHAR(ORIGINATING_TIMESTAMP,'HH24:MI:SS')) OVER (ORDER BY ORIGINATING_TIMESTAMP)) TIME,  
+	MESSAGE_TEXT,
+	MESSAGE_GROUP,
+	PROBLEM_KEY,
+    HOST_ID,
+    HOST_ADDRESS,
+    MESSAGE_TYPE,
+    MESSAGE_LEVEL,
+    MESSAGE_ID,
+    MESSAGE_ARGUMENTS,    
+    CLIENT_ID,
+    MODULE_ID,
+    PROCESS_ID,
+    THREAD_ID,
+    USER_ID,
+    INSTANCE_ID,
+    DETAILED_LOCATION
+FROM
+	 v$diag_alert_ext
+WHERE
+	(ORIGINATING_TIMESTAMP >= (TRUNC(SYSTIMESTAMP) -5 ) AND ORIGINATING_TIMESTAMP < TRUNC(SYSTIMESTAMP) + 1)
+     AND ( upper( MESSAGE_TEXT ) like '%ORA%' )
+--ORDER BY INDX desc
+;
+
+--#########################################################################
+--###### 4) trace dump file view
+--#########################################################################
+--V$DIAG_TRACE_FILE
+--V$DIAG_TRACE_FILE_CONTENTS
+--View를 이용해서 Terminal에 붙지 않고 Trace파일 내용을 가져오는 SQL입니다.
+--ALERT.LOG는 11g도 가능하지만 다른 View는 12.2 부터 가능합니다.
+--Terminal을 붙을 수는 없고 Function을 사용하는 SQL전체를 Trace 뜨고 싶을 때 활용할 수도 있습니다. 
+ 
+
+-- ALERT.LOG
+SELECT 
+
+    TO_CHAR(ORIGINATING_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') SNAPTIME, 
+--    INDX,  
+--     INST_ID, 
+       NULLIF(TO_CHAR(ORIGINATING_TIMESTAMP, 'HH24:MI:SS'), LAG(TO_CHAR(ORIGINATING_TIMESTAMP, 'HH24:MI:SS')) OVER(ORDER BY ORIGINATING_TIMESTAMP))  TIME, 
+       MESSAGE_TEXT, 
+       MESSAGE_GROUP, 
+       PROBLEM_KEY, 
+    HOST_ID, 
+    HOST_ADDRESS, 
+    MESSAGE_TYPE, 
+    MESSAGE_LEVEL, 
+    MESSAGE_ID, 
+    MESSAGE_ARGUMENTS,  
+    CLIENT_ID, 
+    MODULE_ID, 
+    PROCESS_ID, 
+    THREAD_ID, 
+    USER_ID, 
+    INSTANCE_ID, 
+    DETAILED_LOCATION 
+FROM v$diag_alert_ext 
+WHERE 1 = 1 
+    --and COMPONENT_ID = 'rdbms' and message_text like '%ORA-%' and INST_ID = 1 
+    and ORIGINATING_TIMESTAMP >= (SYSTIMESTAMP - 10) 
+ORDER BY ORIGINATING_TIMESTAMP ASC
+;
+
+ 
+
+-- My Trace File Details in file /oratrace/diag/rdbms/m16mesd/M16MESD1/trace/M16MESD1_ora_9494.trc
+
+
+select u_dump.value || '/' ||
+       db_name.value || '_ora_' ||
+       v$process.spid ||
+       nvl2(v$process.traceid, '_' || v$process.traceid, null )||'.trc' "Trace File"
+from  v$parameter u_dump cross join v$parameter db_name cross join v$process
+      join v$session on v$process.addr = v$session.paddr
+where u_dump.name = 'user_dump_dest'
+  and db_name.name = 'db_name'
+  and v$session.audsid=sys_context('userenv','sessionid');
+ 
+
+ 
+
+select * from V$DIAG_TRACE_FILE order by CHANGE_TIME desc;
+
+
+select PAYLOAD, a.* from V$DIAG_TRACE_FILE_CONTENTS a 
+where TRACE_FILENAME = :TRACE_FILE 
+-- and payload like '%deadlock%'
+order by line_number;
+
+select  PAYLOAD, a.*  from V$DIAG_SQL_TRACE_RECORDS a where ADR_HOME = '/oratrace/diag/rdbms/m16mesap/M16MESAP1' 
+AND TRACE_FILENAME = :TRACE_FILE  
+and LINE_NUMBER < 2000
+order by line_number ;  --/oratrace/diag/rdbms/m16mesap/M16MESAP1, M16MESAP1_ora_31291.trc
+
+
+
+
+-- ORA-1653: unable to extend table CORADM.CASTA2214 by 128 in                 tablespace COR_D999_08K 
+
+-- ORA-3234: unable to extend index CORADM.CACNA2039_PK subpartition CACNA2039_PL_02_P009000000 by 1280 in               tablespace COR_I016_08K 
+
+-- ORA-01555 caused by SQL statement below (SQL ID: g6sru7898ks1d, Query Duration=0 sec, SCN: 0x0749.22dc689f):
+-- Memory Notification: Library Cache Object loaded into SGA
+-- Errors in file /logs01/oratest/diag/rdbms/amisstd/AMISTEST/trace/AMISTEST_ora_38994116.trc  (incident=2470800):
+-- ORA-07445: 예외 발견: 코아 덤프 [qksopVisitOpns()+84] [SIGSEGV] [ADDR:0xB38F0000000029] [PC:0x10868DC54] [Address not mapped to object] []
+
+select * from v$parameter where NAME = '_kgl_large_heap_warning_threshold';
+
+select * from gv$instance ;
+
+select a.ksppinm, b.ksppstvl from x$ksppi a, x$ksppsv b
+where a.indx=b.indx
+and a.ksppinm like '%parallel_degree_policy%';
+ 
+ 
+SELECT * FROM GV$INSTANCE ;
+
+ select * from dba_hist_sqltext where sql_id ='g6sru7898ks1d' ;  
+-- Errors in file   (incident=2466703):
+-- ORA-07445: 예외 발견: 코아 덤프 [qkebValidateOpn()+4] [SIGSEGV] [ADDR:0x6B6B6F46726F4374] [PC:0x1086BA424] [Address not mapped to object] [] 
+
+select count(1) from v$sql ;
+
+select * from v$parameter where name like '%size%' ;
+
+
+
+  
+VAR=0
+NAME=dbms_workload_repository
+STMT=32
+ 
+
+select *
+from dba_hist_wr_control;
+
+
+
+-- exec dbms_workload_repository.modify_snapshot_settings( interval => 20, retention=>15*24*60);
+
+execute dbms_workload_repository.create_snapshot;
+
+select output from table(dbms_workload_repository.awr_report_html(1244347055, 1 , 70590 , 71093 , 8 )) ;
+select output from table(dbms_workload_repository.awr_report_html(1244347055, 2 , 70590 , 71093 , 8 )) ;
+select output from table(dbms_workload_repository.awr_report_html(984515169, 1 , 15757 , 15759 , 8 )) ;
+
+
+-- awr sql report, ash_report_html
+select output from table( dbms_workload_repository.awr_sql_report_html( 426905844, 1, 16992, 17132, '0w49nvgsss')); 
+
+select output from table( dbms_workload_repository.ash_report_html(4269058445, 2, trunc( sysdate)+13/24, trunc( sysdate) + 14/24, 0,0, null, '3v1k2wqj7zaaa', null)); 
+
+
+
+select * from dba_hist_snapshot order by snap_id desc ;
+
+
+select * from gv$sql where sql_id = '3f9zp1wvr8n3p' ;
+ 
+select * from dba_hist_librarycache where INSTANCE_NUMBER = 1 and SNAP_ID between 28685 and 28692 ;
+
+
+select * from DBA_HIST_SYSMETRIC_SUMMARY where INSTANCE_NUMBER = 1 and SNAP_ID between 28685 and 28692 and METRIC_NAME like 'Row Cache%';
+VAR=0
+NAME=성능 체크
+STMT=2428
+select min( SNAP_ID )  , max( SNAP_ID )  
+     from dba_hist_snapshot 
+ where END_INTERVAL_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+ and   END_INTERVAL_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+           ;
+ 
+-- 1) cpu usage
+SELECT /*+ all_rows */ 
+       MAX(to_char(END_TIME, 'yyyy-mm-dd hh24:mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Host CPU Utilization (%)", 0 ) ) "N1 Host CPU Utilization (%)",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Host CPU Utilization (%)", 0 ) ) "N2 Host CPU Utilization (%)",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Host CPU Utilization (%)", 0 ) ) "N3 Host CPU Utilization (%)" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Host CPU Utilization (%)", 0 ) ) "N4 Host CPU Utilization (%)"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER, 
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Host CPU Utilization (%)', TRUNC( AVERAGE  , 1) , 0 ) ) "Host CPU Utilization (%)"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Host CPU Utilization (%)' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' )
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+--2) active session
+SELECT /*+ Timestamp */ 
+       MAX(to_char(END_TIME, 'yyyy-mm-dd hh24:mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, Serial_Sessions + Parallel_Sessions, 0 ) ) "N1 ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 2, Serial_Sessions + Parallel_Sessions, 0 ) ) "N2 ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 3, Serial_Sessions + Parallel_Sessions, 0 ) ) "N3 ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 4, Serial_Sessions + Parallel_Sessions, 0 ) ) "N4 ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 1,  Serial_Sessions, 0 ) ) "N1 Serial ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 2,  Serial_Sessions, 0 ) ) "N2 Serial ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 3,  Serial_Sessions, 0 ) ) "N3 Serial ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 4,  Serial_Sessions, 0 ) ) "N4 Serial ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 1,  Parallel_Sessions, 0 ) ) "N1 Parallel ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 2,  Parallel_Sessions, 0 ) ) "N2 Parallel ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 3,  Parallel_Sessions, 0 ) ) "N3 Parallel ActiveSessions",
+       SUM( DECODE( INSTANCE_NUMBER, 4,  Parallel_Sessions, 0 ) ) "N4 Parallel ActiveSessions"
+       
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Active Serial Sessions', TRUNC( AVERAGE ) , 0 ) ) Serial_Sessions ,
+               SUM( DECODE( METRIC_NAME, 'Active Parallel Sessions', TRUNC( AVERAGE ) , 0 ) ) Parallel_Sessions
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Active Serial Sessions', 'Active Parallel Sessions' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd' )
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd' ) 
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+--3) Enqueue
+SELECT /*+ all_rows */ 
+       MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Enqueue Waits Per Sec", 0 ) ) "N1 Enqueue Waits Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Enqueue Waits Per Sec", 0 ) ) "N2 Enqueue Waits Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Enqueue Waits Per Sec", 0 ) ) "N3 Enqueue Waits Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Enqueue Waits Per Sec", 0 )  ) "N4 Enqueue Waits Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Enqueue Waits Per Sec', TRUNC( AVERAGE , 2) , 0 ) ) "Enqueue Waits Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Enqueue Waits Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' )
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+--4) logical reads
+SELECT /*+ all_rows */ 
+       MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       trunc( SUM( DECODE( INSTANCE_NUMBER, 1, "Logical Reads Per Sec", 0 ) )*8*1024 /1024/1024 ) "N1 Logical Read MBytes Per Sec",
+       trunc( SUM( DECODE( INSTANCE_NUMBER, 2, "Logical Reads Per Sec", 0 ) )*8*1024 /1024/1024 ) "N2 Logical Read MBytes Per Sec",
+       trunc( SUM( DECODE( INSTANCE_NUMBER, 3, "Logical Reads Per Sec", 0 ) )*8*1024 /1024/1024 ) "N3 Logical Read MBytes Per Sec",
+       trunc( SUM( DECODE( INSTANCE_NUMBER, 4, "Logical Reads Per Sec", 0 ) )*8*1024 /1024/1024 ) "N4 Logical Read MBytes Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Logical Reads Per Sec', TRUNC( AVERAGE , 0) , 2 ) ) "Logical Reads Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Logical Reads Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' )
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+--5) Exec  
+SELECT /*+ all_rows */ 
+       MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       MAX (TO_CHAR( END_TIME , 'DAY')) ,
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Executions Per Sec", 0 ) ) "N1 Executions Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Executions Per Sec", 0 ) ) "N2 Executions Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Executions Per Sec", 0 ) ) "N3 Executions Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Executions Per Sec", 0 ) ) "N4 Executions Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Executions Per Sec', TRUNC( AVERAGE  ) , 0 ) ) "Executions Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Executions Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' )
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+ 
+--6) Response Time Per Txn
+SELECT /*+ all_rows */ 
+       MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Response Time Per Txn", 0 ) ) "N1 Response Time Per Txn",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Response Time Per Txn", 0 ) ) "N2 Response Time Per Txn",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Response Time Per Txn", 0 ) ) "N3 Response Time Per Txn" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Response Time Per Txn", 0 ) ) "N4 Response Time Per Txn"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Response Time Per Txn', TRUNC( AVERAGE / 1000, 6) , 0 ) ) "Response Time Per Txn"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Response Time Per Txn' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' )
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+ 
+ 
+--7) Enqueue Deadlocks Per Sec
+SELECT /*+ all_rows */ MAX(to_char(END_TIME, 'dd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Enqueue Deadlocks Per Sec", 0 ) ) "N1 Enqueue Deadlocks Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Enqueue Deadlocks Per Sec", 0 ) ) "N2 Enqueue Deadlocks Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Enqueue Deadlocks Per Sec", 0 ) ) "N3 Enqueue Deadlocks Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Enqueue Deadlocks Per Sec", 0 ) ) "N4 Enqueue Deadlocks Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Enqueue Deadlocks Per Sec', TRUNC( AVERAGE , 4) , 0 ) ) "Enqueue Deadlocks Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Enqueue Deadlocks Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' )
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+  
+ 
+--8) Enqueue Requests Per Sec
+SELECT /*+ all_rows */ MAX(to_char(END_TIME, 'dd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Enqueue Requests Per Sec", 0 ) ) "N1 Enqueue Requests Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Enqueue Requests Per Sec", 0 ) ) "N2 Enqueue Requests Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Enqueue Requests Per Sec", 0 ) ) "N3 Enqueue Requests Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Enqueue Requests Per Sec", 0 ) ) "N4 Enqueue Requests Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Enqueue Requests Per Sec', TRUNC( AVERAGE , 4) , 0 ) ) "Enqueue Requests Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Enqueue Requests Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' )
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+   
+-----------------------------------------------------------
+
+--7) Hard Parse Count Per Sec  -------- CPU 40~50 에서 4 ( 이건 0에 근접해야 합니다. ) 
+
+----------------------------------------------------------- 
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Hard Parse Count Per Sec", 0 ) ) "N1 Hard Parse Count Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Hard Parse Count Per Sec", 0 ) ) "N2 Hard Parse Count Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Hard Parse Count Per Sec", 0 ) ) "N3 Hard Parse Count Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Hard Parse Count Per Sec", 0 ) ) "N4 Hard Parse Count Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Hard Parse Count Per Sec', round( AVERAGE , 2 ) , 0 ) ) "Hard Parse Count Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Hard Parse Count Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' )
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+---------------------------------------------------------------------------------------------------------------------
+
+--8) Leaf Node Splits -------- CPU 40~50 에서 40
+-- Number of times per second an index leaf node was split because of the insertion of an additional value.
+-- 인덱스 Spilt 참고 ( https://pangsun.co.kr/entry/Index-Split-%EC%9D%B4%EB%9E%80 ) 
+--------------------------------------------------------------------------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Leaf Node Splits Per Sec", 0 ) ) "N1 Leaf Node Splits Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Leaf Node Splits Per Sec", 0 ) ) "N2 Leaf Node Splits Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Leaf Node Splits Per Sec", 0 ) ) "N3 Leaf Node Splits Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Leaf Node Splits Per Sec", 0 ) ) "N4 Leaf Node Splits Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Leaf Node Splits Per Sec', round( AVERAGE ) , 0 ) ) "Leaf Node Splits Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Leaf Node Splits Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--9) Branch Node Splits -------- CPU 40~50 에서 0
+-- Branch Node 또는 Root Node가 꽉 찰 경우 발생하는 Split 항상 50:50으로 Split이 이루어 진다 
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Branch Node Splits Per Sec", 0 ) ) "N1 Branch Node Splits Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Branch Node Splits Per Sec", 0 ) ) "N2 Branch Node Splits Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Branch Node Splits Per Sec", 0 ) ) "N3 Branch Node Splits Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Branch Node Splits Per Sec", 0 ) ) "N4 Branch Node Splits Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Branch Node Splits Per Sec', round( AVERAGE ) , 0 ) ) "Branch Node Splits Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Branch Node Splits Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--10) Total Parse Count Per Sec 42000
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Total Parse Count Per Sec", 0 ) ) "N1 Total Parse Count Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Total Parse Count Per Sec", 0 ) ) "N2 Total Parse Count Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Total Parse Count Per Sec", 0 ) ) "N3 Total Parse Count Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Total Parse Count Per Sec", 0 ) ) "N4 Total Parse Count Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Total Parse Count Per Sec', round( AVERAGE ) , 0 ) ) "Total Parse Count Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Total Parse Count Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--11) User Calls Per Sec -------- CPU 40~50 에서 110000
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "User Calls Per Sec", 0 ) ) "N1 User Calls Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "User Calls Per Sec", 0 ) ) "N2 User Calls Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "User Calls Per Sec", 0 ) ) "N3 User Calls Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "User Calls Per Sec", 0 ) ) "N4 User Calls Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'User Calls Per Sec', round( AVERAGE ) , 0 ) ) "User Calls Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'User Calls Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--12) User Commits Per Sec -------- CPU 40~50 에서 500
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "User Commits Per Sec", 0 ) ) "N1 User Commits Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "User Commits Per Sec", 0 ) ) "N2 User Commits Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "User Commits Per Sec", 0 ) ) "N3 User Commits Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "User Commits Per Sec", 0 ) ) "N4 User Commits Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'User Commits Per Sec', round( AVERAGE ) , 0 ) ) "User Commits Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'User Commits Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--13) User Transaction Per Sec -------- CPU 40~50 에서 500
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "User Transaction Per Sec", 0 ) ) "N1 User Transaction Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "User Transaction Per Sec", 0 ) ) "N2 User Transaction Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "User Transaction Per Sec", 0 ) ) "N3 User Transaction Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "User Transaction Per Sec", 0 ) ) "N4 User Transaction Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'User Transaction Per Sec', round( AVERAGE ) , 0 ) ) "User Transaction Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'User Transaction Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--14) Long Table Scans Per Sec -------- CPU 40~50 에서 
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Long Table Scans Per Sec", 0 ) ) "N1 Long Table Scans Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Long Table Scans Per Sec", 0 ) ) "N2 Long Table Scans Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Long Table Scans Per Sec", 0 ) ) "N3 Long Table Scans Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Long Table Scans Per Sec", 0 ) ) "N4 Long Table Scans Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Long Table Scans Per Sec', round( AVERAGE ) , 0 ) ) "Long Table Scans Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Long Table Scans Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--15) Full Index Scans Per Sec -------- CPU 40~50 에서 80
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Full Index Scans Per Sec", 0 ) ) "N1 Full Index Scans Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Full Index Scans Per Sec", 0 ) ) "N2 Full Index Scans Per Sec",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Full Index Scans Per Sec", 0 ) ) "N3 Full Index Scans Per Sec" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Full Index Scans Per Sec", 0 ) ) "N4 Full Index Scans Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Full Index Scans Per Sec', round( AVERAGE ) , 0 ) ) "Full Index Scans Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Full Index Scans Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--16) I/O Megabytes per Second -------- CPU 40~50 에서 200
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "I/O Megabytes per Second", 0 ) ) "N1 I/O Megabytes per Second",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "I/O Megabytes per Second", 0 ) ) "N2 I/O Megabytes per Second",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "I/O Megabytes per Second", 0 ) ) "N3 I/O Megabytes per Second" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "I/O Megabytes per Second", 0 ) ) "N4 I/O Megabytes per Second"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'I/O Megabytes per Second', round( AVERAGE ) , 0 ) ) "I/O Megabytes per Second"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'I/O Megabytes per Second' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--17) I/O Requests per Second -------- CPU 40~50 에서 16000
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "I/O Requests per Second", 0 ) ) "N1 I/O Requests per Second",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "I/O Requests per Second", 0 ) ) "N2 I/O Requests per Second",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "I/O Requests per Second", 0 ) ) "N3 I/O Requests per Second" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "I/O Requests per Second", 0 ) ) "N4 I/O Requests per Second"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'I/O Requests per Second', round( AVERAGE ) , 0 ) ) "I/O Requests per Second"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'I/O Requests per Second' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--18) Global Cache Blocks Lost -------- CPU 40~50 에서 0
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Global Cache Blocks Lost", 0 ) ) "N1 Global Cache Blocks Lost",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Global Cache Blocks Lost", 0 ) ) "N2 Global Cache Blocks Lost",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Global Cache Blocks Lost", 0 ) ) "N3 Global Cache Blocks Lost" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Global Cache Blocks Lost", 0 ) ) "N4 Global Cache Blocks Lost"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Global Cache Blocks Lost', round( maxval ) , 0 ) ) "Global Cache Blocks Lost"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Global Cache Blocks Lost' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--19) Buffer Cache Hit Ratio -------- CPU 40~50 에서 99 
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Buffer Cache Hit Ratio", 0 ) ) "N1 Buffer Cache Hit Ratio",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Buffer Cache Hit Ratio", 0 ) ) "N2 Buffer Cache Hit Ratio",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Buffer Cache Hit Ratio", 0 ) ) "N3 Buffer Cache Hit Ratio" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Buffer Cache Hit Ratio", 0 ) ) "N4 Buffer Cache Hit Ratio"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Buffer Cache Hit Ratio', round( AVERAGE ) , 0 ) ) "Buffer Cache Hit Ratio"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Buffer Cache Hit Ratio' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--20) Response Time Per Txn -------- CPU 40~50 에서 db link 없으며 1초 이내.. 있으면 100초 보다 큼
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       SUM( DECODE( INSTANCE_NUMBER, 1, "Response Time Per Txn", 0 ) ) "N1 Response Time Per Txn",
+       SUM( DECODE( INSTANCE_NUMBER, 2, "Response Time Per Txn", 0 ) ) "N2 Response Time Per Txn",
+       SUM( DECODE( INSTANCE_NUMBER, 3, "Response Time Per Txn", 0 ) ) "N3 Response Time Per Txn" ,
+       SUM( DECODE( INSTANCE_NUMBER, 4, "Response Time Per Txn", 0 ) ) "N4 Response Time Per Txn"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Response Time Per Txn', round( AVERAGE / 100, 4) , 0 ) ) "Response Time Per Txn"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Response Time Per Txn' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+
+--21) Network Traffic Volume Per Sec -------- CPU 40~50 에서 200,000,000
+
+-----------------------------------------------------------
+SELECT /*+ all_rows */
+  MAX(to_char(END_TIME, 'yyyymmdd hh24mi')) "Time",
+       to_char(SUM( DECODE( INSTANCE_NUMBER, 1, "Network Traffic Volume Per Sec", 0 ) ), '999,999,999,999' ) "N1 Network  Volume Per Sec",
+       to_char(SUM( DECODE( INSTANCE_NUMBER, 2, "Network Traffic Volume Per Sec", 0 ) ), '999,999,999,999' ) "N2 Network  Volume Per Sec",
+       to_char(SUM( DECODE( INSTANCE_NUMBER, 3, "Network Traffic Volume Per Sec", 0 ) ), '999,999,999,999' ) "N3 Network  Volume Per Sec" ,
+       to_char(SUM( DECODE( INSTANCE_NUMBER, 4, "Network Traffic Volume Per Sec", 0 ) ), '999,999,999,999' ) "N4 Network  Volume Per Sec"
+  FROM (SELECT SNAP_ID,
+               INSTANCE_NUMBER,
+               END_TIME ,
+               SUM( DECODE( METRIC_NAME, 'Network Traffic Volume Per Sec', round( AVERAGE ) , 0 ) ) "Network Traffic Volume Per Sec"
+          FROM DBA_HIST_SYSMETRIC_SUMMARY
+         WHERE METRIC_NAME IN ( 'Network Traffic Volume Per Sec' )
+           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+         GROUP BY SNAP_ID,
+               INSTANCE_NUMBER ,
+               END_TIME )
+ GROUP BY SNAP_ID
+ ORDER BY 1 ;
+ 
+-----------------------------------------------------------
+-- 22) cpu 시간대별 분석 
+-----------------------------------------------------------
+select *
+  from (select substr( dt, 1, 6 ) dt,
+               substr( dt, 8, 4 ) tm,
+               N1
+          from (SELECT /*+ all_rows */
+                  MAX( substr( to_char(END_TIME + 5/24/60, 'yymmdd hh24mi'), 1, 10 ) || '0') dt,
+                       SUM( DECODE( INSTANCE_NUMBER, 1, "Host CPU Utilization (%)", 0 ) ) N1,
+                       SUM( DECODE( INSTANCE_NUMBER, 2, "Host CPU Utilization (%)", 0 ) ) N2
+                  FROM (SELECT SNAP_ID,
+                               INSTANCE_NUMBER,
+                               END_TIME ,
+                               SUM( DECODE( METRIC_NAME, 'Host CPU Utilization (%)', round( AVERAGE , 1) , 0 ) ) "Host CPU Utilization (%)"
+                          FROM DBA_HIST_SYSMETRIC_SUMMARY
+                         WHERE METRIC_NAME IN ( 'Host CPU Utilization (%)' )
+--           and END_TIME >= to_date( '2016-12-24 0000', 'yyyy-mm-dd hh24mi' )
+
+--           and END_TIME <= to_date( '2017-12-30 0000', 'yyyy-mm-dd hh24mi' )
+                           and END_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' ) -- 2020-12-15 0000
+                           and END_TIME <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) -- 2020-12-17 0000
+
+--  AND TO_CHAR( END_TIME, 'D' ) NOT IN ( 1, 7 )
+                         GROUP BY SNAP_ID,
+                               INSTANCE_NUMBER ,
+                               END_TIME )
+                 GROUP BY SNAP_ID ) ) PIVOT ( sum( N1 ) FOR tm IN ( '0000','0010',
+                       '0020',
+                       '0030',
+                       '0040',
+                       '0050',
+                       '0100',
+                       '0110',
+                       '0120',
+                       '0130',
+                       '0140',
+                       '0150',
+                       '0200',
+                       '0210',
+                       '0220',
+                       '0230',
+                       '0240',
+                       '0250',
+                       '0300',
+                       '0310',
+                       '0320',
+                       '0330',
+                       '0340',
+                       '0350',
+                       '0400',
+                       '0410',
+                       '0420',
+                       '0430',
+                       '0440',
+                       '0450',
+                       '0500',
+                       '0510',
+                       '0520',
+                       '0530',
+                       '0540',
+                       '0550',
+                       '0600',
+                       '0610',
+                       '0620',
+                       '0630',
+                       '0640',
+                       '0650',
+                       '0700',
+                       '0710',
+                       '0720',
+                       '0730',
+                       '0740',
+                       '0750',
+                       '0800',
+                       '0810',
+                       '0820',
+                       '0830',
+                       '0840',
+                       '0850',
+                       '0900',
+                       '0910',
+                       '0920',
+                       '0930',
+                       '0940',
+                       '0950',
+                       '1000',
+                       '1010',
+                       '1020',
+                       '1030',
+                       '1040',
+                       '1050',
+                       '1100',
+                       '1110',
+                       '1120',
+                       '1130',
+                       '1140',
+                       '1150',
+                       '1200',
+                       '1210',
+                       '1220',
+                       '1230',
+                       '1240',
+                       '1250',
+                       '1300',
+                       '1310',
+                       '1320',
+                       '1330',
+                       '1340',
+                       '1350',
+                       '1400',
+                       '1410',
+                       '1420',
+                       '1430',
+                       '1440',
+                       '1450',
+                       '1500',
+                       '1510',
+                       '1520',
+                       '1530',
+                       '1540',
+                       '1550',
+                       '1600',
+                       '1610',
+                       '1620',
+                       '1630',
+                       '1640',
+                       '1650',
+                       '1700',
+                       '1710',
+                       '1720',
+                       '1730',
+                       '1740',
+                       '1750',
+                       '1800',
+                       '1810',
+                       '1820',
+                       '1830',
+                       '1840',
+                       '1850',
+                       '1900',
+                       '1910',
+                       '1920',
+                       '1930',
+                       '1940',
+                       '1950',
+                       '2000',
+                       '2010',
+                       '2020',
+                       '2030',
+                       '2040',
+                       '2050',
+                       '2100',
+                       '2110',
+                       '2120',
+                       '2130',
+                       '2140',
+                       '2150',
+                       '2200',
+                       '2210',
+                       '2220',
+                       '2230',
+                       '2240',
+                       '2250',
+                       '2300',
+                       '2310',
+                       '2320',
+                       '2330',
+                       '2340',
+                       '2350' ) ) ;
+ 
+-----------------------------------------------------------
+
+-- 23) Table/Index Segment 분석  
+
+-----------------------------------------------------------
+SELECT *
+FROM(
+select rank() over (   order by LOGICAL_READS_DELTA desc  ) LOGICAL_READS_RANK,
+--   rank() over ( partition by snap_id order by PHYSICAL_READ_REQUESTS_DELTA desc  ) PHYSICAL_READ_REQUESTS_RANK,
+--   rank() over ( partition by snap_id order by ROW_LOCK_WAITS_DELTA desc  ) ROW_LOCK_WAITS_RANK,  -- WRI$_ADV_EXECUTIONS
+a.* 
+from (
+select  
+       A.INSTANCE_NUMBER,
+       MAX( B.END_INTERVAL_TIME ),
+       c.OBJECT_NAME , 
+       SUM( LOGICAL_READS_DELTA ) LOGICAL_READS_DELTA ,
+       SUM( BUFFER_BUSY_WAITS_DELTA ) BUFFER_BUSY_WAITS_DELTA ,
+       SUM( DB_BLOCK_CHANGES_DELTA ) DB_BLOCK_CHANGES_DELTA ,
+       SUM( PHYSICAL_WRITES_DELTA ) PHYSICAL_WRITES_DELTA ,
+       SUM( PHYSICAL_READS_DIRECT_DELTA ) PHYSICAL_READS_DIRECT_DELTA ,
+       SUM( PHYSICAL_WRITES_DIRECT_DELTA ) PHYSICAL_WRITES_DIRECT_DELTA ,
+       SUM( ITL_WAITS_DELTA ) ITL_WAITS_DELTA ,
+       SUM( ROW_LOCK_WAITS_DELTA ) ROW_LOCK_WAITS_DELTA ,
+       SUM( GC_CR_BLOCKS_SERVED_DELTA ) GC_CR_BLOCKS_SERVED_DELTA ,
+       SUM( GC_CU_BLOCKS_SERVED_DELTA ) GC_CU_BLOCKS_SERVED_DELTA ,
+       SUM( GC_BUFFER_BUSY_DELTA ) GC_BUFFER_BUSY_DELTA ,
+       SUM( GC_CR_BLOCKS_RECEIVED_DELTA ) GC_CR_BLOCKS_RECEIVED_DELTA ,
+       SUM( GC_CU_BLOCKS_RECEIVED_DELTA ) GC_CU_BLOCKS_RECEIVED_DELTA ,
+       SUM( SPACE_USED_DELTA ) SPACE_USED_DELTA ,
+       SUM( SPACE_ALLOCATED_DELTA ) SPACE_ALLOCATED_DELTA ,
+       SUM( TABLE_SCANS_DELTA ) TABLE_SCANS_DELTA ,
+       SUM( CHAIN_ROW_EXCESS_DELTA ) CHAIN_ROW_EXCESS_DELTA ,
+       SUM( PHYSICAL_READ_REQUESTS_DELTA ) PHYSICAL_READ_REQUESTS_DELTA ,
+       SUM( PHYSICAL_WRITE_REQUESTS_DELTA ) PHYSICAL_WRITE_REQUESTS_DELTA
+  from sys.dba_hist_seg_stat a, ------ segment 통계
+       dba_hist_snapshot B,
+       dba_objects c
+ where obj# in (select OBJECT_ID
+          from dba_objects
+         where substr( object_type, 1, 5 ) in ( 'TABLE',
+                       'INDEX' )
+        --   and ( object_name like '%MES_LOT_MAS%' )
+        --   and owner like '%ADM'
+           )
+   and B.END_INTERVAL_TIME >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+   and END_INTERVAL_TIME < to_date( :b2, 'yyyy-mm-dd hh24mi' )
+   and a.OBJ#= c.OBJECT_ID
+   AND A.SNAP_ID = B.SNAP_ID
+   AND A.DBID = B.DBID
+   AND A.INSTANCE_NUMBER = B.INSTANCE_NUMBER
+   -- AND A.INSTANCE_NUMBER = 1
+ group by  
+       A.INSTANCE_NUMBER,
+       c.OBJECT_NAME
+ order by 1 desc ,
+       3 ) A
+       ORDER BY LOGICAL_READS_RANK )
+    WHERE ( LOGICAL_READS_RANK <= 20 )  ;
+ 
+ desc dba_hist_seg_stat;
+-----------------------------------------------------------
+
+-- 24) process check  
+-----------------------------------------------------------
+select INST_ID, pname, program,
+       sum(1) process_cnt,
+       ceil( sum( pga_used_mem/1024/1024 )) pga_used_mem,
+       ceil( sum( pga_alloc_mem/1024/1024 )) pga_alloc_mem,
+       ceil( sum( pga_max_mem/1024/1024 )) pga_max_mem
+  from gv$process
+ group by grouping sets ( ( INST_ID, pname,program ) , (INST_ID) , () )
+ order by 1, 3, 4 desc  ;
+ 
+ select program,
+       round( pga_used_mem/1024/1024 ) pga_used_mem,
+       round( pga_alloc_mem/1024/1024 ) pga_alloc_mem,
+       round( pga_max_mem/1024/1024 ) pga_max_mem
+  from v$process
+ order by pga_used_mem desc ;
+ 
+ desc gv$process ;
+ 
+ select * from v$process ;
+ 
+-----------------------------------------------------------
+
+-- 25) Wait Events
+
+-----------------------------------------------------------
+select /*+ all_rows no_merge( a ) no_merge( b ) no_merge( c ) use_hash( a b c ) */
+  a."Timestamp" " 수집시간",
+       a.EVENT_NAME "1번노드 자원사용명",
+       a."% DB time" "1번노드  %",
+       a.rank "1번노드  순위",
+       b.EVENT_NAME "2번노드 자원사용명",
+       b."% DB time" "2번노드  %",
+       b.rank "2번노드  순위",
+       c.EVENT_NAME "3번노드 자원사용명",
+       c."% DB time" "3번노드  %",
+       d.rank "3번노드  순위",
+       d.EVENT_NAME "3번노드 자원사용명",
+       d."% DB time" "3번노드  %",
+       d.rank "3번노드  순위"
+  from (select /*+ no_merge( v1 ) no_merge( v_dbtime ) no_merge( sn ) leading( v1 v_dbtime sn ) use_hash( v1 v_dbtime sn )  */sn.snap_id,
+               to_char(sn.end_interval_time, 'yyyy-mm-dd hh24:mi:ss') "Timestamp",
+               v1.event_name,
+               round( v1.delta_time/1000000, 3 ) "Wait Time(s)",
+               round( decode(v1.delta_wait, 0, 0, v1.delta_time/v1.delta_wait/1000), 3 ) "Avg wait(ms)",
+               round( decode(v_dbtime.delta, 0, 0, v1.delta_time/v_dbtime.delta), 3 ) * 100 "% DB time",
+               v1.rank
+          from (select *
+                  from (select v.*,
+                               row_number() over( partition by snap_id
+                                 order by delta_time desc ) rank
+                          from (select snap_id,
+                                       event_name,
+                                       wait_class,
+                                       nvl(total_waits - lag(total_waits) over ( partition by event_name
+                                                 order by snap_id), 0) delta_wait,
+                                       nvl(time_waited_micro - lag(time_waited_micro) over ( partition by event_name
+                                                 order by snap_id), 0) delta_time
+                                  from dba_hist_system_event ---------- wait event
+                                 where wait_class != 'Idle'
+                                   and snap_id between :s_snap_id and :e_snap_id
+                                   and instance_number = 1
+                                 union all
+                                select snap_id,
+                                       decode(stat_name, 'DB CPU', 'CPU time', stat_name) event_name,
+                                       'N/A' wait_class,
+                                       0 delta_wait,
+                                       nvl(value - lag(value) over ( partition by stat_name
+                                                 order by snap_id ), 0) delta_time
+                                  from dba_hist_sys_time_model
+                                 where stat_name = 'DB CPU'
+                                   and snap_id between :s_snap_id and :e_snap_id
+                                   and instance_number = 1 ) v )
+                 where rank <= 5 ) v1,
+               (select snap_id,
+                       value - lag(value) over ( partition by stat_name
+                         order by snap_id ) delta
+                  from dba_hist_sys_time_model
+                 where stat_name = 'DB time'
+                   and snap_id between :s_snap_id and :e_snap_id
+                   and instance_number = 1 ) v_dbtime,
+               (select snap_id,
+                       end_interval_time
+                  from dba_hist_snapshot
+                 where snap_id between :s_snap_id and :e_snap_id
+                   and instance_number = 1 ) sn
+         where v1.snap_id = sn.snap_id
+           and v_dbtime.snap_id = sn.snap_id
+         order by sn.snap_id desc,
+               v1.rank ) a,
+       (select /*+ no_merge( v1 ) no_merge( v_dbtime ) no_merge( sn ) leading( v1 v_dbtime sn ) use_hash( v1 v_dbtime sn )  */sn.snap_id,
+               to_char(sn.end_interval_time, 'yyyy-mm-dd hh24:mi:ss') "Timestamp",
+               v1.event_name,
+               round( v1.delta_time/1000000, 3 ) "Wait Time(s)",
+               round( decode(v1.delta_wait, 0, 0, v1.delta_time/v1.delta_wait/1000), 3 ) "Avg wait(ms)",
+               round( decode(v_dbtime.delta, 0, 0, v1.delta_time/v_dbtime.delta), 3 ) * 100 "% DB time",
+               v1.rank
+          from (select *
+                  from (select v.*,
+                               row_number() over( partition by snap_id
+                                 order by delta_time desc ) rank
+                          from (select snap_id,
+                                       event_name,
+                                       wait_class,
+                                       nvl(total_waits - lag(total_waits) over ( partition by event_name
+                                                 order by snap_id), 0) delta_wait,
+                                       nvl(time_waited_micro - lag(time_waited_micro) over ( partition by event_name
+                                                 order by snap_id), 0) delta_time
+                                  from dba_hist_system_event
+                                 where wait_class != 'Idle'
+                                   and snap_id between :s_snap_id and :e_snap_id
+                                   and instance_number = 2
+                                 union all
+select snap_id,
+                                       decode(stat_name, 'DB CPU', 'CPU time', stat_name) event_name,
+                                       'N/A' wait_class,
+                                       0 delta_wait,
+                                       nvl(value - lag(value) over ( partition by stat_name
+                                                 order by snap_id ), 0) delta_time
+                                  from dba_hist_sys_time_model
+                                 where stat_name = 'DB CPU'
+                                   and snap_id between :s_snap_id and :e_snap_id
+                                   and instance_number = 2 ) v )
+                 where rank <= 5 ) v1,
+               (select snap_id,
+                       value - lag(value) over ( partition by stat_name
+                         order by snap_id ) delta
+                  from dba_hist_sys_time_model
+                 where stat_name = 'DB time'
+                   and snap_id between :s_snap_id and :e_snap_id
+                   and instance_number = 2 ) v_dbtime,
+               (select snap_id,
+                       end_interval_time
+                  from dba_hist_snapshot
+                 where snap_id between :s_snap_id and :e_snap_id
+                   and instance_number = 2 ) sn
+         where v1.snap_id = sn.snap_id
+           and v_dbtime.snap_id = sn.snap_id
+         order by sn.snap_id desc,
+               v1.rank ) b,
+       (select /*+ no_merge( v1 ) no_merge( v_dbtime ) no_merge( sn ) leading( v1 v_dbtime sn ) use_hash( v1 v_dbtime sn )  */sn.snap_id,
+               to_char(sn.end_interval_time, 'yyyy-mm-dd hh24:mi:ss') "Timestamp",
+               v1.event_name,
+               round( v1.delta_time/1000000, 3 ) "Wait Time(s)",
+               round( decode(v1.delta_wait, 0, 0, v1.delta_time/v1.delta_wait/1000), 3 ) "Avg wait(ms)",
+               round( decode(v_dbtime.delta, 0, 0, v1.delta_time/v_dbtime.delta), 3 ) * 100 "% DB time",
+               v1.rank
+          from (select *
+                  from (select v.*,
+                               row_number() over( partition by snap_id
+                                 order by delta_time desc ) rank
+                          from (select snap_id,
+                                       event_name,
+                                       wait_class,
+                                       nvl(total_waits - lag(total_waits) over ( partition by event_name
+                                                 order by snap_id), 0) delta_wait,
+                                       nvl(time_waited_micro - lag(time_waited_micro) over ( partition by event_name
+                                                 order by snap_id), 0) delta_time
+                                  from dba_hist_system_event
+                                 where wait_class != 'Idle'
+                                   and snap_id between :s_snap_id and :e_snap_id
+                                   and instance_number = 3
+                                 union all
+select snap_id,
+                                       decode(stat_name, 'DB CPU', 'CPU time', stat_name) event_name,
+                                       'N/A' wait_class,
+                                       0 delta_wait,
+                                       nvl(value - lag(value) over ( partition by stat_name
+                                                 order by snap_id ), 0) delta_time
+                                  from dba_hist_sys_time_model
+                                 where stat_name = 'DB CPU'
+                                   and snap_id between :s_snap_id and :e_snap_id
+                                   and instance_number = 3 ) v )
+                 where rank <= 5 ) v1,
+               (select snap_id,
+                       value - lag(value) over ( partition by stat_name
+                         order by snap_id ) delta
+                  from dba_hist_sys_time_model
+                 where stat_name = 'DB time'
+                   and snap_id between :s_snap_id and :e_snap_id
+                   and instance_number = 3 ) v_dbtime,
+               (select snap_id,
+                       end_interval_time
+                  from dba_hist_snapshot
+                 where snap_id between :s_snap_id and :e_snap_id
+                   and instance_number = 3 ) sn
+         where v1.snap_id = sn.snap_id
+           and v_dbtime.snap_id = sn.snap_id
+         order by sn.snap_id desc,
+               v1.rank ) c ,
+       (select /*+ no_merge( v1 ) no_merge( v_dbtime ) no_merge( sn ) leading( v1 v_dbtime sn ) use_hash( v1 v_dbtime sn )  */sn.snap_id,
+               to_char(sn.end_interval_time, 'yyyy-mm-dd hh24:mi:ss') "Timestamp",
+               v1.event_name,
+               round( v1.delta_time/1000000, 3 ) "Wait Time(s)",
+               round( decode(v1.delta_wait, 0, 0, v1.delta_time/v1.delta_wait/1000), 3 ) "Avg wait(ms)",
+               round( decode(v_dbtime.delta, 0, 0, v1.delta_time/v_dbtime.delta), 3 ) * 100 "% DB time",
+               v1.rank
+          from (select *
+                  from (select v.*,
+                               row_number() over( partition by snap_id
+                                 order by delta_time desc ) rank
+                          from (select snap_id,
+                                       event_name,
+                                       wait_class,
+                                       nvl(total_waits - lag(total_waits) over ( partition by event_name
+                                                 order by snap_id), 0) delta_wait,
+                                       nvl(time_waited_micro - lag(time_waited_micro) over ( partition by event_name
+                                                 order by snap_id), 0) delta_time
+                                  from dba_hist_system_event -------
+                                 where wait_class != 'Idle'
+                                   and snap_id between :s_snap_id and :e_snap_id
+                                   and instance_number = 4
+                                 union all
+select snap_id,
+                                       decode(stat_name, 'DB CPU', 'CPU time', stat_name) event_name,
+                                       'N/A' wait_class,
+                                       0 delta_wait,
+                                       nvl(value - lag(value) over ( partition by stat_name
+                                                 order by snap_id ), 0) delta_time
+                                  from dba_hist_sys_time_model
+                                 where stat_name = 'DB CPU'
+                                   and snap_id between :s_snap_id and :e_snap_id
+                                   and instance_number = 4 ) v )
+                 where rank <= 5 ) v1,
+               (select snap_id,
+                       value - lag(value) over ( partition by stat_name
+                         order by snap_id ) delta
+                  from dba_hist_sys_time_model
+                 where stat_name = 'DB time'
+                   and snap_id between :s_snap_id and :e_snap_id
+                   and instance_number = 4 ) v_dbtime,
+               (select snap_id,
+                       end_interval_time
+                  from dba_hist_snapshot
+                 where snap_id between :s_snap_id and :e_snap_id
+                   and instance_number = 4 ) sn
+         where v1.snap_id = sn.snap_id
+           and v_dbtime.snap_id = sn.snap_id
+         order by sn.snap_id desc,
+               v1.rank ) d
+ where a.SNAP_ID = b.SNAP_ID(+)
+   and a.RANK = b.RANK(+)
+   and a.SNAP_ID = c.SNAP_ID(+)
+   and a.RANK = c.RANK(+)
+   and a.SNAP_ID = d.SNAP_ID(+)
+   and a.RANK = d.RANK(+)
+ order by 1 ,
+       4;
+ 
+-----------------------------------------------------------
+
+-- 26) Time Model 1
+
+-----------------------------------------------------------
+select c.snap_id,
+       c.instance_number,
+       d.end_interval_time, 
+       to_char( round(max(decode(stat_name, 'DB time', value, 0)), 2), '999,999,999,999') "DB time",
+       to_char( round(max(decode(stat_name, 'DB CPU', value, 0)), 2), '999,999,999,999') "DB CPU",
+       to_char( round(max(decode(stat_name, 'background elapsed time', value, 0)), 2), '999,999,999,999') "background elapsed time",
+       to_char( round(max(decode(stat_name, 'background cpu time', value, 0)), 2), '999,999,999,999') "background cpu time",
+       to_char( round(max(decode(stat_name, 'parse time elapsed', value, 0)), 2), '999,999,999,999') "parse time elapsed",
+       to_char( round(max(decode(stat_name, 'PL/SQL execution elapsed time', value, 0)), 2), '999,999,999,999') "PL/SQL execution",
+       to_char( round(max(decode(stat_name, 'sql execute elapsed time', value, 0)), 2), '999,999,999,999') "sql execute",
+       to_char( round(max(decode(stat_name, 'Java execution elapsed time', value, 0)), 2), '999,999,999,999') "Java execution",
+       to_char( round(max(decode(stat_name, 'connection management call elapsed time', value, 0)), 2), '999,999,999,999') "connection call elapsed",
+       to_char( max(decode(stat_name, 'redo size', value, 0)), '999,999,999,999') "redo size",
+       to_char( max(decode(stat_name, 'session logical reads', value, 0)), '999,999,999,999') "session logical reads",
+       to_char( max(decode(stat_name, 'user rollbacks', value, 'user commits', value, 0)), '999,999,999,999') "transactions",
+       to_char( max(decode(stat_name, 'parse count (total)', value, 0)), '999,999,999,999') "parse count (total)",
+       to_char( max(decode(stat_name, 'parse count (hard)', value, 0)), '999,999,999,999') "parse count (hard)",
+       to_char( max(decode(stat_name, 'parse count (failures)', value, 0)), '999,999,999,999') "parse count (failures)",
+       to_char( max(decode(stat_name, 'sorts (disk)', value, 0)), '999,999,999,999') "sorts (disk)",
+       to_char( max(decode(stat_name, 'logons cumulative', value, 0)), '999,999,999,999') "logons cumulative"
+  from ( 
+select dbid,
+               snap_id,
+               instance_number,
+               stat_name,
+               CEIL( nvl((value - lag(value) over (partition by instance_number, stat_name 
+                                 order by instance_number, stat_name, snap_id))/1000000, 0)) value
+          from DBA_HIST_SYS_TIME_MODEL a ---- system 전체 누적 시간 ( micro sec )
+         where a.stat_name in ('DB time',
+                       'DB CPU',
+                       'background elapsed time',
+                       'background cpu time',
+                       'parse time elapsed',
+                       'PL/SQL execution elapsed time',
+                       'sql execute elapsed time',
+                       'Java execution elapsed time',
+                       'connection management call elapsed time')
+           and snap_id between :s_snap_id and :e_snap_id
+         union all
+select dbid,
+               snap_id,
+               instance_number,
+               stat_name,
+               nvl((value - lag(value) over ( partition by instance_number, stat_name 
+                                 order by instance_number, stat_name, snap_id)), 0) value
+          from DBA_HIST_SYSSTAT a ----- 시스템통계
+         where a.stat_name in ('redo size',
+                       'user rollbacks',
+                       'redo size',
+                       'user commits',
+                       'parse count (total)',
+                       'parse count (hard)',
+                       'parse count (failures)',
+                       'sorts (disk)',
+                       'logons cumulative',
+                       'session logical reads')
+           and snap_id between :s_snap_id and :e_snap_id ) c,
+       DBA_HIST_SNAPSHOT d
+ where value > 0
+   and c.snap_id = d.snap_id
+ --  and c.instance_number = 1
+   and c.instance_number = d.instance_number
+   and d.snap_id between :s_snap_id and :e_snap_id
+ group by c.snap_id,
+       c.instance_number,
+       d.end_interval_time
+ order by 1,
+       2;
+ 
+-----------------------------------------------------------
+
+-- 26) SGA Info
+
+-----------------------------------------------------------
+select b.snap_id "SnapID",
+       b.snap_time "Timestamp",
+       b.instance_number,
+
+--         pool,
+
+--        name , 
+       round( sum( case  when pool='null' and name='buffer_cache' then bytes/1048576  else 0 end), 2 ) "buf.cache(M)",
+       round( sum( case  when pool='null' and name='log_buffer' then bytes/1048576 else 0 end), 2 ) "log.buf(M)",
+       round( sum( case  when pool='shared pool' then bytes/1048576 else 0 end), 2 ) "shared.pool(M)",
+       round( sum( case  when pool='java pool' then bytes/1048576 else 0  end), 2 ) "java.pool(M)",
+       round( sum( case  when pool='large pool' then bytes/1048576 else 0 end), 2 ) "large.pool(M)",
+       round( sum( case  when pool='streams pool' then bytes/1048576 else 0 end), 2 ) "streams.pool(M)",
+       round( sum( case  when pool='shared pool' and name='SQLA' then bytes/1048576 else 0 end), 2 ) "sharedpool:sqlarea(M)",
+       round( sum( case  when pool='shared pool' and name='row cache' then bytes/1048576 else 0 end), 2 ) "sharedpool:row cache(M)",
+       round( sum( case
+                                         when pool='shared pool'
+                   and substr( name, 1, 3) in ('gcs',
+                               'ges') then bytes/1048576
+                                         else 0
+                                       end), 2 ) "sharedpool:GRD(Global Resource)(M)",
+       round( sum(
+                                       case
+                                         when pool='shared pool'
+                   and ( name not in ('SQLA',
+                                       'row cache',
+                                       'free memory')
+                           and substr( name, 1, 3) not in ('gcs',
+                                       'ges') ) then bytes/1048576
+                                         else 0
+                                       end), 2 ) "sharedpool:others(M)",
+       round( sum(
+                                       case
+                                         when pool='shared pool'
+                   and name='free memory' then bytes/1048576
+                                         else 0
+                                       end), 2 ) "sharedpool:free(M)",
+       round( sum(
+                                       case
+                                         when pool='large pool'
+                   and name<>'free memory' then bytes/1048576
+                                         else 0
+                                       end), 2 ) "largepool:used(M)",
+       round( sum(
+                                       case
+                                         when pool='large pool'
+                   and name='free memory' then bytes/1048576
+                                         else 0
+                                       end), 2 ) "largepool:free(M)",
+       round( sum(
+                                       case
+                                         when pool='java pool'
+                   and name<>'free memory' then bytes/1048576
+                                         else 0
+                                       end), 2 ) "javapool:used(M)",
+       round( sum(
+                                       case
+                                         when pool='java pool'
+                   and name='free memory' then bytes/1048576
+                                         else 0
+                                       end), 2 ) "javapool:free(M)",
+       round( sum(
+                                       case
+                                         when pool='streams pool'
+                   and name<>'free memory' then bytes/1048576
+                                         else 0
+                                       end), 2 ) "streams:used(M)",
+       round( sum(
+                                       case
+                                         when pool='streams pool'
+                   and name='free memory' then bytes/1048576
+                                         else 0
+                                       end), 2 ) "streams:free(M)"
+  from (select snap_id,
+               instance_number,
+               nvl(pool, 'null') pool,
+               name,
+               bytes
+          from dba_hist_sgastat ) a,
+       (select snap_id,
+               instance_number,
+               to_char(end_interval_time, 'yyyy-mm-dd hh24:mi:ss') snap_time
+          from dba_hist_snapshot
+         where end_interval_time >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+           and end_interval_time <= to_date( :b2, 'yyyy-mm-dd hh24mi' ) ) b
+ where a.snap_id=b.snap_id
+   and a.instance_number = b.instance_number
+  --  and a.instance_number = 1 
+ group by b.snap_id,
+       b.instance_number,
+       b.snap_time
+--, pool, name 
+ order by b.snap_time,
+       b.instance_number ;
+ 
+-----------------------------------------------------------
+
+-- 27) Literal SQL Info
+
+-----------------------------------------------------------
+select PARSING_SCHEMA_NAME,
+       PLAN_HASH_VALUE ,
+       cnt_FORCE_MATCHING_SIGNATURE,
+       FORCE_MATCHING_SIGNATURE,
+       cnt "Count" ,
+       executions "Exec (Max)" ,
+       ceil( sharable_mem /1024/1024 ) "Memory (Mbytes)" ,
+       hash_value "Hash_value" ,
+       nvl(module, '-') "Module" ,
+       (select sql_fulltext
+          from gv$sql
+         where PLAN_HASH_VALUE = v1.PLAN_HASH_VALUE
+           and module = v1.module
+           and PARSING_SCHEMA_NAME = v1.PARSING_SCHEMA_NAME
+           and sql_id = v1.sql_id
+           and rownum <= 1) "SQL Text"
+  from (select PARSING_SCHEMA_NAME,
+               module,
+               PLAN_HASH_VALUE,
+               count( distinct FORCE_MATCHING_SIGNATURE ) cnt_FORCE_MATCHING_SIGNATURE ,
+               max( FORCE_MATCHING_SIGNATURE ) FORCE_MATCHING_SIGNATURE ,
+               count(*) cnt ,
+               sum(sharable_mem) sharable_mem ,
+               max(hash_value) hash_value ,
+               max(executions) executions ,
+               max( sql_id ) sql_id
+          from gv$sql
+         where PARSING_SCHEMA_NAME NOT IN ('ANONYMOUS',
+                       'APEX_030200',
+                       'APEX_PUBLIC_USER',
+                       'APPQOSSYS',
+                       'BI',
+                       'CTXSYS',
+                       'DBSNMP',
+                       'DIP',
+                       'EXFSYS',
+                       'FLOWS_FILES',
+                       'HR',
+                       'IX',
+                       'MDDATA',
+                       'MDSYS',
+                       'MGMT_VIEW',
+                       'OE',
+                       'OLAPSYS',
+                       'ORACLE_OCM',
+                       'ORDDATA',
+                       'ORDPLUGINS',
+                       'ORDSYS',
+                       'OUTLN',
+                       'OWBSYS',
+                       'OWBSYS_AUDIT',
+                       'PM',
+                       'SCOTT',
+                       'SH',
+                       'SI_INFORMTN_SCHEMA',
+                       'SPATIAL_CSW_ADMIN_USR',
+                       'SPATIAL_WFS_ADMIN_USR',
+                       'SYS',
+                       'SYSMAN',
+                       'SYSTEM',
+                       'WMSYS',
+                       'XDB',
+                       'XS',
+                       'DVF',
+                       'DVO',
+                       'DVSYS',
+                       'LBACSYS',
+                       'UGDBA',
+                       'META')
+--  and PARSING_SCHEMA_NAME like 'RTD%'
+           and FORCE_MATCHING_SIGNATURE >0
+           AND PLAN_HASH_VALUE > 0
+         group by PARSING_SCHEMA_NAME,
+               module,
+               PLAN_HASH_VALUE
+        having count(*) >= 100
+         order by cnt desc,
+               sharable_mem desc ) V1 ;
+                 
+ 
+select *
+  from v$sgastat
+ where pool = 'shared pool'
+ order by bytes desc;
+ 
+ SELECT COUNT(1) FROM GV$SQL ;
+ 
+ 
+-----------------------------------------------------------
+
+-- 30) Partition Check
+
+-----------------------------------------------------------
+ select TABLE_OWNER, TABLE_NAME,  SUBSTR( MIN(  LPAD(  PARTITION_POSITION , 4, '0' ) || PARTITION_NAME ), 5 ) MIN_PARTITION_POSITION,
+SUBSTR( MAX(  LPAD(  PARTITION_POSITION , 4, '0' ) || PARTITION_NAME ), 5 ) MAX_PARTITION_POSITION
+from dba_tab_partitions where TABLE_OWNER NOT IN ('ANONYMOUS',
+                       'APEX_030200',
+                       'APEX_PUBLIC_USER',
+                       'APPQOSSYS',
+                       'BI',
+                       'CTXSYS',
+                       'DBSNMP',
+                       'DIP',
+                       'EXFSYS',
+                       'FLOWS_FILES',
+                       'HR',
+                       'IX',
+                       'MDDATA',
+                       'MDSYS',
+                       'MGMT_VIEW',
+                       'OE',
+                       'OLAPSYS',
+                       'ORACLE_OCM',
+                       'ORDDATA',
+                       'ORDPLUGINS',
+                       'ORDSYS',
+                       'OUTLN',
+                       'OWBSYS',
+                       'OWBSYS_AUDIT',
+                       'PM',
+                       'SCOTT',
+                       'SH',
+                       'SI_INFORMTN_SCHEMA',
+                       'SPATIAL_CSW_ADMIN_USR',
+                       'SPATIAL_WFS_ADMIN_USR',
+                       'SYS',
+                       'SYSMAN',
+                       'SYSTEM',
+                       'WMSYS',
+                       'XDB',
+                       'XS',
+                       'DVF',
+                       'DVO',
+                       'DVSYS',
+                       'LBACSYS',
+                       'UGDBA',
+                       'META')
+           AND  PARTITION_NAME NOT LIKE '%MAX%'
+GROUP BY TABLE_OWNER, TABLE_NAME
+ORDER BY MAX_PARTITION_POSITION  ;
+
+-----------------------------------------------------------
+
+-- 31) Segment Check  
+
+-----------------------------------------------------------
+-- ==================================================================================================================================================
+-- Segment 주요 관찰 대상
+--   --> 해당 내용은 AWR 기반 각 분야별 Top #10위권에 대한 Segment들의 중점 분석 대상이며, Top조건은 20~30위권 까지 조정할 필요가 있음
+--   --> 해당 기준 값은 시스템의 유형 및 업무 패턴에 따라 기준 값을 조절해서 사용할 필요가 있음. 다음은 일반적인 가이드 기준으로 작성되었음
+--   --> Table기준으로 Summary되었으며, 상세 경합 대상의 종속 Segment는 OBJ_LIST를 참조
+-- 
+-- << Ranking으로 관찰 대상 >>
+--    각 분야별 Top #5위는 특별 관찰 관리 - Ranking의 변화, 신규 SQL의 Ranking내 진입 등
+--    DB의 특정 Wait Class (Wait Event)에 따라 특정 분야 Ranking을 집중 관찰
+--
+--    LOGICAL_READS       : Logical Read (Buffer Gets) Top Segment 
+--    PHYSICAL_READS      : Physical Read Top Segment
+--    PHYSICAL_WRITES     : Physical Write Top Segment
+--    GC_CR_BLOCKS_SERVED : RAC CR(Consistency Read) Cache Fusion Top Segment대상
+--    ROW_LOCK_WAITS      : ROW Lock발생 Top Segment대상
+--    BUFFER_BUSY_WAITS   : Buffer Busy Wait 발생 Top대상
+--    CHAIN_ROW_EXCESS    : Row CHaining Access Top발생 Segment
+--    TABLE_SCANS         : Full Table SCan 발생 Top Segment 대상
+--    
+-- ==================================================================================================================================================
+
+
+
+--========================================================================================================================
+-- 아래 부분을 수정하여 Query실행 (아래 Script는 전체 Node의 Segment Top 대상들을 분석하는 SQL이며 
+--========================================================================================================================
+ WITH TMP_SNAP_RANGE AS (select /*+ MATERIALIZE */A.DBID ,
+               MIN(A.SNAP_ID) MIN_SNAP_ID,
+               MAX(A.SNAP_ID) MAX_SNAP_ID,
+               MAX(A.SNAP_ID) - MIN(A.SNAP_ID) SNAP_CNT,
+               TO_CHAR(MIN(A.BEGIN_INTERVAL_TIME), 'YYYY-MM-DD HH24:MI') MIN_TIME,
+               TO_CHAR(MAX(A.END_INTERVAL_TIME) , 'YYYY-MM-DD HH24:MI') MAX_TIME,
+               COUNT(DISTINCT STARTUP_TIME) STARTUP_CNT
+          from (select /*+ NO_MERGE */DBID,
+                       MIN(SNAP_ID) MIN_SNAP_ID,
+                       MAX(SNAP_ID) MAX_SNAP_ID
+                  from dba_hist_snapshot
+                 where 1=1
+                   and DBID = (select dbid
+                          from v$database)
+--and a.dbid = :dbid   
+
+--and a.INSTANCE_NUMBER = :inst_no  
+                   and end_interval_time >= to_date( :b1, 'yyyy-mm-dd hh24mi' )
+                   and end_interval_time <= to_date( :b2, 'yyyy-mm-dd hh24mi' )
+                 group by DBID) V1,
+               dba_hist_snapshot A
+         where 1=1
+--and a.dbid = :dbid   
+
+--and a.INSTANCE_NUMBER = :inst_no   
+           and V1.DBID = A.DBID
+           and A.SNAP_ID BETWEEN MIN_SNAP_ID -1 and MAX_SNAP_ID +1
+         group by A.DBID )
+select TABLE_OWNER,
+       TABLE_NAME,
+       sum(SCORE) SUM_SCORE,
+       LISTAGG(DECODE(PERF_ITEM, 'LOGICAL_READS' , RANK, NULL), ',')   WITHIN GROUP ( ORDER BY RANK) LOGICAL_READS, 
+       LISTAGG(DECODE(PERF_ITEM, 'PHYSICAL_READS' , RANK, NULL), ',')  WITHIN GROUP ( ORDER BY RANK) PHYSICAL_READS,
+       LISTAGG(DECODE(PERF_ITEM, 'PHYSICAL_WRITES' , RANK, NULL), ',') WITHIN GROUP ( ORDER BY RANK) PHYSICAL_WRITES,
+       LISTAGG(DECODE(PERF_ITEM, 'GC_CR_BLOCKS_SERVED' , RANK, NULL), ',') WITHIN GROUP ( ORDER BY RANK) GC_CR_BLOCKS_SERVED,
+       LISTAGG(DECODE(PERF_ITEM, 'ROW_LOCK_WAITS' , RANK, NULL), ',') WITHIN GROUP ( ORDER BY RANK) ROW_LOCK_WAITS,
+       LISTAGG(DECODE(PERF_ITEM, 'BUFFER_BUSY_WAITS' , RANK, NULL), ',') WITHIN GROUP ( ORDER BY RANK) BUFFER_BUSY_WAITS,
+       LISTAGG(DECODE(PERF_ITEM, 'CHAIN_ROW_EXCESS' , RANK, NULL), ',') WITHIN GROUP ( ORDER BY RANK) CHAIN_ROW_EXCESS,
+       LISTAGG(DECODE(PERF_ITEM, 'TABLE_SCANS' , RANK, NULL), ',') WITHIN GROUP ( ORDER BY RANK) TABLE_SCANS,
+       LISTAGG(OWNER||'.'||OBJECT_NAME||'#'|| DECODE(PERF_ITEM, 'LOGICAL_READS' , 'LR', 'PHYSICAL_READS' , 'PR', 'PHYSICAL_WRITES' , 'PW', 'GC_CR_BLOCKS_SERVED' 
+                                                    , 'GC', 'ROW_LOCK_WAITS' , 'RL', 'BUFFER_BUSY_WAITS' , 'BB', 'CHAIN_ROW_EXCESS' , 'CE', 'TABLE_SCANS' 
+                                                    , 'FT', '') || RANK, ',') WITHIN  GROUP ( ORDER BY RANK) OBJ_LIST
+  FROM (
+--1. LOGICAL_READS_DELTA 
+select PERF_ITEM,
+               RANK,
+               (31-RANK) SCORE,
+               OWNER,
+               OBJECT_NAME,
+               OBJECT_ID,
+               OBJECT_TYPE,
+               substr(TABEL_INFO, 1, INSTR(TABEL_INFO, '.')-1) TABLE_OWNER,
+               substr(TABEL_INFO, INSTR(TABEL_INFO, '.')+1) TABLE_NAME
+          FROM (select 'LOGICAL_READS' perf_item,
+                       rank,
+                       BB.OWNER,
+                       BB.OBJECT_NAME,
+                       OBJECT_ID,
+                       OBJECT_TYPE,
+                       decode(trim(substr(OBJECT_TYPE, 1, 5)) , 'TABLE', BB.OWNER || '.' || BB.OBJECT_NAME, 'INDEX', (select table_owner || '.' || TABLE_NAME
+                                  from dba_Indexes
+                                 where owner = BB.OWNER
+                                   and index_name = BB.OBJECT_NAME), 'LOB' , (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB P', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB S', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB I', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and INDEX_NAME = BB.OBJECT_NAME), BB.OWNER || '.' || BB.OBJECT_NAME) TABEL_INFO
+                  from (select dataobj#,
+                               obj#,
+                               rownum rank
+                          from (select dataobj#,
+                                       obj#,
+                                       sum(logical_reads_delta)
+                                  from dba_hist_seg_stat
+                                 where snap_id between (select MIN_SNAP_ID
+                                          from TMP_SNAP_RANGE) and (select MAX_SNAP_ID
+                                          from TMP_SNAP_RANGE)
+                                   and instance_number in (1,
+                                               2,
+                                               3)
+                                   and obj# in (select OBJECT_ID
+                                          from dba_objects
+                                         where OWNER NOT IN ('ANONYMOUS',
+                                                       'APEX_030200',
+                                                       'APEX_PUBLIC_USER',
+                                                       'APPQOSSYS',
+                                                       'BI',
+                                                       'CTXSYS',
+                                                       'DBSNMP',
+                                                       'DIP',
+                                                       'EXFSYS',
+                                                       'FLOWS_FILES',
+                                                       'HR',
+                                                       'IX',
+                                                       'MDDATA',
+                                                       'MDSYS',
+                                                       'MGMT_VIEW',
+                                                       'OE',
+                                                       'OLAPSYS',
+                                                       'ORACLE_OCM',
+                                                       'ORDDATA',
+                                                       'ORDPLUGINS',
+                                                       'ORDSYS',
+                                                       'OUTLN',
+                                                       'OWBSYS',
+                                                       'OWBSYS_AUDIT',
+                                                       'PM',
+                                                       'SCOTT',
+                                                       'SH',
+                                                       'SI_INFORMTN_SCHEMA',
+                                                       'SPATIAL_CSW_ADMIN_USR',
+                                                       'SPATIAL_WFS_ADMIN_USR',
+                                                       'SYS',
+                                                       'SYSMAN',
+                                                       'SYSTEM',
+                                                       'WMSYS',
+                                                       'XDB',
+                                                       'XS',
+                                                       'DVF',
+                                                       'DVO',
+                                                       'DVSYS',
+                                                       'LBACSYS',
+                                                       'UGDBA',
+                                                       'META') )
+                                 group by dataobj#,
+                                       obj#
+                                 order by sum(logical_reads_delta) desc )
+                         where rownum <= 30 ) AA,
+                       dba_objects BB
+                 where AA. obj# = BB.OBJECT_ID )
+--2. PHYSICAL_READS_DELTA     
+         union all
+select PERF_ITEM,
+               RANK,
+               (21-RANK) SCORE,
+               OWNER,
+               OBJECT_NAME,
+               OBJECT_ID,
+               OBJECT_TYPE,
+               substr(TABEL_INFO, 1, INSTR(TABEL_INFO, '.')-1) TABLE_OWNER,
+               substr(TABEL_INFO, INSTR(TABEL_INFO, '.')+1) TABLE_NAME
+          FROM (select 'PHYSICAL_READS' perf_item,
+                       rank,
+                       BB.OWNER,
+                       BB.OBJECT_NAME,
+                       OBJECT_ID,
+                       OBJECT_TYPE,
+                       decode(trim(substr(OBJECT_TYPE, 1, 5)) , 'TABLE', BB.OWNER || '.' || BB.OBJECT_NAME, 'INDEX', (select table_owner || '.' || TABLE_NAME
+                                  from dba_Indexes
+                                 where owner = BB.OWNER
+                                   and index_name = BB.OBJECT_NAME), 'LOB' , (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB P', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB S', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB I', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and INDEX_NAME = BB.OBJECT_NAME), BB.OWNER || '.' || BB.OBJECT_NAME) TABEL_INFO
+                  from (select dataobj#,
+                               obj#,
+                               rownum rank
+                          from (select dataobj#,
+                                       obj#,
+                                       sum(PHYSICAL_READS_DELTA)
+                                  from dba_hist_seg_stat
+                                 where snap_id between (select MIN_SNAP_ID
+                                          from TMP_SNAP_RANGE) and (select MAX_SNAP_ID
+                                          from TMP_SNAP_RANGE)
+                                   and instance_number in (1,
+                                               2,
+                                               3)
+                                   and obj# in (select OBJECT_ID
+                                          from dba_objects
+                                         where OWNER NOT IN ('ANONYMOUS',
+                                                       'APEX_030200',
+                                                       'APEX_PUBLIC_USER',
+                                                       'APPQOSSYS',
+                                                       'BI',
+                                                       'CTXSYS',
+                                                       'DBSNMP',
+                                                       'DIP',
+                                                       'EXFSYS',
+                                                       'FLOWS_FILES',
+                                                       'HR',
+                                                       'IX',
+                                                       'MDDATA',
+                                                       'MDSYS',
+                                                       'MGMT_VIEW',
+                                                       'OE',
+                                                       'OLAPSYS',
+                                                       'ORACLE_OCM',
+                                                       'ORDDATA',
+                                                       'ORDPLUGINS',
+                                                       'ORDSYS',
+                                                       'OUTLN',
+                                                       'OWBSYS',
+                                                       'OWBSYS_AUDIT',
+                                                       'PM',
+                                                       'SCOTT',
+                                                       'SH',
+                                                       'SI_INFORMTN_SCHEMA',
+                                                       'SPATIAL_CSW_ADMIN_USR',
+                                                       'SPATIAL_WFS_ADMIN_USR',
+                                                       'SYS',
+                                                       'SYSMAN',
+                                                       'SYSTEM',
+                                                       'WMSYS',
+                                                       'XDB',
+                                                       'XS',
+                                                       'DVF',
+                                                       'DVO',
+                                                       'DVSYS',
+                                                       'LBACSYS',
+                                                       'UGDBA',
+                                                       'META') )
+                                 group by dataobj#,
+                                       obj#
+                                 order by sum(PHYSICAL_READS_DELTA) desc )
+                         where rownum <= 20 ) AA,
+                       dba_objects BB
+                 where AA. obj# = BB.OBJECT_ID )
+--3. PHYSICAL_WRITES_DELTA     
+         union all
+select PERF_ITEM,
+               RANK,
+               (21-RANK) SCORE,
+               OWNER,
+               OBJECT_NAME,
+               OBJECT_ID,
+               OBJECT_TYPE,
+               substr(TABEL_INFO, 1, INSTR(TABEL_INFO, '.')-1) TABLE_OWNER,
+               substr(TABEL_INFO, INSTR(TABEL_INFO, '.')+1) TABLE_NAME
+          FROM (select 'PHYSICAL_WRITES' perf_item,
+                       rank,
+                       BB.OWNER,
+                       BB.OBJECT_NAME,
+                       OBJECT_ID,
+                       OBJECT_TYPE,
+                       decode(trim(substr(OBJECT_TYPE, 1, 5)) , 'TABLE', BB.OWNER || '.' || BB.OBJECT_NAME, 'INDEX', (select table_owner || '.' || TABLE_NAME
+                                  from dba_Indexes
+                                 where owner = BB.OWNER
+                                   and index_name = BB.OBJECT_NAME), 'LOB' , (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB P', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB S', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB I', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and INDEX_NAME = BB.OBJECT_NAME), BB.OWNER || '.' || BB.OBJECT_NAME) TABEL_INFO
+                  from (select dataobj#,
+                               obj#,
+                               rownum rank
+                          from (select dataobj#,
+                                       obj#,
+                                       sum(PHYSICAL_WRITES_DELTA)
+                                  from dba_hist_seg_stat
+                                 where snap_id between (select MIN_SNAP_ID
+                                          from TMP_SNAP_RANGE) and (select MAX_SNAP_ID
+                                          from TMP_SNAP_RANGE)
+                                   and instance_number in (1,
+                                               2,
+                                               3)
+                                   and obj# in (select OBJECT_ID
+                                          from dba_objects
+                                         where OWNER NOT IN ('ANONYMOUS',
+                                                       'APEX_030200',
+                                                       'APEX_PUBLIC_USER',
+                                                       'APPQOSSYS',
+                                                       'BI',
+                                                       'CTXSYS',
+                                                       'DBSNMP',
+                                                       'DIP',
+                                                       'EXFSYS',
+                                                       'FLOWS_FILES',
+                                                       'HR',
+                                                       'IX',
+                                                       'MDDATA',
+                                                       'MDSYS',
+                                                       'MGMT_VIEW',
+                                                       'OE',
+                                                       'OLAPSYS',
+                                                       'ORACLE_OCM',
+                                                       'ORDDATA',
+                                                       'ORDPLUGINS',
+                                                       'ORDSYS',
+                                                       'OUTLN',
+                                                       'OWBSYS',
+                                                       'OWBSYS_AUDIT',
+                                                       'PM',
+                                                       'SCOTT',
+                                                       'SH',
+                                                       'SI_INFORMTN_SCHEMA',
+                                                       'SPATIAL_CSW_ADMIN_USR',
+                                                       'SPATIAL_WFS_ADMIN_USR',
+                                                       'SYS',
+                                                       'SYSMAN',
+                                                       'SYSTEM',
+                                                       'WMSYS',
+                                                       'XDB',
+                                                       'XS',
+                                                       'DVF',
+                                                       'DVO',
+                                                       'DVSYS',
+                                                       'LBACSYS',
+                                                       'UGDBA',
+                                                       'META') )
+                                 group by dataobj#,
+                                       obj#
+                                 order by sum(PHYSICAL_WRITES_DELTA) desc )
+                         where rownum <= 20 ) AA,
+                       dba_objects BB
+                 where AA. obj# = BB.OBJECT_ID  )
+--4. GC_CR_BLOCKS_SERVED_DELTA     
+         union all
+select PERF_ITEM,
+               RANK,
+               (11-RANK) SCORE,
+               OWNER,
+               OBJECT_NAME,
+               OBJECT_ID,
+               OBJECT_TYPE,
+               substr(TABEL_INFO, 1, INSTR(TABEL_INFO, '.')-1) TABLE_OWNER,
+               substr(TABEL_INFO, INSTR(TABEL_INFO, '.')+1) TABLE_NAME
+          FROM (select 'GC_CR_BLOCKS_SERVED' perf_item,
+                       rank,
+                       BB.OWNER,
+                       BB.OBJECT_NAME,
+                       OBJECT_ID,
+                       OBJECT_TYPE,
+                       decode(trim(substr(OBJECT_TYPE, 1, 5)) , 'TABLE', BB.OWNER || '.' || BB.OBJECT_NAME, 'INDEX', (select table_owner || '.' || TABLE_NAME
+                                  from dba_Indexes
+                                 where owner = BB.OWNER
+                                   and index_name = BB.OBJECT_NAME), 'LOB' , (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB P', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB S', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB I', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and INDEX_NAME = BB.OBJECT_NAME), BB.OWNER || '.' || BB.OBJECT_NAME) TABEL_INFO
+                  from (select dataobj#,
+                               obj#,
+                               rownum rank
+                          from (select dataobj#,
+                                       obj#,
+                                       sum(GC_CR_BLOCKS_SERVED_DELTA)
+                                  from dba_hist_seg_stat
+                                 where snap_id between (select MIN_SNAP_ID
+                                          from TMP_SNAP_RANGE) and (select MAX_SNAP_ID
+                                          from TMP_SNAP_RANGE)
+                                   and instance_number in (1,
+                                               2,
+                                               3)
+                                   and obj# in (select OBJECT_ID
+                                          from dba_objects
+                                         where OWNER NOT IN ('ANONYMOUS',
+                                                       'APEX_030200',
+                                                       'APEX_PUBLIC_USER',
+                                                       'APPQOSSYS',
+                                                       'BI',
+                                                       'CTXSYS',
+                                                       'DBSNMP',
+                                                       'DIP',
+                                                       'EXFSYS',
+                                                       'FLOWS_FILES',
+                                                       'HR',
+                                                       'IX',
+                                                       'MDDATA',
+                                                       'MDSYS',
+                                                       'MGMT_VIEW',
+                                                       'OE',
+                                                       'OLAPSYS',
+                                                       'ORACLE_OCM',
+                                                       'ORDDATA',
+                                                       'ORDPLUGINS',
+                                                       'ORDSYS',
+                                                       'OUTLN',
+                                                       'OWBSYS',
+                                                       'OWBSYS_AUDIT',
+                                                       'PM',
+                                                       'SCOTT',
+                                                       'SH',
+                                                       'SI_INFORMTN_SCHEMA',
+                                                       'SPATIAL_CSW_ADMIN_USR',
+                                                       'SPATIAL_WFS_ADMIN_USR',
+                                                       'SYS',
+                                                       'SYSMAN',
+                                                       'SYSTEM',
+                                                       'WMSYS',
+                                                       'XDB',
+                                                       'XS',
+                                                       'DVF',
+                                                       'DVO',
+                                                       'DVSYS',
+                                                       'LBACSYS',
+                                                       'UGDBA',
+                                                       'META') )
+                                 group by dataobj#,
+                                       obj#
+                                 order by sum(GC_CR_BLOCKS_SERVED_DELTA) desc )
+                         where rownum <= 10 ) AA,
+                       dba_objects BB
+                 where AA. obj# = BB.OBJECT_ID )
+--5. ROW_LOCK_WAITS_DELTA     
+         union all
+select PERF_ITEM,
+               RANK,
+               (11-RANK) SCORE,
+               OWNER,
+               OBJECT_NAME,
+               OBJECT_ID,
+               OBJECT_TYPE,
+               substr(TABEL_INFO, 1, INSTR(TABEL_INFO, '.')-1) TABLE_OWNER,
+               substr(TABEL_INFO, INSTR(TABEL_INFO, '.')+1) TABLE_NAME
+          FROM (select 'ROW_LOCK_WAITS' perf_item,
+                       rank,
+                       BB.OWNER,
+                       BB.OBJECT_NAME,
+                       OBJECT_ID,
+                       OBJECT_TYPE,
+                       decode(trim(substr(OBJECT_TYPE, 1, 5)) , 'TABLE', BB.OWNER || '.' || BB.OBJECT_NAME, 'INDEX', (select table_owner || '.' || TABLE_NAME
+                                  from dba_Indexes
+                                 where owner = BB.OWNER
+                                   and index_name = BB.OBJECT_NAME), 'LOB' , (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB P', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB S', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB I', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and INDEX_NAME = BB.OBJECT_NAME), BB.OWNER || '.' || BB.OBJECT_NAME) TABEL_INFO
+                  from (select dataobj#,
+                               obj#,
+                               rownum rank
+                          from (select dataobj#,
+                                       obj#,
+                                       sum(ROW_LOCK_WAITS_DELTA)
+                                  from dba_hist_seg_stat
+                                 where snap_id between (select MIN_SNAP_ID
+                                          from TMP_SNAP_RANGE) and (select MAX_SNAP_ID
+                                          from TMP_SNAP_RANGE)
+                                   and instance_number in (1,
+                                               2,
+                                               3)
+                                   and obj# in (select OBJECT_ID
+                                          from dba_objects
+                                         where OWNER NOT IN ('ANONYMOUS',
+                                                       'APEX_030200',
+                                                       'APEX_PUBLIC_USER',
+                                                       'APPQOSSYS',
+                                                       'BI',
+                                                       'CTXSYS',
+                                                       'DBSNMP',
+                                                       'DIP',
+                                                       'EXFSYS',
+                                                       'FLOWS_FILES',
+                                                       'HR',
+                                                       'IX',
+                                                       'MDDATA',
+                                                       'MDSYS',
+                                                       'MGMT_VIEW',
+                                                       'OE',
+                                                       'OLAPSYS',
+                                                       'ORACLE_OCM',
+                                                       'ORDDATA',
+                                                       'ORDPLUGINS',
+                                                       'ORDSYS',
+                                                       'OUTLN',
+                                                       'OWBSYS',
+                                                       'OWBSYS_AUDIT',
+                                                       'PM',
+                                                       'SCOTT',
+                                                       'SH',
+                                                       'SI_INFORMTN_SCHEMA',
+                                                       'SPATIAL_CSW_ADMIN_USR',
+                                                       'SPATIAL_WFS_ADMIN_USR',
+                                                       'SYS',
+                                                       'SYSMAN',
+                                                       'SYSTEM',
+                                                       'WMSYS',
+                                                       'XDB',
+                                                       'XS',
+                                                       'DVF',
+                                                       'DVO',
+                                                       'DVSYS',
+                                                       'LBACSYS',
+                                                       'UGDBA',
+                                                       'META') )
+                                 group by dataobj#,
+                                       obj#
+                                 order by sum(ROW_LOCK_WAITS_DELTA) desc )
+                         where rownum <= 10 ) AA,
+                       dba_objects BB
+                 where AA. obj# = BB.OBJECT_ID )
+--6. BUFFER_BUSY_WAITS_DELTA     
+         union all
+select PERF_ITEM,
+               RANK,
+               (11-RANK) SCORE,
+               OWNER,
+               OBJECT_NAME,
+               OBJECT_ID,
+               OBJECT_TYPE,
+               substr(TABEL_INFO, 1, INSTR(TABEL_INFO, '.')-1) TABLE_OWNER,
+               substr(TABEL_INFO, INSTR(TABEL_INFO, '.')+1) TABLE_NAME
+          FROM (select 'BUFFER_BUSY_WAITS' perf_item,
+                       rank,
+                       BB.OWNER,
+                       BB.OBJECT_NAME,
+                       OBJECT_ID,
+                       OBJECT_TYPE,
+                       decode(trim(substr(OBJECT_TYPE, 1, 5)) , 'TABLE', BB.OWNER || '.' || BB.OBJECT_NAME, 'INDEX', (select table_owner || '.' || TABLE_NAME
+                                  from dba_Indexes
+                                 where owner = BB.OWNER
+                                   and index_name = BB.OBJECT_NAME), 'LOB' , (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB P', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB S', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB I', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and INDEX_NAME = BB.OBJECT_NAME), BB.OWNER || '.' || BB.OBJECT_NAME) TABEL_INFO
+                  from (select dataobj#,
+                               obj#,
+                               rownum rank
+                          from (select dataobj#,
+                                       obj#,
+                                       sum(BUFFER_BUSY_WAITS_DELTA)
+                                  from dba_hist_seg_stat
+                                 where snap_id between (select MIN_SNAP_ID
+                                          from TMP_SNAP_RANGE) and (select MAX_SNAP_ID
+                                          from TMP_SNAP_RANGE)
+                                   and instance_number in (1,
+                                               2,
+                                               3)
+                                   and obj# in (select OBJECT_ID
+                                          from dba_objects
+                                         where OWNER NOT IN ('ANONYMOUS',
+                                                       'APEX_030200',
+                                                       'APEX_PUBLIC_USER',
+                                                       'APPQOSSYS',
+                                                       'BI',
+                                                       'CTXSYS',
+                                                       'DBSNMP',
+                                                       'DIP',
+                                                       'EXFSYS',
+                                                       'FLOWS_FILES',
+                                                       'HR',
+                                                       'IX',
+                                                       'MDDATA',
+                                                       'MDSYS',
+                                                       'MGMT_VIEW',
+                                                       'OE',
+                                                       'OLAPSYS',
+                                                       'ORACLE_OCM',
+                                                       'ORDDATA',
+                                                       'ORDPLUGINS',
+                                                       'ORDSYS',
+                                                       'OUTLN',
+                                                       'OWBSYS',
+                                                       'OWBSYS_AUDIT',
+                                                       'PM',
+                                                       'SCOTT',
+                                                       'SH',
+                                                       'SI_INFORMTN_SCHEMA',
+                                                       'SPATIAL_CSW_ADMIN_USR',
+                                                       'SPATIAL_WFS_ADMIN_USR',
+                                                       'SYS',
+                                                       'SYSMAN',
+                                                       'SYSTEM',
+                                                       'WMSYS',
+                                                       'XDB',
+                                                       'XS',
+                                                       'DVF',
+                                                       'DVO',
+                                                       'DVSYS',
+                                                       'LBACSYS',
+                                                       'UGDBA',
+                                                       'META') )
+                                 group by dataobj#,
+                                       obj#
+                                 order by sum(BUFFER_BUSY_WAITS_DELTA) desc )
+                         where rownum <= 10 ) AA,
+                       dba_objects BB
+                 where AA. obj# = BB.OBJECT_ID )
+--7. CHAIN_ROW_EXCESS_DELTA     
+         union all
+select PERF_ITEM,
+               RANK,
+               (11-RANK) SCORE,
+               OWNER,
+               OBJECT_NAME,
+               OBJECT_ID,
+               OBJECT_TYPE,
+               substr(TABEL_INFO, 1, INSTR(TABEL_INFO, '.')-1) TABLE_OWNER,
+               substr(TABEL_INFO, INSTR(TABEL_INFO, '.')+1) TABLE_NAME
+          FROM (select 'CHAIN_ROW_EXCESS' perf_item,
+                       rank,
+                       BB.OWNER,
+                       BB.OBJECT_NAME,
+                       OBJECT_ID,
+                       OBJECT_TYPE,
+                       decode(trim(substr(OBJECT_TYPE, 1, 5)) , 'TABLE', BB.OWNER || '.' || BB.OBJECT_NAME, 'INDEX', (select table_owner || '.' || TABLE_NAME
+                                  from dba_Indexes
+                                 where owner = BB.OWNER
+                                   and index_name = BB.OBJECT_NAME), 'LOB' , (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB P', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB S', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB I', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and INDEX_NAME = BB.OBJECT_NAME), BB.OWNER || '.' || BB.OBJECT_NAME) TABEL_INFO
+                  from (select dataobj#,
+                               obj#,
+                               rownum rank
+                          from (select dataobj#,
+                                       obj#,
+                                       sum(CHAIN_ROW_EXCESS_DELTA)
+                                  from dba_hist_seg_stat
+                                 where snap_id between (select MIN_SNAP_ID
+                                          from TMP_SNAP_RANGE) and (select MAX_SNAP_ID
+                                          from TMP_SNAP_RANGE)
+                                   and instance_number in (1,
+                                               2,
+                                               3)
+                                   and obj# in (select OBJECT_ID
+                                          from dba_objects
+                                         where OWNER NOT IN ('ANONYMOUS',
+                                                       'APEX_030200',
+                                                       'APEX_PUBLIC_USER',
+                                                       'APPQOSSYS',
+                                                       'BI',
+                                                       'CTXSYS',
+                                                       'DBSNMP',
+                                                       'DIP',
+                                                       'EXFSYS',
+                                                       'FLOWS_FILES',
+                                                       'HR',
+                                                       'IX',
+                                                       'MDDATA',
+                                                       'MDSYS',
+                                                       'MGMT_VIEW',
+                                                       'OE',
+                                                       'OLAPSYS',
+                                                       'ORACLE_OCM',
+                                                       'ORDDATA',
+                                                       'ORDPLUGINS',
+                                                       'ORDSYS',
+                                                       'OUTLN',
+                                                       'OWBSYS',
+                                                       'OWBSYS_AUDIT',
+                                                       'PM',
+                                                       'SCOTT',
+                                                       'SH',
+                                                       'SI_INFORMTN_SCHEMA',
+                                                       'SPATIAL_CSW_ADMIN_USR',
+                                                       'SPATIAL_WFS_ADMIN_USR',
+                                                       'SYS',
+                                                       'SYSMAN',
+                                                       'SYSTEM',
+                                                       'WMSYS',
+                                                       'XDB',
+                                                       'XS',
+                                                       'DVF',
+                                                       'DVO',
+                                                       'DVSYS',
+                                                       'LBACSYS',
+                                                       'UGDBA',
+                                                       'META') )
+                                 group by dataobj#,
+                                       obj#
+                                 order by sum(CHAIN_ROW_EXCESS_DELTA) desc )
+                         where rownum <= 10 ) AA,
+                       dba_objects BB
+                 where AA. obj# = BB.OBJECT_ID )
+--8. TABLE_SCANS_DELTA     
+         union all
+select PERF_ITEM,
+               RANK,
+               (11-RANK) SCORE,
+               OWNER,
+               OBJECT_NAME,
+               OBJECT_ID,
+               OBJECT_TYPE,
+               substr(TABEL_INFO, 1, INSTR(TABEL_INFO, '.')-1) TABLE_OWNER,
+               substr(TABEL_INFO, INSTR(TABEL_INFO, '.')+1) TABLE_NAME
+          FROM (select 'TABLE_SCANS' perf_item,
+                       rank,
+                       BB.OWNER,
+                       BB.OBJECT_NAME,
+                       OBJECT_ID,
+                       OBJECT_TYPE,
+                       decode(trim(substr(OBJECT_TYPE, 1, 5)) , 'TABLE', BB.OWNER || '.' || BB.OBJECT_NAME, 'INDEX', (select table_owner || '.' || TABLE_NAME
+                                  from dba_Indexes
+                                 where owner = BB.OWNER
+                                   and index_name = BB.OBJECT_NAME), 'LOB' , (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB P', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB S', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and SEGMENT_NAME = BB.OBJECT_NAME), 'LOB I', (select OWNER || '.' || SEGMENT_NAME
+                                  from dba_lobs
+                                 where OWNER = BB.OWNER
+                                   and INDEX_NAME = BB.OBJECT_NAME), BB.OWNER || '.' || BB.OBJECT_NAME) TABEL_INFO
+                  from (select dataobj#,
+                               obj#,
+                               rownum rank
+                          from (select dataobj#,
+                                       obj#,
+                                       sum(TABLE_SCANS_DELTA)
+                                  from dba_hist_seg_stat
+                                 where snap_id between (select MIN_SNAP_ID
+                                          from TMP_SNAP_RANGE) and (select MAX_SNAP_ID
+                                          from TMP_SNAP_RANGE)
+                                   and instance_number in (1,
+                                               2,
+                                               3)
+                                   and obj# in (select OBJECT_ID
+                                          from dba_objects
+                                         where OWNER NOT IN ('ANONYMOUS',
+                                                       'APEX_030200',
+                                                       'APEX_PUBLIC_USER',
+                                                       'APPQOSSYS',
+                                                       'BI',
+                                                       'CTXSYS',
+                                                       'DBSNMP',
+                                                       'DIP',
+                                                       'EXFSYS',
+                                                       'FLOWS_FILES',
+                                                       'HR',
+                                                       'IX',
+                                                       'MDDATA',
+                                                       'MDSYS',
+                                                       'MGMT_VIEW',
+                                                       'OE',
+                                                       'OLAPSYS',
+                                                       'ORACLE_OCM',
+                                                       'ORDDATA',
+                                                       'ORDPLUGINS',
+                                                       'ORDSYS',
+                                                       'OUTLN',
+                                                       'OWBSYS',
+                                                       'OWBSYS_AUDIT',
+                                                       'PM',
+                                                       'SCOTT',
+                                                       'SH',
+                                                       'SI_INFORMTN_SCHEMA',
+                                                       'SPATIAL_CSW_ADMIN_USR',
+                                                       'SPATIAL_WFS_ADMIN_USR',
+                                                       'SYS',
+                                                       'SYSMAN',
+                                                       'SYSTEM',
+                                                       'WMSYS',
+                                                       'XDB',
+                                                       'XS',
+                                                       'DVF',
+                                                       'DVO',
+                                                       'DVSYS',
+                                                       'LBACSYS',
+                                                       'UGDBA',
+                                                       'META') )
+                                 group by dataobj#,
+                                       obj#
+                                 order by sum(TABLE_SCANS_DELTA) desc )
+                         where rownum <= 10 ) AA,
+                       dba_objects BB
+                 where AA. obj# = BB.OBJECT_ID )
+                 )
+ GROUP BY TABLE_OWNER,
+       TABLE_NAME
+ ORDER BY 3 DESC ;
+ 
+ 
+select count(1) from MES_WF_HIS ;
+-----------------------------------------------------------
+
+-- 31) Performance Tuning Oracle View
+
+-----------------------------------------------------------
+ 
+/*
+    Wait Eventsfor
+
+V$SESSION
+V$WAITCLASSMETRIC
+V$WAITCLASSMETRIC_HISTORY
+V$WAITSTAT
+V$WAIT_CHAINS
+
+Oracle Concurrency and SQL Tuning
+
+V$LOCK
+V$SQL
+V$SQLAREA
+V$SESSTAT
+V$MYSTAT
+V$SESS_IO
+V$SYSSTAT
+V$STATNAME
+V$OSSTAT
+V$ACTIVE_SESSION_HISTORY
+V$ACTIVE_SESS_POOL_MTH
+V$SESSION_WAIT
+V$SESSION_WAIT_CLASS
+V$SYSTEM_WAIT_CLASS
+V$TRANSACTION
+V$LOCKED_OBJECT
+V$LATCH
+V$LATCH_CHILDREN
+V$LATCH_PARENT
+V$LATCHNAME
+V$LATCHHOLDER
+V$LATCH_MISSES
+V$ENQUEUE_LOCK
+V$TRANSACTION_ENQUEUE
+V$SYS_OPTIMIZER_ENV
+V$SES_OPTIMIZER_ENV
+V$SQL_OPTIMIZER_ENV
+V$SQL_PLAN
+V$SQL_PLAN_STATISTICS
+V$SQL_PLAN_STATISTICS_ALL
+
+
+Oracle Memory Tuning
+
+V$SGA
+V$SGASTAT
+V$SGAINFO
+V$SGA_CURRENT_RESIZE_OPS
+V$SGA_RESIZE_OPS
+V$SGA_DYNAMIC_COMPONENTS
+V$SGA_DYNAMIC_FREE_MEMORY
+V$PGASTAT
+V$SQL_WORKAREA_HISTOGRAM
+V$PGA_TARGET_ADVICE_HISTOGRAM                                              
+V$PGA_TARGET_ADVICE
+V$MEMORY_CURRENT_RESIZE_OPS
+V$MEMORY_RESIZE_OPS
+V$MEMORY_DYNAMIC_COMPONENTS
+V$LIBRARY_CACHE_MEMORY
+V$SHARED_POOL_ADVICE
+V$JAVA_LIBRARY_CACHE_MEMORY
+V$JAVA_POOL_ADVICE
+V$STREAMS_POOL_ADVICE
+
+rman backup
+
+V$ARCHIVED_LOG
+V$BACKUP_CORRUPTION
+V$COPY_CORRUPTION
+V$BACKUP_DATAFILE
+V$BACKUP_REDOLOG
+V$BACKUP_SET
+V$BACKUP_PIECE
+*/
+
+--Background CPU Usage Per Sec
+--Background Checkpoints Per Sec
+--Background Time Per Sec
+--Branch Node Splits Per Sec
+--CPU Usage Per Sec
+--CR Blocks Created Per Sec
+--CR Undo Records Applied Per Sec
+--Consistent Read Changes Per Sec
+--Consistent Read Gets Per Sec
+--DB Block Changes Per Sec
+--DB Block Gets Per Sec
+--DBWR Checkpoints Per Sec
+--DDL statements parallelized Per Sec
+--DML statements parallelized Per Sec
+--Database Time Per Sec
+--Disk Sort Per Sec
+--Enqueue Deadlocks Per Sec
+--Enqueue Requests Per Sec
+--Enqueue Timeouts Per Sec
+--Enqueue Waits Per Sec
+--Executions Per Sec
+--Full Index Scans Per Sec
+--GC CR Block Received Per Second
+--GC Current Block Received Per Second
+--Hard Parse Count Per Sec
+--Host CPU Usage Per Sec
+--I/O Megabytes per Second
+--I/O Requests per Second
+--Leaf Node Splits Per Sec
+--Logical Reads Per Sec
+--Logons Per Sec
+--Long Table Scans Per Sec
+--Network Traffic Volume Per Sec
+--Open Cursors Per Sec
+--PX downgraded 1 to 25% Per Sec
+--PX downgraded 25 to 50% Per Sec
+--PX downgraded 50 to 75% Per Sec
+--PX downgraded 75 to 99% Per Sec
+--PX downgraded to serial Per Sec
+--PX operations not downgraded Per Sec
+--Parse Failure Count Per Sec
+--Physical Read Bytes Per Sec
+--Physical Read IO Requests Per Sec
+--Physical Read Total Bytes Per Sec
+--Physical Read Total IO Requests Per Sec
+--Physical Reads Direct Lobs Per Sec
+--Physical Reads Direct Per Sec
+--Physical Reads Per Sec
+--Physical Write Bytes Per Sec
+--Physical Write IO Requests Per Sec
+--Physical Write Total Bytes Per Sec
+--Physical Write Total IO Requests Per Sec
+--Physical Writes Direct Lobs Per Sec
+--Physical Writes Direct Per Sec
+--Physical Writes Per Sec
+--Queries parallelized Per Sec
+--Recursive Calls Per Sec
+--Redo Generated Per Sec
+--Redo Writes Per Sec
+--Total Index Scans Per Sec
+--Total Parse Count Per Sec
+--Total Table Scans Per Sec
+--User Calls Per Sec
+--User Commits Per Sec
+--User Rollback UndoRec Applied Per Sec
+--User Rollbacks Per Sec
+--User Transaction Per Sec
+ 
+--
+---- Performance tuning oracle view
+--1) wait events
+--v$session
+--v$waitclassmetric
+--v$waitclassmetric_history
+--v$waitstat
+--v$wait_chains 
+--
+--2) oracle concurrency and sql tuning
+--v$lock
+--v$sql
+--v$sqlarea
+--v$sesstat
+--v$mystat
+--v$sess_io
+--v$sysstat
+--v$statname
+--v$osstat
+--v$active_session_history
+--v$active_sess_pool_mth
+--v$session_wait
+--v$session_wait_class
+--v$system_wait_class
+--v$transaction
+--v$locked_object
+--v$latch
+--v$latch_children
+--v$latch_parent
+--v$latchname
+--v$latchholder
+--v$latch_messes
+--v$enqueue_lock
+--v$transaction_enqueue
+--v$sys_optimizer_env
+--v$ses_optimizer_env
+--v$sql_optimizer_env
+--v$sql_plan
+--v$sql_plan_statistics
+--v$sql_plan_statistics_all 
+--
+--3)oracle memory tuning
+--v$sga
+--v$sgastat
+--v$sgainfo
+--v$sga_current_resize_ops
+--v$sga_resize_ops
+--v$sga_dynamic_components
+--v$sga_dynamic_free_memory
+--v$pgastat
+--v$sql_workarea_histogram
+--v$pga_target_advice_histogram
+--v$pga_target_advice
+--v$memory_current_resize_ops
+--v$memory_resize_ops
+--v$memory_dynamic_components
+--v$library_cache_memory
+--v$shared_pool_advice
+--v$java_library_cache_memory
+--v$java_pool_advice
+--v$streams_pool_advice 
+--  
+ 
+
+VAR=0
+NAME=테이블 명세서
+STMT=85
+--테이블 명세서
+select /*+ RULE */
+       decode(a.column_id, 1, d.table_name, '') as TABLE_NAME
+     , decode(a.column_id, 1, nvl(d.comments, d.table_name), '') as "COMMENT"
+     , a.column_name as COLUMN_NAME
+     , nvl(b.comments, b.column_name) as COLUMN_COMMENT
+     , a.data_type  || decode(a.data_type, 'NUMBER', decode(data_scale, '0', '('||nvl(data_precision, 22)||')', NULL,'('||NVL(data_precision, 22)||')', '('||NVL(data_precision, 22)||','||data_scale||')'), 'DATE', '', '('|| a.data_length||')') as DATA_TYPE
+     , decode(a.NULLABLE, 'N', 'NOT NULL', 'NULL') as "NULL여부"
+     , a.num_nulls
+     , c.pk_pos as "PK"
+     , (select decode(a.column_id, 1, to_char(num_rows, '999,999,999,999'), '')
+        from dba_tables
+        where owner = upper(:owner)  /* Owner */
+     -- and table_name = upper(:tname)
+        and table_name = a.table_name
+        and rownum = 1
+       ) as num_rows
+     , num_distinct as NUM_DISTINCT
+     --, a.density
+     , a.last_analyzed
+     , a.num_buckets
+     , a.histogram
+-- , (select decode(a.column_id, 1, round(sum(bytes/1024/1024/1024)), '') /* Segment Size 1개로 볼때 (속도 느려짐 15초) */
+    , (select round(sum(bytes/1024/1024/1024))
+       from dba_segments
+       where segment_name = d.table_name
+       and owner = d.owner
+       group by owner, segment_name
+      ) as "SIZE(gb)"
+    , e.part_key
+    , e.part_type
+    , e.part_col_num
+    , e.part_cnt
+    , e.subpart_key
+    , e.subpart_type
+    , e.subpart_col_num
+    , e.subpart_cnt
+from dba_tab_columns a
+      , dba_col_comments b
+      , dba_tab_comments d
+      , (select b.owner, b.table_name, b.column_name, b.position, b.constraint_name, b.constraint_name || '(' || b.position || ')' pk_pos
+         from dba_constraints a, dba_cons_columns b
+         where a.owner = upper(:owner)
+         and a.owner = upper(:tname)
+         and a.constraint_type = 'P'
+         and a.owner = b.owner
+         and a.table_name = b.table_name
+         and a.constraint_name = b.constraint_name ) c
+     , (select p.owner
+                , p.name
+                , p.column_name as part_key
+                , t.partitioning_type as part_type
+                , p.column_position as part_col_num
+                , t.partition_count as part_cnt
+                , nvl(s.column_name, 'N/A') as subpart_key
+                , decode(t.subpartitioning_type, 'NONE', 'N/A', t.subpartitioning_type) as subpart_type
+                , nvl(s.column_position, 0) as subpart_col_num
+                , t.def_subpartition_count as subpart_cnt
+         from dba_part_key_columns p
+               , dba_subpart_key_columns s
+               , dba_part_tables t
+         where p.name = upper(:tname)      /* Table Name */
+          and p.owner = upper(:owner)
+          and s.name (+) = p.name
+          and s.owner (+) = p.owner
+          and t.table_name = p.name
+          and t.owner = p.owner
+       ) e
+where 1 = 1
+and d.owner = upper(:owner)  /* Owner */
+and a.table_name = upper(:tname) /* Table Name */
+and d.owner = a.owner
+and d.table_name = a.table_name
+and a.owner = b.owner
+and a.table_name = b.table_name
+and a.column_name = b.column_name
+and a.owner = c.owner(+)
+and a.table_name = c.table_name(+)
+and a.column_name = c.column_name(+)
+and a.owner = e.owner(+)
+and a.table_name = e.name (+)
+and a.column_name = e.part_key (+)
+order by a.owner, a.table_name, a.column_id, e.part_col_num, e.subpart_col_num
+;
+
+VAR=0
+NAME=SQL info
+STMT=95
+--=================================================================================================
+-- --SQL PLAN 확인하기
+-- ===============================================================================================
+
+SELECT LPAD('  ',2*(DEPTH))||OPERATION||DECODE(OTHER_TAG,NULL,'','*')||
+       DECODE(OPTIONS,NULL,'',' ('||OPTIONS||')')||DECODE(OBJECT_NAME,NULL,'',' OF '''||OBJECT_NAME||'''')||
+       DECODE(ID,0,DECODE(OPTIMIZER,NULL,'',' Optimizer='||OPTIMIZER))||
+       DECODE(COST,NULL,'',' (Cost='||COST||DECODE(CARDINALITY,NULL,'',' Card='||CARDINALITY)||DECODE(BYTES,NULL,'',' Bytes='||BYTES)||')')
+FROM DBA_HIST_SQL_PLAN
+WHERE SQL_ID = 'asjfct9xbu5xx'
+AND PLAN_HASH_VALUE = 3017555771
+ORDER BY ID, POSITION;
+--asjfct9xbu5xx	3017555771
+
+-- =======================================
+-- Bind Data  ( DBA_HIST_SQLBIND ) 
+-- =======================================
+SELECT SNAP_ID,
+       SQL_ID,
+       NAME,
+       DATATYPE_STRING,
+       MIN(POSITION) POSITION ,
+       REPLACE(MAX(VALUE_STRING), 'NULL', '') BIND_VALUE,
+       MAX(LAST_CAPTURED) LAST_CAPTURE
+  FROM DBA_HIST_SQLBIND
+ WHERE SQL_ID = '78d1anvg4brpt'
+ GROUP BY SQL_ID, NAME, DATATYPE_STRING, SNAP_ID
+ ORDER BY SNAP_ID, POSITION ;
+
+-- =======================================================================
+-- V$SQL_BIND_CAPTURE
+-- =======================================================================
+SELECT SQL_ID, NAME, DATATYPE_STRING, MIN(POSITION) POSITION
+       , REPLACE(MAX(VALUE_STRING),'NULL','') BIND_VALUE,  MAX(LAST_CAPTURED) LAST_CAPTURE
+FROM V$SQL_BIND_CAPTURE
+WHERE SQL_ID = '17hw999qpmfuu'
+GROUP BY SQL_ID, NAME, DATATYPE_STRING
+ORDER BY POSITION
+;
+
+
+-- =======================================
+-- ASIS BIND DATA(SQL*Plus Version)
+-- =======================================
+SELECT A.*
+     , 'var '||REPLACE(NAME,':','')||' '||DATATYPE_STRING||';'||CHR(10)
+    || 'exec '||NAME||' := '''||BIND_VALUE||''';' AS SQL_VARIABLE
+FROM (
+        SELECT SNAP_ID, SQL_ID, NAME, DATATYPE_STRING, MIN(POSITION) POSITION
+             , MAX(VALUE_STRING) BIND_VALUE, MAX(LAST_CAPTURED) LAST_CAPTURED
+        FROM DBA_HIST_SQLBIND
+        WHERE SQL_ID = 'b5565y1v4wyfh'
+        GROUP BY SQL_ID, NAME, DATATYPE_STRING, SNAP_ID
+     ) A
+ORDER BY SNAP_ID, POSITION
+;
+
+var 1 VARCHAR2(32);
+exec :1 := '1';
+SELECT * FROM DBA_HIST_SQLBIND;
+
+-- ==================================================================================================================================================
+-- SQL_MONITOR
+-- ==================================================================================================================================================
+select /*+ no_monitor */ 
+       inst_id, sid, status, username, module, sql_id, sql_exec_id, sql_exec_start
+     , round((sysdate - sql_exec_start) * 24 * 60 * 60, 2) as EXECTIME, sql_plan_hash_value, 'select /*+ no_monitor */ dbms_sqltune.report_sql_monitor(sql_id=>'||''''||sql_id||''''||', session_id=>'||sid||', session_serial=>'||session_serial#||', inst_id=>'||inst_id||', sql_exec_id=>'||sql_exec_id||',type=>''text'',report_level=>''all'') from dual;' as DBMS_SQLTUNE
+--     , 'select * from table(dbms_xplan.display_cursor('''||sql_id||''', 0, ''allstats last advanced''));' as DBMS_XPLAN
+     ,PX_IS_CROSS_INSTANCE, PX_MAXDOP, PX_MAXDOP_INSTANCES, PX_SERVERS_REQUESTED, PX_SERVERS_ALLOCATED, PX_SERVER#, PX_SERVER_GROUP, PX_SERVER_SET, PX_QCINST_ID, PX_QCSID, ERROR_NUMBER, ERROR_FACILITY, ERROR_MESSAGE 
+from gv$sql_monitor
+where 1 = 1
+--and status = 'EXECUTING'
+and sql_id = 'du0sdv3q5gg3z'
+--and inst_id = 7
+and username is not null
+--and username = 'MPPMESTUNER'
+--and MODULE = 'JOD3028'
+ORDER BY SQL_EXEC_START desc
+;
+
+
+
+
+-- ================================================
+-- 단건 SQL 정보보기
+-- ================================================
+SELECT SQL_ID, BUFFER_GETS, ROUND(BUFFER_GETS/EXECUTIONS) AS PER_BUFFERGET
+     , EXECUTIONS
+     , ROUND(ELAPSED_TIME/1000000/EXECUTIONS, 5) AS ELAPSED_TIME
+     , PARSING_SCHEMA_NAME, SERVICE
+     , MODULE, ACTION 
+     , SQL_FULLTEXT
+FROM V$SQL
+WHERE SQL_ID = '17hw999qpmfuu';
+ 
+VAR=0
+NAME=Access Path
+STMT=166
+-- ==========================================================================================================================================================================================
+-- V$SQL ACCESS PREDICATED
+-- ==========================================================================================================================================================================================
+SELECT A.SQL_ID, A.PLAN_HASH_VALUE, A.ACCESS_PATH
+     , B.EXECUTIONS AS EXEC
+     , ROUND(DECODE(B.executions,NULL,0,0,0,(NVL(B.buffer_gets,0)/B.executions)),0) "Bufffer IO"
+     , ROUND(DECODE(B.executions,NULL,0,0,0,(NVL(B.ROWS_PROCESSED,0)/B.executions)),0) "Rows Per Exec"
+     , ROUND(DECODE(B.executions,NULL,0,0,0,(NVL(B.ELAPSED_TIME,0)/B.executions)/ 1000000),5) "Elapsed"
+     , B.SQL_FULLTEXT AS SQL_TEXT
+FROM (
+        SELECT ROW_NUMBER() OVER(PARTITION BY SQL_ID, CHILD_NUMBER, PLAN_HASH_VALUE ORDER BY SQL_ID, CHILD_NUMBER, PLAN_HASH_VALUE, ID, POSITION) RN1
+             , SQL_ID, PLAN_HASH_VALUE, CHILD_NUMBER
+             , OBJECT_NAME || DECODE(ACCESS_PREDICATES, NULL, '', ' [A# '|| ACCESS_PREDICATES || ']'||CHR(10))|| DECODE(FILTER_PREDICATES,NULL,'','[F# ' || FILTER_PREDICATES ||']') || ''
+            || ' --> (Card:' || CARDINALITY || ' Bytes:' || BYTES || DECODE(PARTITION_START, NULL, '', ' PS/PE:') || PARTITION_START || DECODE(PARTITION_START, NULL, '', '/') || PARTITION_STOP ||')' AS ACCESS_PATH
+        FROM V$SQL_PLAN A
+        WHERE (OBJECT_OWNER, OBJECT_NAME) IN (SELECT :OWNER OBJECT_OWNER, :TABLE_NAME OBJECT_NAME
+                                              FROM DUAL
+                                              UNION ALL
+                                              SELECT OWNER OBJECT_OWNER, INDEX_NAME OBJECT_NAME
+                                              FROM DBA_INDEXES
+                                              WHERE OWNER = :OWNER AND TABLE_NAME = :TABLE_NAME)
+        AND ID <> 1
+        ORDER BY SQL_ID, PLAN_HASH_VALUE, ID, POSITION
+      ) A, V$SQL B
+WHERE A.RN1 = 1
+AND A.SQL_ID = B.SQL_ID(+)
+AND A.CHILD_NUMBER = B.CHILD_NUMBER(+)
+AND A.PLAN_HASH_VALUE = B.PLAN_HASH_VALUE(+)
+ORDER BY B.EXECUTIONS DESC
+;
+
+
+
+
+
+--------------------------------------------------------------------
+--<UGENSCAT Tool Dir>\Template\UGENSCAT_SCRIPTS.ini 파일에 아래 부분 수정
+--------------------------------------------------------------------
+
+--select ILMDBA.GET_ACCESS_PATH_2('ILMDBA','PLAN_TABLE', 'ILMDBA', 'ERP_APP'|| '_' || '82kus7agz39yd', SQL_TEXT, 'IO_MGR', 'IO_DD_PRICE') "Access Path"
+select GET_ACCESS_PATH('ILMDBA','PLAN_TABLE', 'ILMDBA', 'ERP_APP'|| '_' || '82kus7agz39yd', SQL_TEXT, 'IO_MGR', 'IO_DD_PRICE') "Access Path"
+FROM ILMDBA.SQLSET_STAGE
+WHERE PARSING_SCHEMA_NAME IS NOT NULL
+AND SQL_ID = '82kus7agz39yd'
+;
+
+--TABLE ACCESS PATH
+--[PLSQLStmt_UGENS11]
+SELECT /*+ ORDERED USE_NL(SRC STS) PARALLEL(2) */
+        STS.NAME || '_' || STS.SQL_ID "Stmt ID",
+        ROW_NUMBER() OVER(PARTITION BY STS.SQL_ID ORDER BY STS.SQL_ID, STS.EXECUTIONS DESC, STS.ELAPSED_TIME DESC) AS RNO,
+        PARSING_SCHEMA_NAME || ':' || MODULE "Run Schema & Module",
+        SQL_TEXT "SQL",
+        GET_ACCESS_PATH('ILMDBA', 'PLAN_TABLE', 'ILMDBA', PARSING_SCHEMA_NAME || ':' || STS.SQL_ID, SQL_TEXT, :owner, :tname) "Access Path" ,
+        ILMDBA.UGENS_ILM_MANAGER.GET_SQLPLAN_FROM_STS2('ILMDBA','SQLSET_STAGE',STS.NAME,STS.SQL_ID ,STS.PLAN_HASH_VALUE) SQL_PLAN,
+--        MPPMESTUNER.UGENS_SPA_MANAGER.GET_SQLPLAN_FROM_STS(STS.OWNER,STS.NAME,STS.SQL_ID,PLAN_HASH_VALUE,'ALL') EXPLAIN,
+        ILMDBA.UGENS_ILM_MANAGER.GET_SQLBIND_STS(STS.BIND_DATA) BIND_INFO,
+        STS.EXECUTIONS EXEC,
+        ROUND(DECODE(STS.executions,NULL,0,0,0,(NVL(STS.buffer_gets,0)/STS.executions)),0) "Bufffer IO",
+        ROUND(DECODE(STS.executions,NULL,0,0,0,(NVL(STS.ROWS_PROCESSED,0)/STS.executions)),0) "Rows Per Exec",
+        ROUND(DECODE(STS.executions,NULL,0,0,0,(NVL(STS.ELAPSED_TIME,0)/STS.executions)/ 1000000),5) "Elapsed"
+FROM (  SELECT DISTINCT NAME , OWNER, SQL_ID
+        FROM (
+                SELECT NAME , OWNER, SQL_ID
+                FROM ILMDBA.SQLSET_STAGE
+                WHERE (plan_object_owner , plan_object_name) IN (SELECT :owner object_owner, :tname object_name
+                                                                FROM DUAL
+                                                                UNION ALL
+                                                                SELECT owner object_owner, index_name object_name
+                                                                FROM dba_indexes
+                                                                WHERE owner = :owner AND table_name = :tname)
+                UNION ALL
+                SELECT NAME , OWNER, SQL_ID
+                FROM ILMDBA.SQLSET_STAGE
+                WHERE COMMAND_TYPE = 2 AND UPPER(SQL_TEXT) LIKE '%' || TRIM(:tname) || '%'
+             ) S
+     ) SRC
+   , ILMDBA.SQLSET_STAGE STS
+WHERE SRC.NAME = STS.NAME AND SRC.OWNER = STS.OWNER AND SRC.SQL_ID = STS.SQL_ID AND STS.PARSING_SCHEMA_NAME IS NOT NULL
+AND (    MODULE NOT LIKE 'Orange%'
+     AND MODULE NOT LIKE 'TOAD%'
+     AND MODULE NOT LIKE 'DBMS_SCHEDULER%'
+     AND MODULE NOT LIKE 'Toad%'
+     AND MODULE NOT LIKE 'SQLGate%'
+     AND MODULE NOT LIKE 'ASH%'
+     AND MODULE NOT LIKE 'OraScope%'
+     AND MODULE NOT LIKE 'Golden%'
+     AND MODULE NOT LIKE 'SQL Developer%'
+     AND MODULE NOT LIKE 'Lab128%'
+--     AND MODULE NOT LIKE 'SQL*Plus%'
+     AND MODULE NOT LIKE 'oracle@%'
+     AND SQL_TEXT NOT LIKE '/* SQL Analyze(0) */%'
+    )
+ORDER BY EXEC DESC; 
+
+
+select /*+ ALL_ROWS ORDERED USE_NL(SRC STS) PARALLEL(4) */
+       STS.NAME || '_' || STS.SQL_ID "Stmt ID",
+       PARSING_SCHEMA_NAME || ':' || MODULE  "Run Schema & Module",
+       SQL_TEXT "SQL",
+       GET_ACCESS_PATH('SYS','plan_table$', sys_context('USERENV','CURRENT_USER'), PARSING_SCHEMA_NAME || ':' || STS.SQL_ID, SQL_TEXT, :owner,:tname ) "Access Path" ,
+       UGENS_ILM_MANAGER.GET_SQLPLAN_FROM_STS2(sys_context('USERENV','CURRENT_USER'),'SQLSET_STAGE',STS.NAME,STS.SQL_ID ,STS.PLAN_HASH_VALUE)  SQL_PLAN,
+--       CASE WHEN MODULE = 'JDBC Thin Client' and REGEXP_INSTR(SQL_TEXT, '/*[^ ]+*/') >= 1 THEN 
+--                  TRIM(replace(replace(replace(REGEXP_SUBSTR(SQL_TEXT, '/*[^ ]+*/',1,1),'/*',''),'*/',''),'/','')) ELSE NULL END "App SQL_ID",
+       ' ' "App SQL_ID",
+       UGENS_ILM_MANAGER.GET_SQLBIND_STS(STS.BIND_DATA) BIND_INFO,
+       STS.EXECUTIONS EXEC, 
+       round(decode(STS.executions,null,0,0,0,(nvl(STS.buffer_gets,0)/STS.executions)),0)           "Bufffer IO", 
+       round(decode(STS.executions,null,0,0,0,(nvl(STS.ROWS_PROCESSED,0)/STS.executions)),0)        "Rows Per Exec", 
+       round(decode(STS.executions,null,0,0,0,(nvl(STS.ELAPSED_TIME,0)/STS.executions)/ 1000000),5) "Elapsed" 
+from  (select distinct NAME , OWNER, SQL_ID
+      from  (
+             select NAME , OWNER, SQL_ID 
+             from   ILMDBA.SQLSET_STAGE 
+             where  (plan_object_owner , plan_object_name)  in 
+                    (select :owner object_owner, :tname object_name 
+                     from dual 
+                     union all 
+                     select owner object_owner, index_name object_name 
+                     from dba_indexes 
+                     where owner = :owner and table_name = :tname)
+             union all
+             select NAME , OWNER, SQL_ID 
+             from   SQLSET_STAGE 
+             where  COMMAND_TYPE = 2 and REGEXP_INSTR(upper(SQL_TEXT), '[^[:alpha:]]INTO[^[:alpha:]]+' || :tname  ) > 1
+             ) S
+      ) SRC,
+      SQLSET_STAGE STS
+where SRC.NAME = STS.NAME and SRC.OWNER = STS.OWNER and  SRC.SQL_ID = STS.SQL_ID and STS.PARSING_SCHEMA_NAME IS NOT NULL
+order by exec desc   
+;
+
+
+SELECT DISTINCT SQL_ID FROM SQLSET_STAGE;
+
+
+SELECT *
+FROM MPPMESTUNER.SQLSET_STAGE
+;
+select * from tab;
+SELECT * FROM ILMDBA.SQLSET_STAGE;
+DESC ILMDBA.SQLSET_STAGE;
+
+ 
+--[PLSQLStmt_UGENS13]
+select /* PARALLEL(2) */ s.OWNER, s.INDEX_NAME, SUM(s.CNT) CNT,
+       NVL(SUM(a.executions),0) TOT_EXEC , 
+       ILMDBA.UGENS_ILM_MANAGER.INDEX_COL_LIST2(s.owner,s.INDEX_NAME , s.TABLE_OWNER ,s.TABLE_NAME )   INDEX_INFO ,  
+       NULL " ",  NULL "  ",  NULL "   ",  NULL "    ",  NULL "     ",  NULL "      "
+from   (select src.OWNER, src.INDEX_NAME, src.table_owner, src.table_name, sts.owner STS_OWNER, sts.name STS_NAME, sts.sql_id, COUNT(distinct STS.sql_id || STS.PLAN_OPERATION || STS.ID || STS.PLAN_HASH_VALUE) CNT
+        from   (select b.owner , b.index_name, c.owner table_owner, c.table_name table_name
+                from   dba_indexes b, dba_tables c
+                where  c.owner = :owner and c.table_name = :tname
+                and c.owner = b.owner and c.table_name = b.table_name) SRC,
+                ILMDBA.SQLSET_STAGE STS
+        where  SRC.OWNER = STS.PLAN_OBJECT_OWNER(+)
+        and  SRC.index_name = STS.PLAN_OBJECT_NAME(+)
+        and STS.PLAN_OPERATION(+) = 'INDEX'
+        group by src.OWNER, src.INDEX_NAME, src.table_owner, src.table_name, sts.owner, sts.name, sts.sql_id) s,
+        ILMDBA.SQLSET_STAGE a
+where   s.STS_OWNER = a.owner(+) and s.STS_NAME = a.name(+) and s.sql_id = a.sql_id(+) and a.PARSING_SCHEMA_NAME(+) is not null
+group by s.OWNER, s.INDEX_NAME,  s.TABLE_OWNER ,s.TABLE_NAME
+order by 2
+;
+
+
+VAR=0
+NAME=히든 Parameter
+STMT=89
+-- ================================================================================================================================================
+-- Hidden 파라미터 보기
+-- ================================================================================================================================================
+COLUMN parameter      FORMAT A45
+COLUMN session_value  FORMAT A20 HEADING 'SESSION|VALUE'
+COLUMN instance_value FORMAT A20 HEADING 'INSTANCE|VALUE' 
+COLUMN a              FORMAT A7  HEADING 'ALTER|SESSION'
+COLUMN b              FORMAT A9  HEADING 'ALTER|SYSTEM'
+COLUMN ksppdesc       FORMAT A70 HEADING 'DESCRIPTION'
+;
+
+SELECT a.ksppinm "parameter",
+--       b.ksppstvl "session_value",
+       c.ksppstvl "instance_value",
+       a.ksppdesc,
+       DECODE(BITAND(ksppiflg/256, 1), 1, 'TRUE', 'FALSE') a,  
+       DECODE(BITAND(ksppiflg/65536, 3), 1, 'IMMEDIATE', 2, 'DEFERRED', 3, 'IMMEDIATE', 'FALSE') b
+  FROM sys.x$ksppi a,
+       sys.x$ksppcv b,
+       sys.x$ksppsv c
+ WHERE a.indx = b.indx
+   AND a.indx = c.indx
+   AND a.ksppinm LIKE '%_session_wait_history%'
+;
+
+
+
+
+-- ==============================================
+-- 파라미터 뷰 종류
+-- ==============================================
+--DBA_ADVISOR_DEF_PARAMETERS
+--DBA_ADVISOR_EXEC_PARAMETERS
+--DBA_ADVISOR_PARAMETERS
+--DBA_ADVISOR_PARAMETERS_PROJ
+--DBA_ADVISOR_SQLW_PARAMETERS
+--DBA_APPLY_PARAMETERS
+--DBA_CAPTURE_PARAMETERS
+--DBA_HIST_PARAMETER
+--DBA_HIST_PARAMETER_NAME
+--DBA_ILMPARAMETERS
+--DBA_LOGSTDBY_PARAMETERS
+--DBA_ROLLING_PARAMETERS
+--DBA_XS_ACL_PARAMETERS
+--NLS_DATABASE_PARAMETERS
+--NLS_INSTANCE_PARAMETERS
+--NLS_SESSION_PARAMETERS
+--GV$HS_PARAMETER
+--GV$LOGMNR_PARAMETERS
+--GV$NLS_PARAMETERS
+--GV$OBSOLETE_PARAMETER
+--GV$PARAMETER
+--GV$PARAMETER2
+--GV$SPPARAMETER
+--GV$SYSTEM_PARAMETER
+--GV$SYSTEM_PARAMETER2
+--GV$SYSTEM_RESET_PARAMETER
+--GV$SYSTEM_RESET_PARAMETER2
+
+SELECT * FROM DICT WHERE TABLE_NAME LIKE '%PARAMETER%';
+SELECT * FROM DBA_DB_LINKS;
+
+--11g
+SELECT *
+FROM V$PARAMETER2@TARGET_11G
+WHERE 1 = 1
+--AND NAME LIKE '%sql92_security%'
+AND NAME IN ('sga_max_size','db_cache_size','shared_pool_size','shared_pool_reserved_size','large_pool_size','java_pool_size','pga_aggregate_target','pga_aggregate_limit')
+ORDER BY 2
+;
+
+--12c
+SELECT *
+FROM V$PARAMETER2
+--FROM V$SPPARAMETER
+WHERE 1 = 1
+AND NAME LIKE '%log_buf%'
+--AND NAME IN ('sga_max_size','db_cache_size','shared_pool_size','shared_pool_reserved_size','large_pool_size','java_pool_size','pga_aggregate_target','pga_aggregate_limit')
+ORDER BY 2
+;
+
+
+
+--10240000
+--102400
+
+
+
+
+VAR=0
+NAME=SPM
+STMT=90
+ 
+-- ==================================================================================
+-- 1.>>  SQL_ID to manually load the SQL plan baseline
+-- ===================================================================================
+
+DECLARE
+  l_plans_loaded  PLS_INTEGER;
+BEGIN
+  l_plans_loaded := DBMS_SPM.load_plans_from_cursor_cache( sql_id => '8jt4z1bas7vjr');
+    
+  DBMS_OUTPUT.put_line('Plans Loaded: ' || l_plans_loaded);
+END;
+/
+ 
+-- =====================================================================================================================
+--2.>>  
+-- The DBA_SQL_PLAN_BASELINES view provides information about the SQL plan baselines
+-- . We can see there is a single plan associated with our baseline, which is both enabled and accepte
+-- ======================================================================================================================
+ 
+SELECT  SQL_HANDLE, PLAN_NAME , substr(SQL_TEXT,1,30),ENABLED,  ACCEPTED,FIXED,REPRODUCED,AUTOPURGE 
+FROM   dba_sql_plan_baselines
+ 
+; 
+
+
+-- =====================================================================================================================
+--3.>> PLAN 확인   
+--   -- . We can see there is a single plan associated with our baseline, which is both enabled and accepte
+-- ======================================================================================================================
+ -- PLAN DISPLAY 
+ SELECT *
+FROM   TABLE(DBMS_XPLAN.display_sql_plan_baseline(plan_name=>'SQL_PLAN_9qf19sbs4ywwv34f70ac8'));
+
+
+-- =====================================================================================================================
+--튜닝후 SPM 적용 하기    
+-- ======================================================================================================================
+
+DECLARE 
+    l_plans_loaded PLS_INTEGER;
+    BEGIN 
+        l_plans_loaded := DBMS_SPM.load_plans_from_cursor_cache(
+                     sql_id => '4137q7jzjqfmm',
+            plan_hash_value => '660075988',
+                 sql_handle => 'SQL_9b3829c2f04f739b' 
+        ); 
+END;
+/
+
+
+
+
+-- =====================================================================================================================
+-- SPM 속성 변경 하기  
+-- ======================================================================================================================
+
+DECLARE
+  l_plans_altered  PLS_INTEGER;
+BEGIN
+  l_plans_altered := DBMS_SPM.alter_sql_plan_baseline(
+    sql_handle      => 'SQL_7b76323ad90440b9',
+    plan_name       => 'SQL_PLAN_7qxjk7bch8h5tb65c37c8',
+    attribute_name  => 'enabled',
+    attribute_value => 'NO');
+
+  DBMS_OUTPUT.put_line('Plans Altered: ' || l_plans_altered);
+END;
+/
+
+
+-- =====================================================================================================================
+-- DROP BASE LINE   
+-- ======================================================================================================================
+
+ 
+DECLARE
+  l_plans_dropped  PLS_INTEGER;
+BEGIN
+  l_plans_dropped := DBMS_SPM.drop_sql_plan_baseline (
+    sql_handle => NULL,
+    plan_name  => 'SQL_PLAN_9qf19sbs4ywwv34f70ac8');
+    
+  DBMS_OUTPUT.put_line(l_plans_dropped);
+END;
+/
+
+ 
+
+ 
+VAR=0
+NAME=Profile
+STMT=68
+-- =======================================================================
+-- 튜너가 긴급 튜닝한 실행계획(v$sql_plan)으로 SQL Profile 생성
+-- ========================================================================
+
+DECLARE
+  CL_SQL_TEXT CLOB;
+  HINT_SPEC SYS.SQLPROF_ATTR;
+BEGIN
+  SELECT SQL_FULLTEXT INTO CL_SQL_TEXT
+    FROM GV$SQL
+  WHERE SQL_ID = '8jt4z1bas7vjr'
+  AND ROWNUM =1 
+  ;         ---11g에서 regression 발생한 SQL의 ID
+  
+  SELECT  EXTRACTVALUE(VALUE(d), '/hint') AS OUTLINE_HINTS
+              BULK COLLECT
+    INTO  HINT_SPEC
+    FROM  XMLTABLE('/*/outline_data/hint'
+              PASSING (
+                          SELECT  XMLTYPE(OTHER_XML) AS xmlval
+                           FROM  V$SQL_PLAN 
+                          WHERE  SQL_ID = '4137q7jzjqfmm'  --튜닝 후 SQL의 sql_id
+                           AND  PLAN_HASH_VALUE = '660075988'
+                              AND  OTHER_XML IS NOT NULL
+                            )
+     ) D;
+
+  DBMS_SQLTUNE.IMPORT_SQL_PROFILE(
+    SQL_TEXT => CL_SQL_TEXT,
+    PROFILE => HINT_SPEC,
+    NAME => 'SQLPROF_8jt4z1bas7vjr',
+    FORCE_MATCH => TRUE);      --컬럼의 데이터가 skew되어 있고 히스토그램 정보가 있으면, FALSE로 할 것.
+
+END;
+/
+
+
+---- =======================================================================
+---- SQL Profile 참고사항 
+---- ========================================================================
+--# SQL Profile 명명규칙
+--   SQLPROF_sql_id
+--   예) sql_id 'abcd1234'의 SQL Profile 이름 : SQLPROF_abcd1234
+--
+--# SQL Profile 생성 확인
+SELECT * FROM DBA_SQL_PROFILES;
+--
+--# SQL Profile의 실행계획 조회
+--SELECT extractValue(value(h),'.') AS hint
+--  FROM sys.sqlobj$data od, sys.sqlobj$ so,
+--           table(xmlsequence(extract(xmltype(od.comp_data),'/outline_data/hint'))) h
+-- WHERE so.name = 'SQLPROF_fu3j25g46q9js'
+--   AND so.signature = od.signature
+--   AND so.category = od.category
+--   AND so.obj_type = od.obj_type
+--   AND so.plan_id = od.plan_id;
+--
+--# SQL Profile 제거
+--EXEC DBMS_SQLTUNE.DROP_SQL_PROFILE(NAME => 'SQLPROF_fu3j25g46q9js');
+--
+--# SQL Profile STATUS 변경
+--BEGIN
+--  DBMS_SQLTUNE.ALTER_SQL_PROFILE(
+--  NAME => 'SQLPROF_fu3j25g46q9js',
+--  ATTRIBUTE_NAME => 'STATUS',
+--  VALUE => 'DISABLED');
+--END;
+--/
+VAR=0
+NAME=통계정보
+STMT=3
+select OWNER,TABLE_NAME,STATTYPE_LOCKED 
+from dba_tab_statistics 
+where table_name ='TSMS_AGENT_MESSAGE_LOG_202204'
+VAR=0

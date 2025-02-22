@@ -1,0 +1,129 @@
+OGG 세팅
+
+0. Virtualbox 7.1.6 사용
+1. Oracle Linux 9.5 OS 설치
+	- Software Selection
+		- Base Environment: Server with GUI (필수)
+		- Additional software for Selected Environment
+			- Debugging Tools
+			- Performance Tools
+			- Legacy/UNIX Compatiability
+			- Development Tools
+			- Graphical Administration Tools
+			- System Tools
+	- Installation Destination
+		- Automatic Partitioning (아무 설정도 하지 말고 바로 DONE 클릭)
+	- Network & Hostname
+		- Hostname: "primary.localdomain" -> Apply	
+	- ROOT Password
+		- 1/1
+
+2. yum update -y
+
+3. VM -> 장치 -> 게스트 확장 CD 이미지 삽입
+
+4. 방화벽 해제 #######################################################
+	- systemctl stop firewalld
+	- systemctl disable firewalld
+
+5. 로컬머신-VM 간 공유 폴더 구성
+	- 마운트 지점: /media
+	- 읽기 전용, 자동 마운트, 항상 사용
+
+6. 로컬머신 공유 폴더에 설치 파일 업로드
+	- Oracle database 23ai: oracle-database-free-23ai-1.0-1.el8.x86_64.rpm
+	- OGG 23ai Microservices: V1042871-01.zip
+	- [선택]Oracle database 19c: oracle-database-ee-19c-1.0-1.x86_64.rpm
+
+7. vm 화면 크기 조정
+	- 보기 -> 게스트 디스플레이 크기 자동 조정
+
+8. Virtualbox에서 VM 네트워크 어댑터 추가
+	- VM설정 -> 네트워크 -> Adapter 2 활성화: 호스트 전용 어댑터
+	- 호스트 전용 어댑터 추가하면 포트포워딩 필요 없음
+	- VM에 접속 후 우측 상단 배터리 클릭 -> Ethernet enp0s8 Connect 상태로 변경
+	
+9. Oracle DB 설치
+	- su -
+	- cd /media
+	- yum install oracle-database-free-23ai-1.0-1.el8.x86_64.rpm
+	- [참고] yum remove oracle-database-free-23ai
+	- cd /etc/init.d
+	- ./oracle-free-23ai configure
+	
+10. .bash_profile 설정
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# DB defaults
+export ORACLE_HOME=/opt/oracle/product/23ai/dbhomeFree
+export ORACLE_SID=FREE
+export TEMPLATE_NAME=FREE_Database.dbc
+export PDB_NAME=FREEPDB1
+export LISTENER_NAME=LISTENER
+export NUMBER_OF_PDBS=1
+export CREATE_AS_CDB=true
+
+# General exports and vars
+export PATH=$ORACLE_HOME/bin:$PATH
+LSNR=$ORACLE_HOME/bin/lsnrctl
+SQLPLUS=$ORACLE_HOME/bin/sqlplus
+NETCA=$ORACLE_HOME/bin/netca
+DBCA=$ORACLE_HOME/bin/dbca
+ORACLE_OWNER=oracle
+RETVAL=0
+CONFIG_NAME="oracle-free-23ai.conf"
+CONFIGURATION="/etc/sysconfig/$CONFIG_NAME"
+ORACLE_HOME_NAME="OraHomeFree"
+MINIMUM_MEMORY=1048576
+MAXIMUM_MEMORY=2097152
+MINIMUM_MEMORY_STR="1GB"
+
+MINIMUM_SPACE=4718592
+MINIMUM_SPACE_STR="4.5GB"
+
+# Commands
+if [ -z "$SS" ];then SS=/usr/sbin/ss; fi
+if [ -z "$SU" ];then SU=/bin/su; fi
+if [ -z "$AWK" ];then AWK=/bin/awk; fi
+if [ -z "$DF" ];then DF=/bin/df; fi
+if [ -z "$GREP" ]; then GREP=/usr/bin/grep; fi
+if [ ! -f "$GREP" ]; then GREP=/bin/grep; fi
+if [ -z "$TAIL" ]; then TAIL=/usr/bin/tail; fi
+if [ ! -f "$TAIL" ]; then TAIL=/bin/tail; fi
+HOSTNAME_CMD="/bin/hostname"
+MKDIR_CMD="/bin/mkdir"
+if [ ! -f "$SS" ]; then SS="/sbin/ss"; fi
+
+alias sq="sqlplus / as sysdba"
+export OGG_HOME=/u01/app/oracle/ogg_ma
+export PATH=$OGG_HOME/bin:$PATH
+alias admcl="adminclient"
+
+
+
+11. OGG사용자 생성
+	- CREATE USER c##ogguser identified by 1;
+	- GRANT CONNECT, RESOURCE, DBA TO c##ogguser;
+	- DB접속 테스트
+	
+12. OGG 설치
+	- su -
+	- mkdir -p /u01/app/oracle
+	- chown -R oracle:oinstall /u01
+	- chmod -R 755 /u01
+	- su - oracle
+	- cd /u01/app/oracle
+	- mkdir engine_zip
+	- mkdir ogg_ma			: 여기가 OGG_HOME
+	- mkdir ogg_sm
+	- mkdir ogg_deploy
+	- cp V1042871-01.zip /u01/app/oracle/engine_zip/
+	- cd engine_zip
+	- unzip V1042871-01.zip
+	- cd fbo_ggs_Linux_x64_Oracle_services_shiphome/Disk1/
+	- ./runInstaller

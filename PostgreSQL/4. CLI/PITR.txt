@@ -1,0 +1,29 @@
+# within psql, initiate log switch
+select pg_switch_wal();
+
+# within terminal, perform base backup
+pg_basebackup -U postgres -Ft -D "[BACKUP_DIR]"
+
+# stop database
+pg_ctl stop
+
+# corrupt data directory (PGDATA)
+
+# within BACKUP_DIR, use the backup file (.tar) to restore data directory
+tar xvf "[BACKUP_DIR_FILE.tar]" -C "[RESTORE_DIR]"
+
+# edit postgresql.conf
+# for PITR, edit recovery_target_time
+restore_command = 'copy "C:\\[ARCHIVE_FOLDER]\\%f" "%p"'
+recovery_target_time = '2022-08-06 12:52:00'
+
+# create an empty "recovery.signal" text file in PGDATA
+# this file signals to start the database in recovery mode
+touch recovery.signal
+or
+type nul >> "recovery.signal"
+
+# start database
+pg_ctl start
+
+# check PGDATA/log for proper restoration
