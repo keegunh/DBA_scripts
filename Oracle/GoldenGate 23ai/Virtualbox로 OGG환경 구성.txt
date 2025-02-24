@@ -122,7 +122,7 @@ alias admcl="adminclient"
 	- mkdir ogg_ma			: 여기가 OGG_HOME
 	- mkdir ogg_sm
 	- mkdir ogg_deploy
-	- cp V1042871-01.zip /u01/app/oracle/engine_zip/
+	- cp /media/V1042871-01.zip /u01/app/oracle/engine_zip/
 	- cd engine_zip
 	- unzip V1042871-01.zip
 	- cd fbo_ggs_Linux_x64_Oracle_services_shiphome/Disk1/
