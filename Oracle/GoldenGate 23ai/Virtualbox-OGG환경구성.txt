@@ -163,7 +163,11 @@ TNSADMIN=$ORACLE_HOME/network/admin
 	- Secondary: http://192.168.56.102:7820
 	- Primary 서버에서는 Receiver Service 정지
 	- Secondary 서버에서는 Distribution Service 정지
-	
+
+	- 서버에서 adminclient를 통해서도 접속 가능하다.
+	- $OGG_HOME/bin/adminclient
+	- connect http://localhost:7820 deployment DP1 as oggadmin password 1
+
 15. Primary, Secondary 각 DB인스턴스 파라미터 설정
 	sqlplus / as sysdba
 	alter system set enable_goldengate_replication=TRUE;
@@ -198,11 +202,13 @@ TNSADMIN=$ORACLE_HOME/network/admin
 	alter session set container = FREEPDB1;
 	CREATE USER oggsource IDENTIFIED BY 1;
 	GRANT dba TO oggsource;
+	GRANT ogg_capture, ogg_apply, ogg_apply_procrep to oggsource;
 	
 	-- Secondary
 	alter session set container = FREEPDB1;
 	CREATE USER oggtarget IDENTIFIED BY 1;
 	GRANT dba TO oggtarget;
+	GRANT ogg_capture, ogg_apply, ogg_apply_procrep to oggtarget;
 	
 19. Primary, Secondary 각 DB인스턴스 tnsnames.ora, listener.ora 파일 수정 (FREEPDB1으로 바로 접속 가능하도록)
 	-- tnsnames.ora
@@ -321,3 +327,31 @@ TNSADMIN=$ORACLE_HOME/network/admin
 			- Table Name: oggtarget.dept22
 	- 등록함으로써 해당 테이블에 대한 supplemental logging이 활성화된다.
 	- 확인 쿼리: select owner, log_group_name, table_name, log_group_type from dba_log_groups where table_name in ('DEPT11', 'DEPT22');
+	
+	
+
+
+
+24. 
+
+EXTRACT extw
+USERIDALIAS ggadmin_FREE domain OracleGoldenGate
+EXTTRAIL /u01/app/oracle/ogg_DP1_dirs/var/lib/data/lw
+SOURCECATALOG oggsource
+DDL INCLUDE ALL
+TABLE oggsource.*;
+
+REPLICAT repe
+USERIDALIAS oggtarget_FREEPDB1 DOMAIN OracleGoldenGate
+SOURCECATALOG oggsource
+MAP oggsource.dept11, TARGET oggtarget.dept22;
+
+
+
+
+
+
+https://apexapps.oracle.com/pls/apex/r/dbpm/livelabs/run-workshop?p210_wid=3273&p210_wec=&session=12954942311374
+
+connect http://localhost:7820 deployment DP1 as oggadmin password 1
+connect http://localhost:7820 deployment DP2 as oggadmin password 1
