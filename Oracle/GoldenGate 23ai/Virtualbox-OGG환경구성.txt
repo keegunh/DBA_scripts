@@ -1,357 +1,490 @@
-OGG 세팅
-
-0. Virtualbox 7.1.6 사용
-1. Oracle Linux 9.5 OS 설치
-	- Software Selection
-		- Base Environment: Server with GUI (필수)
-		- Additional software for Selected Environment
-			- Debugging Tools
-			- Performance Tools
-			- Legacy/UNIX Compatiability
-			- Development Tools
-			- Graphical Administration Tools
-			- System Tools
-	- Installation Destination
-		- Automatic Partitioning (아무 설정도 하지 말고 바로 DONE 클릭)
-	- Network & Hostname
-		- Hostname: "primary.localdomain" -> Apply	
-	- ROOT Password
-		- 1/1
-
-2. yum update -y
-
-3. VM -> 장치 -> 게스트 확장 CD 이미지 삽입
-
-4. 방화벽 해제 #######################################################
-	- systemctl stop firewalld
-	- systemctl disable firewalld
-
-5. 로컬머신-VM 간 공유 폴더 구성
-	- 마운트 지점: /media
-	- 읽기 전용, 자동 마운트, 항상 사용
-
-6. 로컬머신 공유 폴더에 설치 파일 업로드
-	- Oracle database 23ai: oracle-database-free-23ai-1.0-1.el8.x86_64.rpm
-	- OGG 23ai Microservices: V1042871-01.zip
-	- [선택]Oracle database 19c: oracle-database-ee-19c-1.0-1.x86_64.rpm
-
-7. vm 화면 크기 조정
-	- 보기 -> 게스트 디스플레이 크기 자동 조정
-
-8. Virtualbox에서 VM 네트워크 어댑터 추가
-	- VM설정 -> 네트워크 -> Adapter 2 활성화: 호스트 전용 어댑터
-	- 호스트 전용 어댑터 추가하면 포트포워딩 필요 없음
-	- VM에 접속 후 우측 상단 배터리 클릭 -> Ethernet enp0s8 Connect 상태로 변경
-	
-9. Oracle DB 설치
-	- su -
-	- cd /media
-	- yum install oracle-database-free-23ai-1.0-1.el8.x86_64.rpm
-	- [참고] yum remove oracle-database-free-23ai
-	- cd /etc/init.d
-	- ./oracle-free-23ai configure
-	
-10. .bash_profile 설정
-# .bash_profile
-
-# Get the aliases and functions
-if [ -f ~/.bashrc ]; then
-        . ~/.bashrc
-fi
-
-# DB defaults
-export ORACLE_HOME=/opt/oracle/product/23ai/dbhomeFree
-export ORACLE_SID=FREE
-export TEMPLATE_NAME=FREE_Database.dbc
-export PDB_NAME=FREEPDB1
-export LISTENER_NAME=LISTENER
-export NUMBER_OF_PDBS=1
-export CREATE_AS_CDB=true
-export TNSADMIN=$ORACLE_HOME/network/admin
-
-# General exports and vars
-export PATH=$ORACLE_HOME/bin:$PATH
-LSNR=$ORACLE_HOME/bin/lsnrctl
-SQLPLUS=$ORACLE_HOME/bin/sqlplus
-NETCA=$ORACLE_HOME/bin/netca
-DBCA=$ORACLE_HOME/bin/dbca
-ORACLE_OWNER=oracle
-RETVAL=0
-CONFIG_NAME="oracle-free-23ai.conf"
-CONFIGURATION="/etc/sysconfig/$CONFIG_NAME"
-ORACLE_HOME_NAME="OraHomeFree"
-MINIMUM_MEMORY=1048576
-MAXIMUM_MEMORY=2097152
-MINIMUM_MEMORY_STR="1GB"
-
-MINIMUM_SPACE=4718592
-MINIMUM_SPACE_STR="4.5GB"
-
-# Commands
-if [ -z "$SS" ];then SS=/usr/sbin/ss; fi
-if [ -z "$SU" ];then SU=/bin/su; fi
-if [ -z "$AWK" ];then AWK=/bin/awk; fi
-if [ -z "$DF" ];then DF=/bin/df; fi
-if [ -z "$GREP" ]; then GREP=/usr/bin/grep; fi
-if [ ! -f "$GREP" ]; then GREP=/bin/grep; fi
-if [ -z "$TAIL" ]; then TAIL=/usr/bin/tail; fi
-if [ ! -f "$TAIL" ]; then TAIL=/bin/tail; fi
-HOSTNAME_CMD="/bin/hostname"
-MKDIR_CMD="/bin/mkdir"
-if [ ! -f "$SS" ]; then SS="/sbin/ss"; fi
-
-alias sq="sqlplus / as sysdba"
-export OGG_HOME=/u01/app/oracle/ogg_ma
-export PATH=$OGG_HOME/bin:$PATH
-alias admcl="adminclient"
-TNSADMIN=$ORACLE_HOME/network/admin
+###########################################################################################################
+# 
+# Oracle Goldengate 23ai 환경 구성
+# 
+# 설치버전:
+# 	1. VM:	Virtualbox 7.1.6
+# 	2. OS:	Oracle Linux 9.5
+# 	3. DB:	Oracle database 23.0.0.0.0
+# 	4. CDC:	Oracle Goldengate 23ai
+# 	
+# 아키텍처 구성
+# 	1. Primary서버
+# 		- OGG설치
+# 		- DB설치
+# 		- OS구성
+# 	2. Secondary서버
+# 		- DB설치
+# 		- OS구성
+# 	** OGG엔진은 실제 환경에서는 source서버, target서버, 또는 제 3의 서버에 설치해도 CDC구성 가능
+# 	** 본 예시에서는 Primary서버에만 설치
+# 
+# 프로그램 기동/정지
+# 	1. DB
+# 		startup
+# 		shutdown immediate
+# 	2. DB리스너
+# 		lsnrctl start
+# 		lsnrctl stop
+# 		lsnrctl status
+# 	3. OGG
+# 		systemctl start OracleGoldenGate
+# 		systemctl stop OracleGoldenGate
+# 		systemctl status OracleGoldenGate
+# 
+# 특이사항:	Oracle 23ai 무료 버전에서는 SID를 변경하거나 하나의 서버에 멀티 인스턴스를 구성할 수 없음. SID가 FREE로 고정되어 있음.
+# 			이에 아래 primary 및 secondary 서버의 tnsnames.ora, listener.ora 에서는 각자 자기 DB를 FREE라 칭함.
+#			예) primary 서버에서는 자기 DB를 FREE, secondary 서버를 FREETARGET이라 부름
+#			secondary 서버에서는 자기 DB를 FREE, primary 서버를 FREESOURCE라 부름
+# 
+# 참고자료:	https://apexapps.oracle.com/pls/apex/r/dbpm/livelabs/run-workshop?p210_wid=3273&p210_wec=&session=12954942311374
+# 			https://www.udemy.com/course/oracle-goldengate-microservices
+# 
+# Goldengate Service Manager PORT 정리 (SM port가 7820이라 가정)
+#	administration service 7821
+#	distribution service 7822
+#	receiver service 7823
+#	performance metrics 7824
+###########################################################################################################
 
 
-11. OGG사용자 생성
-	- CREATE USER c##ogguser identified by 1;
-	- GRANT CONNECT, RESOURCE, DBA TO c##ogguser;
-	- DB접속 테스트
-	
-12. OGG 설치
-	- su -
-	- mkdir -p /u01/app/oracle
-	- chown -R oracle:oinstall /u01
-	- chmod -R 755 /u01
-	- su - oracle
-	- cd /u01/app/oracle
-	- mkdir engine_zip
-	- mkdir ogg_ma			: OGG_HOME
-	- mkdir ogg_deploy_home	: Deployment Home
-	- mkdir ogg_DP1_dirs	: Deployment1 (Named Directory) directories
-	- cp /media/V1042871-01.zip /u01/app/oracle/engine_zip/
-	- cd engine_zip
-	- unzip V1042871-01.zip
-	- cd fbo_ggs_Linux_x64_Oracle_services_shiphome/Disk1/
-	- ./runInstaller
 
-13. OGG Service Manager, Deployment 구성
-	- $OGG_HOME/bin/oggca.sh -> Oracle GoldenGate Configuration Assistant UI로 켜줌
-	- Service Manager Deployment
-		- Software Home: /u01/app/oracle/ogg_ma			($OGG_HOME/ogg_ma, 자동설정)
-		- Deployment Home: /u01/app/oracle/ogg_deploy_home		($OGG_HOME/ogg_deploy_home)
-		- Hostname/IP Address: 자동 설정
-		- Port: 7820 (임의 설정)
-		- Security: Enable Security 비활성화 (운영 환경에서는 활성화 필수!)
-	- Service Manager Administrator
-		- Administrator Account for Service Manager
-			- Username/PW: oggadmin/1
-	- User Deployment
-		- Deployment Name: DP1 (primary 서버에서는 DP1, secondary 서버에서는 DP2)
-		- Depoyment Directories: /u01/app/oracle/ogg_DP1_dirs	($OGG_HOME/ogg_DP1_dirs)
-		- Ports: 자동 설정
-		- Replication options
-			- TNS_ADMIN: Environment Variables 누른 후 TNS경로 절대경로로 추가. 
-				${ORACLE_HOME}을 활용한 상대 경로 쓰면 안 되더라. 
-				만약 이미 그렇게 했다면 deploy_home/var/lib/conf/ServiceManager-resources.dat에서 TNS_NAMES를 검색해서 변경할 것. 
-				또한 Service Manager -> Deployments -> DP1 -> Configuration -> TNS_NAMES에서도 변경 필요.
-				서버 재기동 필요.
-			- Replication Schema: C##OGGUSER (사전에 DB에 생성해둔 ogg용 스키마)
-	- Administrator Account for Deployment
-		- Local Account with new credentials
-			- Username/PW: oggDP1admin/1
-		- 또는 Same as Service Manager administrator credentials
-	- 마지막에 root 권한으로 다음과 같은 스크립트 실행해야함. /u01/app/oracle/ogg_dp_home/bin/registerServiceManager.sh
+I. Virtualbox로 Linux 가상 환경 구성
+	1. Virtualbox 다운로드 및 설치
+	2. Virtualbox에 Oracle Linux 9.5 OS 설치 (source 서버 하나, target  서버 하나, 총 2개 VM 필요)
+		- Software Selection
+			- Base Environment: Server with GUI (필수)
+			- Additional software for Selected Environment
+				- Debugging Tools
+				- Performance Tools
+				- Legacy/UNIX Compatiability
+				- Development Tools
+				- Graphical Administration Tools
+				- System Tools
+		- Installation Destination
+			- Automatic Partitioning (아무 설정도 하지 말고 바로 DONE 클릭)
+		- Network & Hostname
+			- Hostname: "primary.localdomain" -> Apply
+			- 서버1은 primary.localdomain, 서버2는 secondary.localdomain으로 설정
+		- ROOT Password
+			- 1/1
+	3. Oracle Linux 9.5 OS 추가 구성
+		- yum update -y
+		- VM -> 장치 -> 게스트 확장 CD 이미지 삽입
+	4. 공유 폴더 구성 
+		- Virtualbox로 로컬머신와 VM 간 공유 폴더 구성
+		- Virtualbox -> VM 선택 -> 설정
+		- 마운트 지점: /media
+		- 읽기 전용, 자동 마운트, 항상 사용
+	5. 설치파일 업로드
+		- 로컬머신 공유 폴더에 설치 파일 업로드
+		- Oracle database 23ai: oracle-database-free-23ai-1.0-1.el8.x86_64.rpm
+		- OGG 23ai Microservices: V1042871-01.zip
+	6. Virtualbox에서 VM 화면 크기 조정
+		- VM -> 보기 -> 게스트 디스플레이 크기 자동 조정
+	7. 네트워크 구성
+		- Virtualbox에서 VM 네트워크 어댑터 추가
+			- VM설정 -> 네트워크 -> Adapter 2 활성화: 호스트 전용 어댑터
+			- 호스트 전용 어댑터 추가하면 포트포워딩 필요 없음
+			- VM에 접속 후 우측 상단 배터리 클릭 -> Ethernet enp0s8 Connect 상태로 변경
+		- VM 방화벽 해제
+			- systemctl stop firewalld
+			- systemctl disable firewalld
+		- /etc/hosts파일에 primary 및 secondary IP와 hostname 추가
+		- /etc/hostname에 hostname 필요 시 조정
+
+II. Oracle DB 설치
+	1. VM에서 아래 스크립트 실행
+		- su -
+		- cd /media
+		- yum install oracle-database-free-23ai-1.0-1.el8.x86_64.rpm
+		- [참고] yum remove oracle-database-free-23ai
+		- cd /etc/init.d
+		- ./oracle-free-23ai configure
+	2. .bash_profile 설정
+			# .bash_profile
+
+			# Get the aliases and functions
+			if [ -f ~/.bashrc ]; then
+					. ~/.bashrc
+			fi
+
+			# DB defaults
+			export ORACLE_HOME=/opt/oracle/product/23ai/dbhomeFree
+			export ORACLE_SID=FREE
+			export TEMPLATE_NAME=FREE_Database.dbc
+			export PDB_NAME=FREEPDB1
+			export LISTENER_NAME=LISTENER
+			export NUMBER_OF_PDBS=1
+			export CREATE_AS_CDB=true
+			export TNSADMIN=$ORACLE_HOME/network/admin
+
+			# General exports and vars
+			export PATH=$ORACLE_HOME/bin:$PATH
+			LSNR=$ORACLE_HOME/bin/lsnrctl
+			SQLPLUS=$ORACLE_HOME/bin/sqlplus
+			NETCA=$ORACLE_HOME/bin/netca
+			DBCA=$ORACLE_HOME/bin/dbca
+			ORACLE_OWNER=oracle
+			RETVAL=0
+			CONFIG_NAME="oracle-free-23ai.conf"
+			CONFIGURATION="/etc/sysconfig/$CONFIG_NAME"
+			ORACLE_HOME_NAME="OraHomeFree"
+			MINIMUM_MEMORY=1048576
+			MAXIMUM_MEMORY=2097152
+			MINIMUM_MEMORY_STR="1GB"
+
+			MINIMUM_SPACE=4718592
+			MINIMUM_SPACE_STR="4.5GB"
+
+			# Commands
+			if [ -z "$SS" ];then SS=/usr/sbin/ss; fi
+			if [ -z "$SU" ];then SU=/bin/su; fi
+			if [ -z "$AWK" ];then AWK=/bin/awk; fi
+			if [ -z "$DF" ];then DF=/bin/df; fi
+			if [ -z "$GREP" ]; then GREP=/usr/bin/grep; fi
+			if [ ! -f "$GREP" ]; then GREP=/bin/grep; fi
+			if [ -z "$TAIL" ]; then TAIL=/usr/bin/tail; fi
+			if [ ! -f "$TAIL" ]; then TAIL=/bin/tail; fi
+			HOSTNAME_CMD="/bin/hostname"
+			MKDIR_CMD="/bin/mkdir"
+			if [ ! -f "$SS" ]; then SS="/sbin/ss"; fi
+
+			alias sq="sqlplus / as sysdba"
+			export OGG_HOME=/u01/app/oracle/ogg_ma
+			export PATH=$OGG_HOME/bin:$PATH
+			alias admcl="adminclient"
+			TNSADMIN=$ORACLE_HOME/network/admin
+
+III. Oracle Goldengate (OGG) 엔진 설치
+	1. VM에서 아래 스크립트 실행
+		- su -
+		- mkdir -p /u01/app/oracle
+		- chown -R oracle:oinstall /u01
+		- chmod -R 755 /u01
+		- su - oracle
+		- cd /u01/app/oracle
+		- mkdir engine_zip
+		- mkdir ogg_ma			: OGG_HOME
+		- mkdir ogg_deploy_home	: Deployment Home
+		- mkdir ogg_DP1_dirs	: Deployment1 (Named Directory) directories
+		- cp /media/V1042871-01.zip /u01/app/oracle/engine_zip/
+		- cd engine_zip
+		- unzip V1042871-01.zip
+		- cd fbo_ggs_Linux_x64_Oracle_services_shiphome/Disk1/
+		- ./runInstaller
+	2. Oracle DB에 OGG용 replication schema 생성
+		- CREATE USER c##oggrep identified by 1;
+		- GRANT DBA TO c##oggrep;
+		- DB접속 테스트
+	3. OGG Configuration Assistant로 Service Manager 및 Deployment 구성
+		- $OGG_HOME/bin/oggca.sh
+			- Service Manager Deployment
+				- Software Home: /u01/app/oracle/ogg_ma			($OGG_HOME/ogg_ma, 자동설정)
+				- Deployment Home: /u01/app/oracle/ogg_deploy_home		($OGG_HOME/ogg_deploy_home)
+				- Hostname/IP Address: 자동 설정
+				- Port: 7820 (임의 설정)
+				- Security: Enable Security 비활성화 (운영 환경에서는 활성화 필수!)
+			- Service Manager Administrator
+				- Administrator Account for Service Manager
+					- Username/PW: oggadmin/1
+			- User Deployment
+				- Deployment Name: DP1 (이름은 임의 설정, 본 실습은 primary 서버에서는 DP1, secondary 서버에서는 DP2로 설정)
+				- Depoyment Directories: /u01/app/oracle/ogg_DP1_dirs	($OGG_HOME/ogg_DP1_dirs)
+				- Ports: 자동 설정
+				- Replication options
+					- TNS_ADMIN: Environment Variables 누른 후 TNS경로 절대경로로 추가. 
+						${ORACLE_HOME}을 활용한 상대 경로로 입력하면 작동하지 않음
+							만약 이미 그렇게 했다면 deploy_home/var/lib/conf/ServiceManager-resources.dat에서 TNS_NAMES를 검색해서 변경할 것. 
+							또한 Service Manager -> Deployments -> DP1 -> Configuration -> TNS_NAMES에서도 변경 필요.
+							서버 재기동 필요.
+					- Replication Schema: c##oggrep
+			- Administrator Account for Deployment
+				- Local Account with new credentials (Deployment 별로 다른 관리 계정)
+					- Username/PW: oggDP1admin/1
+				- 또는 Same as Service Manager administrator credentials (Service Manager과 동일 계정으로 사용)
+			- 마지막에 root 권한으로 다음과 같은 스크립트 실행해야함. /u01/app/oracle/ogg_dp_home/bin/registerServiceManager.sh
+
+IV. OGG Service Manager 접속
+	1. GUI를 통한 접속
+		- http(s)://[서버IP]:[Service Manager Deployment에서 지정한 포트]
+		- Primary: http://192.168.56.101:7820
+		- Secondary: http://192.168.56.102:7820
+		- ID/PW : oggadmin/1
+	2. Command prompt를 통한 접속
+		- 서버에서 adminclient를 통해서 접속
+		- $OGG_HOME/bin/adminclient
+		- connect http://localhost:7820 deployment DP1 as oggadmin password 1
+
+V. DB내 OGG 환경 구성
+	1. Primary, Secondary 각 DB인스턴스 파라미터 설정
+		sqlplus / as sysdba
+		alter system set enable_goldengate_replication=TRUE;
+		alter database add supplemental log data (all) columns;  -- 이거는 primary (source)에서만 활성화. (It adds an extra column in redo logs so that a row can be uniquely identified.)
+		alter database force logging;
+
+		shutdown immediate
+		startup mount
+		alter database archivelog;
+		alter database open;
+		archive log list; 
+
+		select supplemental_log_data_min , force_logging, log_mode, cdb from v$database; 
 		
-14. Service manager에 접속한다.
-	- http(s)://[서버IP]:[Service Manager Deployment에서 지정한 포트]
-	- Primary: http://192.168.56.101:7820
-	- Secondary: http://192.168.56.102:7820
-	- Primary 서버에서는 Receiver Service 정지
-	- Secondary 서버에서는 Distribution Service 정지
-
-	- 서버에서 adminclient를 통해서도 접속 가능하다.
-	- $OGG_HOME/bin/adminclient
-	- connect http://localhost:7820 deployment DP1 as oggadmin password 1
-
-15. Primary, Secondary 각 DB인스턴스 파라미터 설정
-	sqlplus / as sysdba
-	alter system set enable_goldengate_replication=TRUE;
-	alter database add supplemental log data (all) columns;  -- 이거는 primary (source)에서만 활성화되어 있으면 된다. It adds an extra column in redo logs so that a row can be uniquely identified.
-	alter database force logging;
-
-	shutdown immediate
-	startup mount
-	alter database archivelog;
-	alter database open;
-	archive log list; 
-
-	select supplemental_log_data_min , force_logging, log_mode, cdb from v$database; 
+	2.Primary, Secondary 각 DB인스턴스 GLOBAL 유저 생성 및 권한 부여
+		# 테이블스페이스는 선택 사항
+		create user c##ggsource identified by 1;
+		grant connect, resource, dba to c##ggsource container=all;
+		grant ogg_capture, ogg_apply, ogg_apply_procrep to c##ggsource container=all;
+		
+		create user c##ggtarget identified by 1;
+		grant connect, resource, dba to c##ggtarget container=all;
+		grant ogg_capture, ogg_apply, ogg_apply_procrep to c##ggtarget container=all;
 	
-16. Primary, Secondary 각 DB인스턴스 GLOBAL 유저 생성 및 권한 부여
-	# 테이블스페이스는 선택 사항
-	create user c##ggtrainingsource identified by 1;
-	grant connect, resource, dba to c##ggtrainingsource container=all;
-	grant ogg_capture, ogg_apply, ogg_apply_procrep to c##ggtrainingsource container=all;
-	-- exec dbms_goldengate_auth.grant_admin_privilege ('c##ggtrainingsource', container=>'all');
-	
-	create user c##ggtrainingtarget identified by 1;
-	grant connect, resource, dba to c##ggtrainingtarget container=all;
-	grant ogg_capture, ogg_apply, ogg_apply_procrep to c##ggtrainingtarget container=all;
-	
-17. 만약 사용하려는 PDB가 mounted 상태라면 open 상태로 변경
-	select name, open_mode from v$pdbs;
-	alter pluggable database FREEPDB1 OPEN;
+	3. 만약 사용하려는 PDB가 mounted 상태라면 open 상태로 변경
+		select name, open_mode from v$pdbs;
+		alter pluggable database FREEPDB1 OPEN;
 
-18. Primary, Secondary 각 DB인스턴스에 FREEPDB1 내 ogg 사용자 생성
-	-- Primary
-	alter session set container = FREEPDB1;
-	CREATE USER oggsource IDENTIFIED BY 1;
-	GRANT dba TO oggsource;
-	GRANT ogg_capture, ogg_apply, ogg_apply_procrep to oggsource;
+	4. Primary, Secondary 각 DB인스턴스에 FREEPDB1 내 ogg 사용자 생성
+		-- Primary
+		alter session set container = FREEPDB1;
+		CREATE USER oggsource IDENTIFIED BY 1;
+		GRANT dba TO oggsource;
+		GRANT ogg_capture, ogg_apply, ogg_apply_procrep to oggsource;
+		
+		-- Secondary
+		alter session set container = FREEPDB1;
+		CREATE USER oggtarget IDENTIFIED BY 1;
+		GRANT dba TO oggtarget;
+		GRANT ogg_capture, ogg_apply, ogg_apply_procrep to oggtarget;
 	
-	-- Secondary
-	alter session set container = FREEPDB1;
-	CREATE USER oggtarget IDENTIFIED BY 1;
-	GRANT dba TO oggtarget;
-	GRANT ogg_capture, ogg_apply, ogg_apply_procrep to oggtarget;
+	5. Primary, Secondary 각 DB인스턴스에 FREEPDB1로 접속 후 테이블 생성
+		-- Primary FREEPDB1.oggsource
+		create table dept11(
+		 deptno number(2,0),
+		 dname varchar2(14),
+		 loc varchar2(13),
+		 constraint pk_dept primary key (deptno)
+		);
+		
+		-- Secondary FREEPDB1.oggtarget
+		create table dept11(
+		 deptno number(2,0),
+		 dname varchar2(14),
+		 loc varchar2(13),
+		 constraint pk_dept primary key (deptno)
+		);
 	
-19. Primary, Secondary 각 DB인스턴스 tnsnames.ora, listener.ora 파일 수정 (FREEPDB1으로 바로 접속 가능하도록)
-	-- tnsnames.ora
-	# tnsnames.ora Network Configuration File: /opt/oracle/product/23ai/dbhomeFree/network/admin/tnsnames.ora
-	# Generated by Oracle configuration tools.
+	6. Primary, Secondary 각 DB인스턴스 tnsnames.ora, listener.ora 파일 수정 (primary, secondary 서버가 각각 서로의 CDB와 PDB(FREEPDB1)로 바로 접속 가능하도록 설정)
 
-	FREE =
-	  (DESCRIPTION =
-		(ADDRESS = (PROTOCOL = TCP)(HOST = primary.localdomain)(PORT = 1521))
-		(CONNECT_DATA =
-		  (SERVER = DEDICATED)
-		  (SERVICE_NAME = FREE)
-		)
-	  )
+		-- tnsnames.ora
+		# tnsnames.ora Network Configuration File: /opt/oracle/product/23ai/dbhomeFree/network/admin/tnsnames.ora
+		# Generated by Oracle configuration tools.
 
-	LISTENER_FREE =
-	  (ADDRESS = (PROTOCOL = TCP)(HOST = primary.localdomain)(PORT = 1521))
+		FREE =
+		  (DESCRIPTION =
+			(ADDRESS = (PROTOCOL = TCP)(HOST = primary.localdomain)(PORT = 1521))
+			(CONNECT_DATA =
+			  (SERVER = DEDICATED)
+			  (SERVICE_NAME = FREE)
+			)
+		  )
 
-	FREEPDB1 =
-	  (DESCRIPTION =
-		(ADDRESS = (PROTOCOL = TCP)(HOST = primary.localdomain)(PORT = 1521))
-		(CONNECT_DATA =
-		  (SERVER = DEDICATED)
-		  (SERVICE_NAME = FREEPDB1)
-		)
-	  )
-
-	LISTENER_FREEPDB1 =
-	  (ADDRESS = (PROTOCOL = TCP)(HOST = primary.localdomain)(PORT = 1521))
-	
-	
-	
-	
-	-- listener.ora
-	# listener.ora Network Configuration File: /opt/oracle/product/23ai/dbhomeFree/network/admin/listener.ora
-	# Generated by Oracle configuration tools.
-
-	DEFAULT_SERVICE_LISTENER = FREE
-
-	FREE =
-	  (DESCRIPTION_LIST =
-		(DESCRIPTION =
+		LISTENER_FREE =
 		  (ADDRESS = (PROTOCOL = TCP)(HOST = primary.localdomain)(PORT = 1521))
-		  (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
-		)
-	  )
 
+		FREEPDB1 =
+		  (DESCRIPTION =
+			(ADDRESS = (PROTOCOL = TCP)(HOST = primary.localdomain)(PORT = 1521))
+			(CONNECT_DATA =
+			  (SERVER = DEDICATED)
+			  (SERVICE_NAME = FREEPDB1)
+			)
+		  )
 
-	FREEPDB1 =
-	  (DESCRIPTION_LIST =
-		(DESCRIPTION =
+		LISTENER_FREEPDB1 =
 		  (ADDRESS = (PROTOCOL = TCP)(HOST = primary.localdomain)(PORT = 1521))
-		  (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
-		)
-	  )
 
-	-- DB재기동 및 listener 재기동 필수!
-	shutdown immediate
-	startup
+		FREETARGET =
+		  (DESCRIPTION =
+			(ADDRESS = (PROTOCOL = TCP)(HOST = secondary.localdomain)(PORT = 1521))
+			(CONNECT_DATA =
+			  (SERVER = DEDICATED)
+			  (SERVICE_NAME = FREE)
+			)
+		  )
+
+		LISTENER_FREETARGET =
+		  (ADDRESS = (PROTOCOL = TCP)(HOST = secondary.localdomain)(PORT = 1521))
+
+		FREETARGETPDB1 =
+		  (DESCRIPTION =
+			(ADDRESS = (PROTOCOL = TCP)(HOST = secondary.localdomain)(PORT = 1521))
+			(CONNECT_DATA =
+			  (SERVER = DEDICATED)
+			  (SERVICE_NAME = FREEPDB1)
+			)
+		  )
+
+		LISTENER_FREETARGETPDB1 =
+		  (ADDRESS = (PROTOCOL = TCP)(HOST = secondary.localdomain)(PORT = 1521))
+
+
+		-- listener.ora
+		# listener.ora Network Configuration File: /opt/oracle/product/23ai/dbhomeFree/network/admin/listener.ora
+		# Generated by Oracle configuration tools.
+
+		DEFAULT_SERVICE_LISTENER = FREE
+
+		FREE =
+		  (DESCRIPTION_LIST =
+			(DESCRIPTION =
+			  (ADDRESS = (PROTOCOL = TCP)(HOST = primary.localdomain)(PORT = 1521))
+			  (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+			)
+		  )
+
+
+		FREEPDB1 =
+		  (DESCRIPTION_LIST =
+			(DESCRIPTION =
+			  (ADDRESS = (PROTOCOL = TCP)(HOST = primary.localdomain)(PORT = 1521))
+			  (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+			)
+		  )
+
+		FREETARGET =
+		  (DESCRIPTION_LIST =
+			(DESCRIPTION =
+			  (ADDRESS = (PROTOCOL = TCP)(HOST = secondary.localdomain)(PORT = 1521))
+			  (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+			)
+		  )
+
+
+		FREETARGETPDB1 =
+		  (DESCRIPTION_LIST =
+			(DESCRIPTION =
+			  (ADDRESS = (PROTOCOL = TCP)(HOST = secondary.localdomain)(PORT = 1521))
+			  (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+			)
+		  )
+
 	
-	lsnrctl stop
-	lsnrctl start
-	lsnrctl status
-	
+VI. OGG Replication 구성
+	1. Configure Database Credentials, Trandata, Heartbeat, and Checkpoint Tables
+		Task 1: Connect to the Administration Service for the Deployment
+			1. Primary
+				CONNECT http://localhost:7820 deployment DP1 as oggadmin password 1
 
-20. Primary, Secondary 각 DB인스턴스에 FREEPDB1로 접속 후 테이블 생성
-	-- Primary FREEPDB1
-	create table dept11(
-	 deptno number(2,0),
-	 dname varchar2(14),
-	 loc varchar2(13),
-	 constraint pk_dept primary key (deptno)
-	);
-	
-	
-	-- Secondary FREEPDB1
-	create table dept22(
-	 deptno number(2,0),
-	 dname varchar2(14),
-	 loc varchar2(13),
-	 constraint pk_dept primary key (deptno)
-	);
-	
-	
-21. OGG 기동/정지 상태확인
-	systemctl start OracleGoldenGate
-	systemctl status OracleGoldenGate
-	systemctl stop OracleGoldenGate
-	
-22. OGG Service Manager에 DB접속정보 등록
-	- Primary: http://192.168.56.101:7820
-		login service manager -> Deployments -> DP1 -> Administration Service -> login deployment -> DB Connections 추가
-		- Alias: ggadmin_FREE
-			- User ID: c##ggtrainingsource@FREE	
-			- PW: 1
-		- Alias: oggsource_FREEPDB1
-			- User ID: oggsource@FREEPDB1	
-			- PW: 1
-	- Secondary: http://192.168.56.102:7820
-		login service manager -> Deployments -> DP2 -> Administration Service -> login deployment -> DB Connections 추가
-		- Alias: ggadmin_FREE
-			- User ID: c##ggtrainingtarget@FREE	
-			- PW: 1
-		- Alias: oggtarget_FREEPDB1
-			- User ID: oggtarget@FREEPDB1	
-			- PW: 1
-	- OGG -> DB 접속테스트 수행
-	
-	
-23. OGG Service Manager에 transactional 테이블 등록
-	- Primary: http://192.168.56.101:7820
-		login service manager -> Deployments -> DP1 -> Administration Service -> login deployment -> DB Connections -> oggsource_FREEPDB1(oggsource@FREEPDB1) -> TRANDATA Information 추가
-			- Table Name: oggsource.dept11
-	- Secondary: http://192.168.56.102:7820
-		login service manager -> Deployments -> DP2 -> Administration Service -> login deployment -> DB Connections -> oggtarget_FREEPDB1(oggtarget@FREEPDB1) -> TRANDATA Information 추가
-			- Table Name: oggtarget.dept22
-	- 등록함으로써 해당 테이블에 대한 supplemental logging이 활성화된다.
-	- 확인 쿼리: select owner, log_group_name, table_name, log_group_type from dba_log_groups where table_name in ('DEPT11', 'DEPT22');
-	
-	
+		Task 2: Add Database Credentials
+			1. Primary
+				CONNECT http://localhost:7820 deployment DP1 as oggadmin password 1
+				ALTER CREDENTIALSTORE ADD USER c##ggsource@FREE ALIAS coggsource DOMAIN OracleGoldenGate PASSWORD 1
+				DBLOGIN USERIDALIAS coggsource
+
+				CONNECT http://localhost:7820 deployment DP1 as oggadmin password 1
+				ALTER CREDENTIALSTORE ADD USER oggsource@FREEPDB1 ALIAS oggsource DOMAIN OracleGoldenGate PASSWORD 1
+				DBLOGIN USERIDALIAS oggsource
+
+				CONNECT http://localhost:7820 deployment DP1 as oggadmin password 1
+				ALTER CREDENTIALSTORE ADD USER c##ggtarget@FREETARGET ALIAS coggtarget DOMAIN OracleGoldenGate PASSWORD 1
+				DBLOGIN USERIDALIAS coggtarget
+
+				CONNECT http://localhost:7820 deployment DP1 as oggadmin password 1
+				ALTER CREDENTIALSTORE ADD USER oggtarget@FREETARGETPDB1 ALIAS oggtarget DOMAIN OracleGoldenGate PASSWORD 1
+				DBLOGIN USERIDALIAS oggtarget
+				
+		Task 3: Enable supplemental logging on source database
+			1. Primary
+				DBLOGIN USERIDALIAS oggsource
+				ADD SCHEMATRANDATA oggsource		## DB SCHEMA
+				INFO SCHEMATRANDATA oggsource
+				ADD TRANDATA oggsource.dept11		## DB TABLE
+				INFO TRANDATA oggsource.dept11
+
+		Task 4: Add checkpoint table for target
+			1. Primary
+				DBLOGIN USERIDALIAS oggtarget
+				ADD CHECKPOINTTABLE oggtarget.ggs_checkpoint	## oggtarget 스키마에 ggs_checkpoint 테이블 생성
+				INFO CHECKPOINTTABLE oggtarget.ggs_checkpoint
+
+		Task 5: Add heartbeattable for source and target
+			1. Primary
+				DBLOGIN USERIDALIAS oggsource
+				ADD HEARTBEATTABLE
+				INFO HEARTBEATTABLE
+
+				DBLOGIN USERIDALIAS oggtarget
+				ADD HEARTBEATTABLE
+				INFO HEARTBEATTABLE
+		
+		2. Add Extract
+			1. Primary
+				DBLOGIN USERIDALIAS coggsource
+				ADD EXTRACT extw, INTEGRATED TRANLOG, BEGIN NOW
+				REGISTER EXTRACT extw Database Container (FREEPDB1)
+				EDIT PARAMS extw
+				
+					EXTRACT extw
+					USERIDALIAS coggsource domain OracleGoldenGate
+					EXTTRAIL west/ea
+					SOURCECATALOG FREEPDB1
+					DDL INCLUDE ALL
+					TABLE oggsource.dept11;
+					-- TABLE oggsource.*;    <- 이렇게 구성하면 HEARTBEAT 테이블 떄문에 오류 발생함. HEARTBEAT는 지속적으로 업데이트가 발생하는데 pk가 없음.
+					
+				ADD EXTTRAIL west/ea EXTRACT extw
+				START EXTRACT extw
+				INFO EXTRACT extw
+		
+		3. Add Replicat
+			1. Secondary
+				DBLOGIN USERIDALIAS oggtarget
+				ADD REPLICAT repe, PARALLEL, EXTTRAIL west/ea CHECKPOINTTABLE oggtarget.ggs_checkpoint
+				EDIT PARAMS repe
+				
+					REPLICAT repe
+					USERIDALIAS oggtarget DOMAIN OracleGoldenGate
+					SOURCECATALOG FREEPDB1
+					MAP oggsource.dept11, TARGET oggtarget.dept11;
+					
+				START REPLICAT repe
+				INFO REPLICAT repe
+		
+		4. Start extract and replicat 
+			1. Primary
+				adminclient
+				CONNECT http://localhost:7820 deployment DP1 as oggadmin password 1
+				DBLOGIN USERIDALIAS oggsource
+				STATS EXTRACT extw
+				DBLOGIN USERIDALIAS oggtarget
+				STATS REPLICAT repe
+			2. 주의사항
+				Replicat 프로세스는 DDL/DML 오류 발생 시 ABEND 상태로 중단됨. 
+				Primary DB의 변경사항을 Secondary DB에 적용했을 때 오류 발생하지 않도록 주의 필요
+		
+[참고] 테스트 SQL 스크립트
+SELECT * FROM tab;
+
+DROP TABLE dept1 purge;
+create table dept1(
+deptno number(2,0),
+dname varchar2(14),
+loc varchar2(13),
+constraint pk_dept primary key (deptno)
+);
+
+TRUNCATE TABLE dept1;
+insert into dept1 values(10, 'ACCOUNTING', 'NEW YORK');
+insert into dept1 values(20, 'RESEARCH', 'DALLAS');
+insert into dept1 values(30, 'SALES', 'CHICAGO');
+insert into dept1 values(40, 'OPERATIONS', 'BOSTON');
+commit;
 
 
+SELECT * FROM dept1 ORDER BY deptno;
+UPDATE dept1 SET dname='CONSULTING', LOC='SEOUL' WHERE DEPTNO=10;
+UPDATE dept1 SET dname='ACCOUNTING', LOC='NEW YORK' WHERE DEPTNO=10;
+COMMIT;
 
-24. 
-
-EXTRACT extw
-USERIDALIAS ggadmin_FREE domain OracleGoldenGate
-EXTTRAIL /u01/app/oracle/ogg_DP1_dirs/var/lib/data/lw
-SOURCECATALOG oggsource
-DDL INCLUDE ALL
-TABLE oggsource.*;
-
-REPLICAT repe
-USERIDALIAS oggtarget_FREEPDB1 DOMAIN OracleGoldenGate
-SOURCECATALOG oggsource
-MAP oggsource.dept11, TARGET oggtarget.dept22;
-
-
-
-
-
-
-https://apexapps.oracle.com/pls/apex/r/dbpm/livelabs/run-workshop?p210_wid=3273&p210_wec=&session=12954942311374
-
-connect http://localhost:7820 deployment DP1 as oggadmin password 1
-connect http://localhost:7820 deployment DP2 as oggadmin password 1
