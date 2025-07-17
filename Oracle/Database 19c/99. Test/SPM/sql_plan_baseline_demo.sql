@@ -1129,6 +1129,11 @@ dbms_spm.configure('plan_retention_weeks', 53);
 dbms_spm.configure ('space_budget_percent', 10);
 --Alert log: SPM: SMB space usage (99215979) exceeds 10.000000% of SYSAUX size (1018594954).
 
+-- Check dbms_spm.configure values
+SELECT PARAMETER_NAME, PARAMETER_VALUE, LAST_MODIFIED, MODIFIED_BY 
+  FROM DBA_SQL_MANAGEMENT_CONFIG
+ WHERE PARAMETER_NAME IN ('SPACE_BUDGET_PERCENT', 'PLAN_RETENTION_WEEKS');
+
 --Initiate purge manually
 DECLARE ret NUMBER;
 BEGIN
@@ -1139,7 +1144,7 @@ END;
 --위 조건에 만족하는 대상들은 자동으로 삭제되나 강제로 즉시 Purge 하고 싶을때 사용.
 ;
 
--- IDENTIFYING WHEN BASELINES WHERE LAST USED
+-- IDENTIFYING WHEN BASELINES WERE LAST USED
 SELECT FLOOR(EXTRACT(DAY FROM (SYSDATE - last_executed)) / 7) AS "Weeks Since Last Execute",
        COUNT(*) AS "Num Baselines"
 FROM   dba_sql_plan_baselines

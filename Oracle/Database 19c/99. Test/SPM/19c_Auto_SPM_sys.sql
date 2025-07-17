@@ -44,7 +44,7 @@ from DBA_AutoTask_Schedule_Control
 where Task_Name = 'Auto STS Capture Task';
 
 --------------------------------------------------------------------------
--- #03. Enable Real-time SPM
+-- #03. Enable Auto SPM
 --------------------------------------------------------------------------
 BEGIN
     dbms_spm.configure('AUTO_SPM_EVOLVE_TASK','ON');
